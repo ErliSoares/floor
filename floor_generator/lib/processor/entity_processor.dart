@@ -339,13 +339,12 @@ class EntityProcessor extends QueryableProcessor<Entity> {
   String _getSaveSub(final FieldElement field, String tableName) {
     final String code;
 
-    final fieldType = field.type.flatten();
+    final fieldType = field.type.isDartCoreList ? field.type.flatten() : field.type;
 
     final fieldTypeElement = fieldType.element;
     if (!(fieldTypeElement is ClassElement)) {
       throw _processorError.noMethodWithSaveAnnotation(field);
     }
-
 
     final fieldOfDaoWithAllMethods = _allFieldOfDaoWithAllMethods.firstWhereOrNull((e) {
       if (!e.method.hasAnnotation(annotations.save.runtimeType)) {
