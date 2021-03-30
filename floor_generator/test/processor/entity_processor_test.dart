@@ -373,9 +373,8 @@ void main() {
   });
 
   test('Process entity sub', () async {
-    LibraryReader _library;
     final path = testFilePath('processor', 'source', 'entity_processor_test_sub.dart');
-    _library = await resolveCompilationUnit(path);
+    final _library = await resolveCompilationUnit(path);
     final classElement = _library.classes.first;
 
     final actual = EntityProcessor(classElement, {}).process();

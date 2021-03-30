@@ -7,12 +7,12 @@ class Column {
     this.name,
     this.type, {
     this.relationship,
-    this.isPrimaryKey = false,
     required this.nullable,
     required this.useInQuery,
     required this.useInInsert,
     required this.useInIUpdate,
     required this.useInIDelete,
+    this.converter,
   });
 
   factory Column.useAll(
@@ -20,7 +20,7 @@ class Column {
     DbType type, {
     required bool nullable,
     ForeignKey? relationship,
-    bool isPrimaryKey = false,
+    TypeConverterBase? converter,
   }) =>
       Column(
         name,
@@ -31,7 +31,7 @@ class Column {
         useInInsert: true,
         useInIUpdate: true,
         relationship: relationship,
-        isPrimaryKey: isPrimaryKey,
+        converter: converter,
       );
 
   factory Column.onlyQuery(
@@ -39,7 +39,7 @@ class Column {
     DbType type, {
     required bool nullable,
     ForeignKey? relationship,
-    bool isPrimaryKey = false,
+    TypeConverterBase? converter,
   }) =>
       Column(
         name,
@@ -50,7 +50,7 @@ class Column {
         useInInsert: false,
         useInIUpdate: false,
         relationship: relationship,
-        isPrimaryKey: isPrimaryKey,
+        converter: converter,
       );
 
   factory Column.onlyInsert(
@@ -58,7 +58,7 @@ class Column {
     DbType type, {
     required bool nullable,
     ForeignKey? relationship,
-    bool isPrimaryKey = false,
+    TypeConverterBase? converter,
   }) =>
       Column(
         name,
@@ -69,7 +69,7 @@ class Column {
         useInInsert: true,
         useInIUpdate: false,
         relationship: relationship,
-        isPrimaryKey: isPrimaryKey,
+        converter: converter,
       );
 
   factory Column.onlyDelete(
@@ -77,7 +77,7 @@ class Column {
     DbType type, {
     required bool nullable,
     ForeignKey? relationship,
-    bool isPrimaryKey = false,
+    TypeConverterBase? converter,
   }) =>
       Column(
         name,
@@ -88,7 +88,7 @@ class Column {
         useInInsert: false,
         useInIUpdate: false,
         relationship: relationship,
-        isPrimaryKey: isPrimaryKey,
+        converter: converter,
       );
 
   factory Column.onlyUpdate(
@@ -96,7 +96,7 @@ class Column {
     DbType type, {
     required bool nullable,
     ForeignKey? relationship,
-    bool isPrimaryKey = false,
+    TypeConverterBase? converter,
   }) =>
       Column(
         name,
@@ -107,7 +107,7 @@ class Column {
         useInInsert: false,
         useInIUpdate: true,
         relationship: relationship,
-        isPrimaryKey: isPrimaryKey,
+        converter: converter,
       );
 
   final bool useInQuery;
@@ -120,8 +120,6 @@ class Column {
   ForeignKey? relationship;
 
   bool get isSub => relationship != null;
-
-  final bool isPrimaryKey;
 
   final DbType type;
 
@@ -136,9 +134,9 @@ class Column {
 
 /// A type that sql expressions can have at runtime.
 enum DbType {
-  nullType,
   int,
   real,
   text,
   blob,
+  expand,
 }

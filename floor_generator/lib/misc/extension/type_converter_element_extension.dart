@@ -43,6 +43,10 @@ extension TypeConverterElementExtension on Element {
           .map((element) => TypeConverterProcessor(element, scope).process())
           .toSet();
     } else {
+      final thisClass = this;
+      if (thisClass is ClassElement && thisClass.supertype != null) {
+        return thisClass.supertype!.element.getTypeConverters(scope);
+      }
       return {};
     }
   }
