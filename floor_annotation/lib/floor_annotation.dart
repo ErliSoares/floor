@@ -20,5 +20,6 @@ export 'src/save.dart';
 export 'src/sub.dart';
 export 'src/transaction.dart';
 export 'src/type_converter.dart';
+export 'src/type_converter_base.dart';
 export 'src/type_converters.dart';
 export 'src/update.dart';
