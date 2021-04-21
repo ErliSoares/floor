@@ -9,11 +9,11 @@ class SortingInfo {
   bool desc;
 
   SortingInfo copyWith({
-    required String selector,
+    String? selector,
     bool? desc,
   }) {
     return SortingInfo(
-      selector: selector,
+      selector: selector ?? this.selector,
       desc: desc ?? this.desc,
     );
   }
