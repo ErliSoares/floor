@@ -38,6 +38,7 @@ void main() {
       final entity = Entity(
         fakeClassElement,
         'entityName',
+        [],
         allFields,
         allFields,
         allFields,
@@ -66,6 +67,7 @@ void main() {
       final entity = Entity(
         fakeClassElement,
         'entityName',
+        [],
         allFields,
         allFields,
         allFields,
@@ -95,6 +97,7 @@ void main() {
       final entity = Entity(
         fakeClassElement,
         'entityName',
+        [],
         allFields,
         allFields,
         allFields,
@@ -133,6 +136,7 @@ void main() {
       final entity = Entity(
         fakeClassElement,
         'entityName',
+        [],
         [nullableField],
         [nullableField],
         [nullableField],
@@ -171,6 +175,7 @@ void main() {
       final entity = Entity(
         fakeClassElement,
         'entityName',
+        [],
         [nullableField],
         [nullableField],
         [nullableField],
@@ -201,6 +206,7 @@ void main() {
     final entity = Entity(
       fakeClassElement,
       'entityName',
+      [],
       allFields,
       allFields,
       allFields,

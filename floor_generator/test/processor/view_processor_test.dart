@@ -1,5 +1,6 @@
 import 'package:floor_generator/processor/field_processor.dart';
 import 'package:floor_generator/processor/view_processor.dart';
+import 'package:floor_generator/value_object/embedded.dart';
 import 'package:floor_generator/value_object/view.dart';
 import 'package:test/test.dart';
 
@@ -24,11 +25,13 @@ void main() {
     final fields = classElement.fields
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
+    final embeddeds = <Embedded>[];
     const query = 'SELECT * from otherentity';
     const constructor = "Person(row['id'] as int, row['name'] as String)";
     final expected = View(
       classElement,
       name,
+      embeddeds,
       fields,
       fields,
       fields,
@@ -62,6 +65,7 @@ void main() {
     final expected = View(
       classElement,
       name,
+      [],
       fields,
       fields,
       fields,
@@ -185,11 +189,13 @@ void main() {
     final fields = classElement.fields
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
+    final embeddeds = <Embedded>[];
     const query = 'SELECT * from otherentity';
     const constructor = "Person(row['id'] as int, row['name'] as String)";
     final expected = View(
       classElement,
       name,
+      embeddeds,
       fields,
       fields,
       fields,

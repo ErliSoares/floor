@@ -31,6 +31,7 @@ void main() {
     final view = View(
       fakeClassElement,
       'entityName',
+      [],
       allFields,
       allFields,
       allFields,

@@ -68,7 +68,6 @@ class _$FlutterDatabase extends FlutterDatabase {
       version: 1,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
-        await callback?.onConfigure?.call(database);
       },
       onOpen: (database) async {
         await callback?.onOpen?.call(database);
@@ -81,7 +80,7 @@ class _$FlutterDatabase extends FlutterDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Task` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `message` TEXT NOT NULL)');
+            'CREATE TABLE IF NOT EXISTS `Task` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `message` TEXT NOT NULL, `time_created_at` TEXT NOT NULL, `time_updated_at` TEXT NOT NULL)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -91,39 +90,47 @@ class _$FlutterDatabase extends FlutterDatabase {
 
   @override
   TaskDao get taskDao {
-    return _taskDaoInstance ??= _$TaskDao(this, changeListener);
+    return _taskDaoInstance ??= _$TaskDao(database, changeListener);
   }
 }
 
 class _$TaskDao extends TaskDao {
-  _$TaskDao(this.floorDatabase, this.changeListener)
-      : _queryAdapter = QueryAdapter(floorDatabase.database,
-            changeListener: changeListener),
+  _$TaskDao(this.database, this.changeListener)
+      : _queryAdapter = QueryAdapter(database, changeListener),
         _taskInsertionAdapter = InsertionAdapter(
-            floorDatabase.database,
+            database,
             'Task',
             (Task item) => <String, Object?>{
                   'id': item.id,
-                  'message': item.message
-                }, inserted: (id, entity) {
-          entity.id = id;
-        }, changeListener: changeListener),
+                  'message': item.message,
+                  'time_created_at': item.timestamp.createdAt,
+                  'time_updated_at': item.timestamp.updatedAt
+                },
+            changeListener),
         _taskUpdateAdapter = UpdateAdapter(
-            floorDatabase.database,
+            database,
             'Task',
             ['id'],
-            (Task item) =>
-                <String, Object?>{'id': item.id, 'message': item.message},
-            changeListener: changeListener),
+            (Task item) => <String, Object?>{
+                  'id': item.id,
+                  'message': item.message,
+                  'time_created_at': item.timestamp.createdAt,
+                  'time_updated_at': item.timestamp.updatedAt
+                },
+            changeListener),
         _taskDeletionAdapter = DeletionAdapter(
-            floorDatabase.database,
+            database,
             'Task',
             ['id'],
-            (Task item) =>
-                <String, Object?>{'id': item.id, 'message': item.message},
-            changeListener: changeListener);
+            (Task item) => <String, Object?>{
+                  'id': item.id,
+                  'message': item.message,
+                  'time_created_at': item.timestamp.createdAt,
+                  'time_updated_at': item.timestamp.updatedAt
+                },
+            changeListener);
 
-  final _$FlutterDatabase floorDatabase;
+  final sqflite.DatabaseExecutor database;
 
   final StreamController<String> changeListener;
 
@@ -138,23 +145,35 @@ class _$TaskDao extends TaskDao {
   @override
   Future<Task?> findTaskById(int id) async {
     return _queryAdapter.query('SELECT * FROM task WHERE id = ?1',
-        mapper: (Map<String, Object?> row) =>
-            Task(row['id'] as int?, row['message'] as String),
+        mapper: (Map<String, Object?> row) => Task(
+            row['id'] as int?,
+            row['message'] as String,
+            Timestamp(
+                createdAt: row['time_created_at'] as String,
+                updatedAt: row['time_updated_at'] as String)),
         arguments: [id]);
   }
 
   @override
   Future<List<Task>> findAllTasks() async {
     return _queryAdapter.queryList('SELECT * FROM task',
-        mapper: (Map<String, Object?> row) =>
-            Task(row['id'] as int?, row['message'] as String));
+        mapper: (Map<String, Object?> row) => Task(
+            row['id'] as int?,
+            row['message'] as String,
+            Timestamp(
+                createdAt: row['time_created_at'] as String,
+                updatedAt: row['time_updated_at'] as String)));
   }
 
   @override
   Stream<List<Task>> findAllTasksAsStream() {
     return _queryAdapter.queryListStream('SELECT * FROM task',
-        mapper: (Map<String, Object?> row) =>
-            Task(row['id'] as int?, row['message'] as String),
+        mapper: (Map<String, Object?> row) => Task(
+            row['id'] as int?,
+            row['message'] as String,
+            Timestamp(
+                createdAt: row['time_created_at'] as String,
+                updatedAt: row['time_updated_at'] as String)),
         queryableName: 'Task',
         isView: false);
   }

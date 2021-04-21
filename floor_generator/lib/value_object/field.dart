@@ -1,9 +1,9 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:floor_generator/value_object/fieldable.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 
 /// Represents an Entity field and thus a table column.
-class Field {
-  final FieldElement fieldElement;
+class Field extends Fieldable {
   final String name;
   final String columnName;
   final bool isNullable;
@@ -11,13 +11,13 @@ class Field {
   final TypeConverter? typeConverter;
 
   Field(
-    this.fieldElement,
+    FieldElement fieldElement,
     this.name,
     this.columnName,
     this.isNullable,
     this.sqlType,
     this.typeConverter,
-  );
+  ) : super(fieldElement);
 
   /// The database column definition.
   String getDatabaseDefinition(final bool autoGenerate) {

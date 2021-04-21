@@ -9,6 +9,8 @@ abstract class AnnotationField {
 
   static const columnInfoName = 'name';
 
+  static const embeddedPrefix = 'prefix';
+
   static const entityTableName = 'tableName';
   static const entityForeignKeys = 'foreignKeys';
   static const entityIndices = 'indices';

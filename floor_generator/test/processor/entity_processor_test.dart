@@ -37,6 +37,7 @@ void main() {
     final fields = classElement.fields
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
+    final embeddeds = <Embedded>[];
     final primaryKey = PrimaryKey([fields[0]], false);
     const foreignKeys = <ForeignKey>[];
     const indices = <Index>[];
@@ -45,6 +46,7 @@ void main() {
     final expected = Entity(
       classElement,
       name,
+      embeddeds,
       fields,
       fields,
       fields,
@@ -79,6 +81,7 @@ void main() {
     final fields = classElement.fields
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
+    const embeddeds = <Embedded>[];
     final primaryKey = PrimaryKey(fields, false);
     const foreignKeys = <ForeignKey>[];
     const indices = <Index>[];
@@ -87,6 +90,7 @@ void main() {
     final expected = Entity(
       classElement,
       name,
+      embeddeds,
       fields,
       fields,
       fields,
@@ -274,6 +278,7 @@ void main() {
     final expected = Entity(
       classElement,
       name,
+      [],
       fields,
       fields,
       fields,
@@ -356,6 +361,7 @@ void main() {
     final expected = Entity(
       classElement,
       name,
+      [],
       fields,
       fields,
       fields,
@@ -421,11 +427,4 @@ Future<List<ClassElement>> _createClassElements(final String classes) async {
   });
 
   return library.classes.toList();
-}
-
-TypeChecker _typeChecker(final Type type) => TypeChecker.fromRuntime(type);
-extension AnnotationChecker on Element {
-  bool hasAnnotation(final Type type) {
-    return _typeChecker(type).hasAnnotationOfExact(this);
-  }
 }

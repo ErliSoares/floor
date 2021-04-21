@@ -12,8 +12,10 @@ import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/database_processor.dart';
 import 'package:floor_generator/processor/error/entity_processor_error.dart';
 import 'package:floor_generator/processor/queryable_processor.dart';
+import 'package:floor_generator/value_object/embedded.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/field.dart';
+import 'package:floor_generator/value_object/fieldable.dart';
 import 'package:floor_generator/value_object/foreign_key.dart';
 import 'package:floor_generator/value_object/fts.dart';
 import 'package:floor_generator/value_object/index.dart';
@@ -33,6 +35,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
   @override
   Entity process() {
     final name = classElement.tableName();
+    final embeddeds = getEmbeddeds();
     final fieldsAll = getFieldsWithOutCheckIgnore();
     final fieldsDataBaseSchema = fieldsAll.where((e) => shouldBeIncludedForDataBaseSchema(e.fieldElement)).toList();
     final fieldsQuery = fieldsAll.where((e) => shouldBeIncludedForQuery(e.fieldElement)).toList();
@@ -55,6 +58,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     return Entity(
       classElement,
       name,
+      embeddeds,
       fieldsAll,
       fieldsDataBaseSchema,
       fieldsQuery,
@@ -62,10 +66,10 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       _getForeignKeys(classElement),
       _getIndices(fieldsDataBaseSchema, name),
       _getWithoutRowid(),
-      getConstructor(fieldsQuery),
-      _getValueMapping(fieldsInsert),
-      _getValueMapping(fieldsUpdate),
-      _getValueMapping(fieldsDelete),
+      getConstructor([...fieldsQuery, ...embeddeds]),
+      _getValueMapping(fieldsInsert, embeddeds),
+      _getValueMapping(fieldsUpdate, embeddeds),
+      _getValueMapping(fieldsDelete, embeddeds),
       _getFts(),
       saveSub,
     );
@@ -276,17 +280,50 @@ class EntityProcessor extends QueryableProcessor<Entity> {
         false;
   }
 
-  String _getValueMapping(final List<Field> fields) {
-    final keyValueList = fields.map((field) {
-      final columnName = field.columnName;
-      final attributeValue = _getAttributeValue(field);
-      return "'$columnName': $attributeValue";
+  void _processFields(final Map map, final List<Fieldable> fields, {String prefix = ''}) {
+    for (final field in fields) {
+      if (field is Field) {
+        map[field.columnName] = _getAttributeValue(field, prefix: prefix);
+      } else if (field is Embedded) {
+        _processFields(map, [...field.fields, ...field.children], prefix: '$prefix${field.fieldElement.name}.');
+      }
+    }
+  }
+
+  String _getValueMapping(final List<Fieldable> fields, List<Embedded> embeddeds) {
+    final Map<String, String> map = {};
+    _processFields(map, fields);
+
+    final keyValueList = map.entries
+        .map((entry) => "'${entry.key}': ${entry.value}")
+        .toList();
+
+    final embeddedKeyValue = embeddeds.expand((embedded) {
+      final keyValue = <String>[];
+      final className = <String>[];
+
+      void dig(final Embedded child) {
+        className.add(child.fieldElement.displayName);
+        for (final field in child.fields) {
+          final columnName = field.columnName;
+          final attributeValue =
+          [...className, _getAttributeValue(field)].join('?.');
+          keyValue.add("'$columnName': item.$attributeValue");
+        }
+
+        child.children.forEach(dig);
+      }
+
+      dig(embedded);
+
+      return keyValue;
     }).toList();
+    keyValueList.addAll(embeddedKeyValue);
 
     return '<String, Object?>{${keyValueList.join(', ')}}';
   }
 
-  String _getAttributeValue(final Field field) {
+  String _getAttributeValue(final Field field, {String prefix = ''}) {
     final fieldElement = field.fieldElement;
     final parameterName = fieldElement.displayName;
     final fieldType = fieldElement.type;
@@ -294,16 +331,16 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     String attributeValue;
 
     if (fieldType.isDefaultSqlType) {
-      attributeValue = 'item.$parameterName';
-    } else if (fieldType.element is ClassElement && (fieldType.element as ClassElement).isEnum) {
-      attributeValue = 'item.$parameterName.value';
+      attributeValue = 'item.$prefix$parameterName';
+    }  else if (fieldType.element is ClassElement && (fieldType.element as ClassElement).isEnum) {
+      return 'item.$prefix$parameterName.value';
     } else {
       final typeConverter = [
         ...queryableTypeConverters,
         field.typeConverter,
       ].whereNotNull().getClosest(fieldType);
       attributeValue =
-          '_${typeConverter.name.decapitalize()}.encode(item.$parameterName)';
+          '_${typeConverter.name.decapitalize()}.encode(item.$prefix$parameterName)';
     }
 
     if (fieldType.isDartCoreBool) {

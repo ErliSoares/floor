@@ -3,15 +3,19 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/constants.dart';
+import 'package:floor_generator/extension/field_element_extension.dart';
 import 'package:floor_generator/misc/extension/set_extension.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/misc/extension/type_converter_element_extension.dart';
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
+import 'package:floor_generator/processor/embedded_processor.dart';
 import 'package:floor_generator/processor/error/queryable_processor_error.dart';
 import 'package:floor_generator/processor/field_processor.dart';
 import 'package:floor_generator/processor/processor.dart';
+import 'package:floor_generator/value_object/embedded.dart';
 import 'package:floor_generator/value_object/field.dart';
+import 'package:floor_generator/value_object/fieldable.dart';
 import 'package:floor_generator/value_object/queryable.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:meta/meta.dart';
@@ -22,6 +26,8 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
 
   @protected
   final ClassElement classElement;
+  @protected
+  final List<FieldElement> _fields;
 
   final Set<TypeConverter> queryableTypeConverters;
 
@@ -29,21 +35,21 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
   QueryableProcessor(
     this.classElement,
     final Set<TypeConverter> typeConverters,
-  )   : _queryableProcessorError = QueryableProcessorError(classElement),
+  ) : _queryableProcessorError = QueryableProcessorError(classElement),
         queryableTypeConverters = typeConverters +
-            classElement.getTypeConverters(TypeConverterScope.queryable);
+            classElement.getTypeConverters(TypeConverterScope.queryable),
+        _fields = [
+          ...classElement.fields,
+          ...classElement.allSupertypes.expand((type) => type.element.fields),
+        ];
 
   @protected
   List<Field> getFieldsWithOutCheckIgnore() {
     if (classElement.mixins.isNotEmpty) {
       throw _queryableProcessorError.prohibitedMixinUsage;
     }
-    final fields = [
-      ...classElement.fields,
-      ...classElement.allSupertypes.expand((type) => type.element.fields),
-    ];
 
-    return fields
+    return _fields
         .where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation())
         .map((field) {
       final typeConverter =
@@ -57,12 +63,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
     if (classElement.mixins.isNotEmpty) {
       throw _queryableProcessorError.prohibitedMixinUsage;
     }
-    final fields = [
-      ...classElement.fields,
-      ...classElement.allSupertypes.expand((type) => type.element.fields),
-    ];
-
-    return fields
+    return _fields
         .where((fieldElement) => fieldElement.shouldBeIncludedSub())
         .toList();
   }
@@ -72,26 +73,24 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
     if (classElement.mixins.isNotEmpty) {
       throw _queryableProcessorError.prohibitedMixinUsage;
     }
-    final fields = [
-      ...classElement.fields,
-      ...classElement.allSupertypes.expand((type) => type.element.fields),
-    ];
+    final constructorParameters = classElement.constructors.first.parameters.where((e) => _fields.any((f) => e.displayName == f.displayName) );
 
-    final constructorParameters = classElement.constructors.first.parameters.where((e) => fields.any((f) => e.displayName == f.displayName) );
-
-    return fields
+    return _fields
         .where((fieldElement) => fieldElement.shouldBeIncludedForQuery() && constructorParameters.every((e) => e.name != fieldElement.name))
         .toList();
   }
 
-  String _getValueMappingOutsideConstructor(final List<Field> fields, List<FieldElement> fieldsOutsideConstructor) {
+  String _getValueMappingOutsideConstructor(final List<Fieldable> fields, List<FieldElement> fieldsOutsideConstructor) {
     final keyValueList = fieldsOutsideConstructor.map((fieldElement) {
       final parameterName = fieldElement.displayName;
-      final field = fields.firstWhere((field) => field.name == parameterName);
-      final columnName = field.columnName;
-      final attributeValue = _getAttributeValue(fieldElement, field);
-      return '..$columnName = $attributeValue';
-    }).toList();
+      final field = fields.firstWhereOrNull((field) => field.fieldElement.name == parameterName);
+      if (field is Field) {
+        final columnName = field.columnName;
+        final attributeValue = _getAttributeValue(fieldElement, field);
+        return '..$columnName = $attributeValue';
+      }
+      return null;
+    }).whereNotNull().toList();
 
     return keyValueList.join('\n');
   }
@@ -129,66 +128,84 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
   }
 
   @protected
-  String getConstructor(final List<Field> fields) {
+  List<Embedded> getEmbeddeds() {
+    return _fields
+        .where((fieldElement) => fieldElement.isEmbedded)
+        .map((embedded) => EmbeddedProcessor(embedded).process())
+        .toList();
+  }
+
+  @protected
+  String getConstructor(final List<Fieldable> fields) {
+    final fieldsOutsideConstructor = getFieldsOutsideConstructor();
+    final valueMappingOutsideConstructor = _getValueMappingOutsideConstructor(fields, fieldsOutsideConstructor);
+    return _getConstructor(classElement, fields) + valueMappingOutsideConstructor;
+  }
+
+  String _getConstructor(ClassElement classElement, final List<Fieldable> fields) {
     final constructorParameters = classElement.constructors.first.parameters;
     final parameterValues = constructorParameters
         .map((parameterElement) => _getParameterValue(parameterElement, fields))
         .where((parameterValue) => parameterValue != null)
         .join(', ');
 
-    final fieldsOutsideConstructor = getFieldsOutsideConstructor();
-    final valueMappingOutsideConstructor = _getValueMappingOutsideConstructor(fields, fieldsOutsideConstructor);
-
-    return '${classElement.displayName}($parameterValues)$valueMappingOutsideConstructor';
+    return '${classElement.displayName}($parameterValues)';
   }
 
   /// Returns `null` whenever field is @ignored
   String? _getParameterValue(
     final ParameterElement parameterElement,
-    final List<Field> fields,
+    final List<Fieldable> fields,
   ) {
     final parameterName = parameterElement.displayName;
     final field =
         // null whenever field is @ignored
-        fields.firstWhereOrNull((field) => field.name == parameterName);
+        fields.firstWhereOrNull((field) => field.fieldElement.displayName == parameterName);
     if (field != null) {
-      final databaseValue = "row['${field.columnName}']";
+      if (field is Field) {
+        final databaseValue = "row['${field.columnName}']";
 
-      String parameterValue;
+        String parameterValue;
 
-      if (parameterElement.type.isDefaultSqlType) {
-        parameterValue = databaseValue.cast(
-          parameterElement.type,
-          field.isNullable,
-          parameterElement,
-        );
-      } else if (parameterElement.type.element is ClassElement && (parameterElement.type.element as ClassElement).isEnum) {
-        if (field.isNullable) {
-          parameterValue = '$databaseValue == null ? null : ${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
-        } else{
-          parameterValue = '${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
+        if (parameterElement.type.isDefaultSqlType) {
+          parameterValue = databaseValue.cast(
+            parameterElement.type,
+            field.isNullable,
+            parameterElement,
+          );
+        } else if (parameterElement.type.element is ClassElement && (parameterElement.type.element as ClassElement).isEnum) {
+          if (field.isNullable) {
+            parameterValue = '$databaseValue == null ? null : ${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
+          } else{
+            parameterValue = '${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
+          }
+        } else {
+          final typeConverter = [...queryableTypeConverters, field.typeConverter]
+              .whereNotNull()
+              .getClosest(parameterElement.type);
+          final castedDatabaseValue = databaseValue.cast(
+            typeConverter.databaseType,
+            field.isNullable,
+            parameterElement,
+          );
+
+          parameterValue =
+          '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
         }
-      } else {
-        final typeConverter = [...queryableTypeConverters, field.typeConverter]
-            .whereNotNull()
-            .getClosest(parameterElement.type);
-        final castedDatabaseValue = databaseValue.cast(
-          typeConverter.databaseType,
-          field.isNullable,
-          parameterElement,
-        );
 
-        parameterValue =
-            '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+        if (parameterElement.isNamed) {
+          return '$parameterName: $parameterValue';
+        }
+        return parameterValue; // also covers positional parameter
+      } else if (field is Embedded) {
+        final parameterValue = _getConstructor(field.classElement, [...field.fields, ...field.children]);
+        if (parameterElement.isNamed) {
+          return '$parameterName: $parameterValue';
+        }
+        return parameterValue;
       }
-
-      if (parameterElement.isNamed) {
-        return '$parameterName: $parameterValue';
-      }
-      return parameterValue; // also covers positional parameter
-    } else {
-      return null;
     }
+    return null;
   }
 
   @protected
@@ -256,7 +273,7 @@ extension on String {
 
 extension on FieldElement {
   bool shouldBeIncludedAnyOperation() {
-    if (isStatic || isSynthetic) {
+    if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
     final isSub = hasAnnotation(annotations.sub.runtimeType);
@@ -276,7 +293,7 @@ extension on FieldElement {
   }
 
   bool shouldBeIncludedForQuery() {
-    if (isStatic || isSynthetic) {
+    if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
     final isSub = hasAnnotation(annotations.sub.runtimeType);
@@ -293,7 +310,7 @@ extension on FieldElement {
   }
 
   bool shouldBeIncludedForInsert() {
-    if (isStatic || isSynthetic) {
+    if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
     final isSub = hasAnnotation(annotations.sub.runtimeType);
@@ -310,7 +327,7 @@ extension on FieldElement {
   }
 
   bool shouldBeIncludedForUpdate() {
-    if (isStatic || isSynthetic) {
+    if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
     final isSub = hasAnnotation(annotations.sub.runtimeType);
@@ -327,7 +344,7 @@ extension on FieldElement {
   }
 
   bool shouldBeIncludedForDelete() {
-    if (isStatic || isSynthetic) {
+    if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
     final isSub = hasAnnotation(annotations.sub.runtimeType);
@@ -344,7 +361,7 @@ extension on FieldElement {
   }
 
   bool shouldBeIncludedForDataBaseSchema() {
-    if (isStatic || isSynthetic) {
+    if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
     final isSub = hasAnnotation(annotations.sub.runtimeType);
@@ -364,7 +381,7 @@ extension on FieldElement {
   }
 
   bool shouldBeIncludedSub() {
-    if (isStatic || isSynthetic) {
+    if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
     final isSub = hasAnnotation(annotations.sub.runtimeType);

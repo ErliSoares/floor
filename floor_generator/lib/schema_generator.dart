@@ -14,6 +14,7 @@ import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:source_gen/src/output_helpers.dart';
+import 'package:floor_generator/extension/field_element_extension.dart';
 
 
 class SchemaGenerator extends Generator {
@@ -113,7 +114,7 @@ extension StringExtension on String {
 
 extension on FieldElement {
   ColumnData toColumnData(List<TypeConverter> databaseTypeConverters) {
-    if (isStatic || isSynthetic) {
+    if (isStatic || isSynthetic || isEmbedded) {
       return null;
     }
     // TODO Tratar quando for sub

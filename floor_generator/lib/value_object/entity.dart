@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:collection/collection.dart';
+import 'package:floor_generator/value_object/embedded.dart';
 import 'package:floor_generator/value_object/field.dart';
 import 'package:floor_generator/value_object/foreign_key.dart';
 import 'package:floor_generator/value_object/index.dart';
@@ -22,6 +23,7 @@ class Entity extends Queryable {
   Entity(
     ClassElement classElement,
     String name,
+    List<Embedded> embeddeds,
     List<Field> fieldsAll,
     List<Field> fieldsDataBaseSchema,
     List<Field> fieldsQuery,
@@ -35,7 +37,7 @@ class Entity extends Queryable {
       this.valueMappingForDelete,
       this.fts,
       [this.saveSub = '']
-  ) : super(name: name, classElement: classElement, constructor: constructor, fieldsAll: fieldsAll, fieldsDataBaseSchema: fieldsDataBaseSchema, fieldsQuery: fieldsQuery);
+  ) : super(name: name, classElement: classElement, constructor: constructor, fieldsAll: fieldsAll, fieldsDataBaseSchema: fieldsDataBaseSchema, fieldsQuery: fieldsQuery, embeddeds: embeddeds);
 
   String getCreateTableStatement() {
     final databaseDefinition = fieldsDataBaseSchema.map((field) {
@@ -43,6 +45,25 @@ class Entity extends Queryable {
           primaryKey.fields.contains(field) && primaryKey.autoGenerateId;
       return field.getDatabaseDefinition(autoIncrement);
     }).toList();
+
+    final embeddedDefinitions = embeddeds
+
+        // dig into children to expand fields
+        .expand((embedded) {
+          final fields = <Field>[];
+
+          void dig(final Embedded child) {
+            fields.addAll(child.fields);
+            child.children.forEach(dig);
+          }
+
+          dig(embedded);
+
+          return fields;
+        })
+        .map((field) => field.getDatabaseDefinition(false))
+        .toList();
+    databaseDefinition.addAll(embeddedDefinitions);
 
     final foreignKeyDefinitions =
         foreignKeys.map((foreignKey) => foreignKey.getDefinition()).toList();
@@ -75,6 +96,50 @@ class Entity extends Queryable {
     }
   }
 
+
+  String getValueMapping() {
+    final keyValueList = <String>[];
+    final fieldKeyValue = fieldsAll.map((field) {
+      final columnName = field.columnName;
+      final attributeValue = _getAttributeValue(field);
+      return "'$columnName': item.$attributeValue";
+    }).toList();
+    keyValueList.addAll(fieldKeyValue);
+
+    final embeddedKeyValue = embeddeds.expand((embedded) {
+      final keyValue = <String>[];
+      final className = <String>[];
+
+      void dig(final Embedded child) {
+        className.add(child.fieldElement.displayName);
+        for (final field in child.fields) {
+          final columnName = field.columnName;
+          final attributeValue =
+              [...className, _getAttributeValue(field)].join('?.');
+          keyValue.add("'$columnName': item.$attributeValue");
+        }
+
+        child.children.forEach(dig);
+      }
+
+      dig(embedded);
+
+      return keyValue;
+    }).toList();
+    keyValueList.addAll(embeddedKeyValue);
+
+    return '<String, dynamic>{${keyValueList.join(', ')}}';
+  }
+
+  String _getAttributeValue(final Field field) {
+    final parameterName = field.fieldElement.displayName;
+    if (field.fieldElement.type.isDartCoreBool) {
+      return '$parameterName?.toInt()';
+    } else {
+      return '$parameterName';
+    }
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -82,9 +147,10 @@ class Entity extends Queryable {
           runtimeType == other.runtimeType &&
           classElement == other.classElement &&
           name == other.name &&
-          fieldsDataBaseSchema.equals(other.fieldsDataBaseSchema) &&
-          fieldsQuery.equals(other.fieldsQuery) &&
-          fieldsAll.equals(other.fieldsAll) &&
+          const ListEquality<Field>().equals(fieldsDataBaseSchema, other.fieldsDataBaseSchema) &&
+          const ListEquality<Field>().equals(fieldsQuery, other.fieldsQuery) &&
+          const ListEquality<Field>().equals(fieldsAll, other.fieldsAll) &&
+          const ListEquality<Embedded>().equals(embeddeds, other.embeddeds) &&
           primaryKey == other.primaryKey &&
           foreignKeys.equals(other.foreignKeys) &&
           indices.equals(other.indices) &&
@@ -98,6 +164,7 @@ class Entity extends Queryable {
   int get hashCode =>
       classElement.hashCode ^
       name.hashCode ^
+      embeddeds.hashCode ^
       fieldsDataBaseSchema.hashCode ^
       fieldsQuery.hashCode ^
       fieldsAll.hashCode ^
@@ -113,6 +180,6 @@ class Entity extends Queryable {
 
   @override
   String toString() {
-    return 'Entity{classElement: $classElement, name: $name, fieldsDataBaseSchema: $fieldsDataBaseSchema, fieldsQuery: $fieldsQuery, fieldsAll: $fieldsAll, primaryKey: $primaryKey, foreignKeys: $foreignKeys, indices: $indices, constructor: $constructor, withoutRowid: $withoutRowid, valueMappingForUpdate: $valueMappingForUpdate, valueMappingForInsert: $valueMappingForInsert, valueMappingForDelete: $valueMappingForDelete, fts: $fts}';
+    return 'Entity{classElement: $classElement, name: $name, embeddeds: $embeddeds, fieldsDataBaseSchema: $fieldsDataBaseSchema, fieldsQuery: $fieldsQuery, fieldsAll: $fieldsAll, primaryKey: $primaryKey, foreignKeys: $foreignKeys, indices: $indices, constructor: $constructor, withoutRowid: $withoutRowid, valueMappingForUpdate: $valueMappingForUpdate, valueMappingForInsert: $valueMappingForInsert, valueMappingForDelete: $valueMappingForDelete, fts: $fts}';
   }
 }
