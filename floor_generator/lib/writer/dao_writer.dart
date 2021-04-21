@@ -1,6 +1,7 @@
 // ignore_for_file: import_of_legacy_library_into_null_safe
 import 'package:code_builder/code_builder.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/dao.dart';
 import 'package:floor_generator/value_object/deletion_method.dart';
 import 'package:floor_generator/value_object/entity.dart';
@@ -21,8 +22,9 @@ class DaoWriter extends Writer {
   final Set<Entity> streamEntities;
   final bool dbHasViewStreams;
   final String databaseNameType;
+  final SqlColumnProcessor? sqlColumnProcessor;
 
-  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams, this.databaseNameType);
+  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams, this.databaseNameType, {this.sqlColumnProcessor});
 
   @override
   Class write() {
@@ -226,7 +228,7 @@ class DaoWriter extends Writer {
 
   List<Method> _generateQueryMethods(final List<QueryMethod> queryMethods) {
     return queryMethods
-        .map((method) => QueryMethodWriter(method).write())
+        .map((method) => QueryMethodWriter(method, sqlColumnProcessor: sqlColumnProcessor).write())
         .toList();
   }
 

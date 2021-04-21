@@ -1,4 +1,4 @@
-// @dart=2.8
+// @dart=2.9
 
 import 'package:code_builder/code_builder.dart';
 import 'package:floor_generator/schema_generator.dart';
@@ -81,9 +81,9 @@ class PersonSchema extends Table {
           ],
         );
 
-  static final colId = Column.useAll(id, DbType.int, nullable: false);
-  static final colName = Column.useAll(name, DbType.text, nullable: false);
-  static final colDataHora = Column.useAll(dataHora, DbType.text, nullable: false);
+  static final colId = Column.useAll('id', DbType.int, nullable: false);
+  static final colName = Column.useAll('name', DbType.text, nullable: false);
+  static final colDataHora = Column.useAll('dataHora', DbType.text, nullable: false);
 
   static final PersonSchema instance = PersonSchema._();
 }""";

@@ -1,10 +1,11 @@
-// ignore_for_file: import_of_legacy_library_into_null_safe
+// @dart=2.9
 import 'package:build_test/build_test.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/dao_processor.dart';
 import 'package:floor_generator/processor/entity_processor.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/dao.dart';
 import 'package:floor_generator/value_object/query_method.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
@@ -406,6 +407,29 @@ void main() {
 
     expect(actual, throwsA(const TypeMatcher<InvalidGenerationSourceError>()));
   });
+
+  test('query list with load options', () async {
+    final queryMethod = await _createQueryMethod('''
+      @Query('SELECT pe.*, 1 + 2 AS test, address.name FROM person as pe INNER JOIN address ON (address.personId = pe.id)WHERE pe.id = 2 GROUP BY pe.name ORDER BY pe.name DESC LIMIT 1, 10')
+      Future<List<Person>> findAll(LoadOptions loadOptions);
+    ''');
+
+    final _sqlColumnProcessor = SqlColumnProcessor();
+
+    var sql = 'CREATE TABLE IF NOT EXISTS `person` (`id` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))';
+    _sqlColumnProcessor.registerSqlCreateTable(sql);
+    sql = 'CREATE TABLE IF NOT EXISTS `address` (`id` INTEGER, `personId` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))';
+    _sqlColumnProcessor.registerSqlCreateTable(sql);
+
+    final actual = QueryMethodWriter(queryMethod, sqlColumnProcessor: _sqlColumnProcessor).write();
+
+    expect(actual, equalsDart('''
+      @override
+      Future<List<Person>> findAll(LoadOptions loadOptions) async {
+        return _queryAdapter.queryList('SELECT * FROM Person', mapper: (Map<String, Object?> row) => Person(row['id'] as int, row['name'] as String), loadOptions: loadOptions, sqlColumns: { 'id': 'Person.id', 'name': 'Person.name' });
+      }
+    '''));
+  });
 }
 
 Future<QueryMethod> _createQueryMethod(final String methodSignature) async {
@@ -458,7 +482,7 @@ Future<Dao> createOrderDao(
         }
       }
       ''', (resolver) async {
-    return LibraryReader((await resolver.findLibraryByName('test'))!);
+    return LibraryReader(await resolver.findLibraryByName('test'));
   });
 
   final daoClass = library.classes.firstWhere((classElement) =>

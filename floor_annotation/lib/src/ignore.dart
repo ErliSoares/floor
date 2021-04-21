@@ -3,7 +3,13 @@ class Ignore {
   final bool forInsert;
   final bool forUpdate;
   final bool forDelete;
-  const Ignore({this.forQuery = true, this.forInsert = true, this.forUpdate = true, this.forDelete = true});
+
+  const Ignore({
+    this.forQuery = true,
+    this.forInsert = true,
+    this.forUpdate = true,
+    this.forDelete = true,
+  });
 }
 
 /// Ignores the marked element from Floor's processing logic.

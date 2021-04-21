@@ -9,16 +9,20 @@ import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/error/processor_error.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/query.dart';
 import 'package:floor_generator/value_object/query_method.dart';
 import 'package:floor_generator/value_object/queryable.dart';
 import 'package:floor_generator/value_object/view.dart';
 import 'package:floor_generator/writer/writer.dart';
+import 'package:collection/collection.dart';
 
 class QueryMethodWriter implements Writer {
   final QueryMethod _queryMethod;
+  final SqlColumnProcessor? _sqlColumnProcessor;
 
-  QueryMethodWriter(final QueryMethod queryMethod) : _queryMethod = queryMethod;
+  QueryMethodWriter(final QueryMethod queryMethod, {final SqlColumnProcessor? sqlColumnProcessor})
+      : _queryMethod = queryMethod, _sqlColumnProcessor = sqlColumnProcessor;
 
   @override
   Method write() {
@@ -80,7 +84,7 @@ class QueryMethodWriter implements Writer {
     // We establish the conventions that we provide the fixed parameters first and then append the list parameters one by one.
     // parameters 1,2,... start-1 are already used by fixed (non-list) parameters.
     final start = _queryMethod.parameters
-            .where((param) => !param.type.isDartCoreList)
+            .where((param) => !param.type.isDartCoreList && !param.type.isLoadOptions)
             .length +
         1;
 
@@ -112,7 +116,7 @@ class QueryMethodWriter implements Writer {
     //first, take fixed parameters, then insert list parameters.
     return [
       ..._queryMethod.parameters
-          .where((parameter) => !parameter.type.isDartCoreList)
+          .where((parameter) => !parameter.type.isDartCoreList && !parameter.type.isLoadOptions)
           .map((parameter) {
         if (parameter.type.isDefaultSqlType) {
           if (parameter.type.isDartCoreBool) {
@@ -203,6 +207,71 @@ class QueryMethodWriter implements Writer {
       parameters
         ..write(", queryableName: '${queryable.name}'")
         ..write(', isView: ${queryable is View}');
+    }
+
+    final loadOptionsParam = _queryMethod.parameters.firstWhereOrNull((param) => param.type.isLoadOptions);
+    if (loadOptionsParam != null) {
+      if (_sqlColumnProcessor == null) {
+        throw Exception('Não foi informado _sqlColumnProcessor para processar as colunas para o loadOptions');
+      }
+
+      parameters.write(', loadOptions: ${loadOptionsParam.name}');
+
+      final select = _sqlColumnProcessor!.parserSelect(query.fromLiteral());
+
+      final queryInfoParameters = StringBuffer();
+
+      final sqlColumns = StringBuffer();
+      sqlColumns.writeln('{');
+      final mapColumns = _sqlColumnProcessor!.getColumns(select);
+      for(var field in mapColumns.entries) {
+        sqlColumns.writeln(" '${field.key}': '${field.value}',");
+      }
+      sqlColumns.write('}');
+      queryInfoParameters.writeln('sqlColumns: $sqlColumns,');
+
+      var whereClauseStartIndex = 0;
+      final columns = select.columns;
+      if (columns.isNotEmpty && columns.first.span != null) {
+        // TODO Tem de somar mais um parece que o index da biblioteca está errado
+        final offsetStart = columns.first.span!.start.offset + 1;
+        final offsetEnd = columns.last.span!.end.offset + 1;
+        queryInfoParameters.writeln('columnsIndex: const RangeIndex($offsetStart, $offsetEnd),');
+        whereClauseStartIndex = offsetEnd;
+      }
+
+      if (select.from?.span != null) {
+        whereClauseStartIndex = select.from!.span!.end.offset + 1;
+      }
+
+      if (select.orderBy?.span != null) {
+        final span = select.orderBy!.span!;
+        queryInfoParameters.writeln('orderByClauseIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
+        if (whereClauseStartIndex == 0) {
+          whereClauseStartIndex = span.start.offset + 1;
+        }
+      }
+
+      if (select.limit?.span != null) {
+        final span = select.limit!.span!;
+        queryInfoParameters.writeln('limitClauseIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
+        if (whereClauseStartIndex == 0) {
+          whereClauseStartIndex = span.start.offset + 1;
+        }
+      }
+
+      if (select.where?.span != null) {
+        final span = select.where!.span!;
+        queryInfoParameters.writeln('whereClauseIndex: const RangeIndex($whereClauseStartIndex, ${span.end.offset + 1}),');
+      }
+
+      if (select.where?.span != null) {
+        final span = select.where!.span!;
+        queryInfoParameters.writeln('whereExpressionIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
+      }
+
+      parameters..write(', queryInfo: QueryInfo($queryInfoParameters),');
+
     }
 
     final list = _queryMethod.returnsList ? 'List' : '';

@@ -247,7 +247,7 @@ class ColumnData {
       setAllUse = true;
     }
 
-    str.write('($name, DbType.$type, nullable: $nullable');
+    str.write('(\'$name\', DbType.$type, nullable: $nullable');
 
     if (setAllUse) {
       str.write(

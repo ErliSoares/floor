@@ -40,6 +40,10 @@ extension FlattenUtil on DartType {
   }
 }
 
+extension LoadOptionsChecker on DartType {
+  bool get isLoadOptions => _loadOptionsTypeChecker.isExactlyType(this);
+}
+
 extension AnnotationChecker on Element {
   bool hasAnnotation(final Type type) {
     return _typeChecker(type).hasAnnotationOfExact(this);
@@ -111,6 +115,8 @@ extension ClassElementExtension on ClassElement {
 }
 
 TypeChecker _typeChecker(final Type type) => TypeChecker.fromRuntime(type);
+
+final _loadOptionsTypeChecker = _typeChecker(annotations.LoadOptions);
 
 final _stringTypeChecker = _typeChecker(String);
 

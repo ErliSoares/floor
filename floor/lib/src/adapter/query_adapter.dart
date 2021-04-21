@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:floor/floor.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// This class knows how to execute database queries.
@@ -36,8 +37,18 @@ class QueryAdapter {
     final String sql, {
     final List<Object>? arguments,
     required final T Function(Map<String, Object?>) mapper,
+    LoadOptions? loadOptions,
+    QueryInfo? queryInfo,
   }) async {
-    final rows = await _database.rawQuery(sql, arguments);
+    if (loadOptions == null) {
+      final rows = await _database.rawQuery(sql, arguments);
+      return rows.map((row) => mapper(row)).toList();
+    }
+    if (queryInfo == null) {
+      throw StateError('queryInfo is required when loadOptions is not null.');
+    }
+    final sqlProcessed = processSqlWithLoadOptions(sql, loadOptions, queryInfo);
+    final rows = await _database.rawQuery(sqlProcessed, arguments);
     return rows.map((row) => mapper(row)).toList();
   }
 
@@ -59,6 +70,8 @@ class QueryAdapter {
     required final String queryableName,
     required final bool isView,
     required final T Function(Map<String, Object?>) mapper,
+    LoadOptions? loadOptions,
+    QueryInfo? queryInfo,
   }) {
     // ignore: close_sinks
     final changeListener = ArgumentError.checkNotNull(_changeListener);
@@ -115,5 +128,9 @@ class QueryAdapter {
     controller.onCancel = () => subscription.cancel();
 
     return controller.stream;
+  }
+
+  String processSqlWithLoadOptions(String sql, LoadOptions loadOptions, QueryInfo queryInfo) {
+    throw UnimplementedError('Não foi implementado para fazer o processamento de SQL');
   }
 }

@@ -7,6 +7,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/extension/iterable_extension.dart';
 import 'package:floor_generator/processor/database_processor.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/database.dart';
 import 'package:floor_generator/writer/dao_writer.dart';
 import 'package:floor_generator/writer/database_builder_writer.dart';
@@ -25,6 +26,13 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
   ) {
     final database = _getDatabase(element);
 
+    final _sqlColumnProcessor = SqlColumnProcessor();
+
+    for(var item in database.entities){
+      final sqlCreate = item.getCreateTableStatement();
+      _sqlColumnProcessor.registerSqlCreateTable(sqlCreate);
+    }
+
     final databaseClass = DatabaseWriter(database).write();
     final daoClasses = database.daoGetters
         .map((daoGetter) => daoGetter.dao)
@@ -33,6 +41,7 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
               database.streamEntities,
               database.hasViewStreams,
               database.name,
+      sqlColumnProcessor: _sqlColumnProcessor,
             ).write());
     final distinctTypeConverterFields = database.allTypeConverters
         .distinctBy((element) => element.name)

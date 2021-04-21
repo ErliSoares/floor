@@ -52,4 +52,25 @@ extension NullableStringExtension on String? {
       return "'$this'";
     }
   }
+
+  /// Remove ['] or ["]
+  ///
+  /// ```dart
+  /// print(null.fromLiteral())   // null
+  /// print("'Abcd'".fromLiteral()) // Abcd
+  /// ```
+  String fromLiteral() {
+    if (this == null) {
+      return 'null';
+    } else {
+      //TODO unescape correctly
+      if (this!.startsWith('"') && this!.endsWith('"')) {
+        return this!.substring(1, this!.length -1);
+      }
+      if (this!.startsWith('\'') && this!.endsWith('\'')) {
+        return this!.substring(1, this!.length -1);
+      }
+      return this!;
+    }
+  }
 }
