@@ -1,8 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:collection/collection.dart';
-import 'package:floor_annotation/floor_annotation.dart' as annotations;
-import 'package:floor_generator/misc/constants.dart';
 import 'package:floor_generator/extension/field_element_extension.dart';
 import 'package:floor_generator/misc/extension/set_extension.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
@@ -131,7 +129,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
   List<Embedded> getEmbeddeds() {
     return _fields
         .where((fieldElement) => fieldElement.isEmbedded)
-        .map((embedded) => EmbeddedProcessor(embedded).process())
+        .map((embedded) => EmbeddedProcessor(embedded, queryableTypeConverters).process())
         .toList();
   }
 
@@ -268,135 +266,5 @@ extension on String {
         element: parameterElement,
       );
     }
-  }
-}
-
-extension on FieldElement {
-  bool shouldBeIncludedAnyOperation() {
-    if (isStatic || isSynthetic || isEmbedded) {
-      return false;
-    }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
-      return false;
-    }
-
-    final isIgnored = hasAnnotation(annotations.Ignore);
-    if (!isIgnored) {
-      return true;
-    }
-    final ignoreAnnotation = getAnnotation(annotations.Ignore)!;
-    return !ignoreAnnotation.getField(IgnoreField.forQuery)!.toBoolValue()! ||
-        !ignoreAnnotation.getField(IgnoreField.forInsert)!.toBoolValue()! ||
-        !ignoreAnnotation.getField(IgnoreField.forUpdate)!.toBoolValue()! ||
-        !ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!;
-  }
-
-  bool shouldBeIncludedForQuery() {
-    if (isStatic || isSynthetic || isEmbedded) {
-      return false;
-    }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
-      return false;
-    }
-
-    final isIgnored = hasAnnotation(annotations.Ignore);
-    if (!isIgnored) {
-      return true;
-    }
-    final ignoreAnnotation = getAnnotation(annotations.Ignore)!;
-    return !ignoreAnnotation.getField(IgnoreField.forQuery)!.toBoolValue()!;
-  }
-
-  bool shouldBeIncludedForInsert() {
-    if (isStatic || isSynthetic || isEmbedded) {
-      return false;
-    }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
-      return false;
-    }
-
-    final isIgnored = hasAnnotation(annotations.Ignore);
-    if (!isIgnored) {
-      return true;
-    }
-    final ignoreAnnotation = getAnnotation(annotations.Ignore)!;
-    return !ignoreAnnotation.getField(IgnoreField.forInsert)!.toBoolValue()!;
-  }
-
-  bool shouldBeIncludedForUpdate() {
-    if (isStatic || isSynthetic || isEmbedded) {
-      return false;
-    }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
-      return false;
-    }
-
-    final isIgnored = hasAnnotation(annotations.Ignore);
-    if (!isIgnored) {
-      return true;
-    }
-    final ignoreAnnotation = getAnnotation(annotations.Ignore)!;
-    return !ignoreAnnotation.getField(IgnoreField.forUpdate)!.toBoolValue()!;
-  }
-
-  bool shouldBeIncludedForDelete() {
-    if (isStatic || isSynthetic || isEmbedded) {
-      return false;
-    }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
-      return false;
-    }
-
-    final isIgnored = hasAnnotation(annotations.Ignore);
-    if (!isIgnored) {
-      return true;
-    }
-    final ignoreAnnotation = getAnnotation(annotations.Ignore)!;
-    return !ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!;
-  }
-
-  bool shouldBeIncludedForDataBaseSchema() {
-    if (isStatic || isSynthetic || isEmbedded) {
-      return false;
-    }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
-      return false;
-    }
-
-    final isIgnored = hasAnnotation(annotations.Ignore);
-    if (!isIgnored) {
-      return true;
-    }
-    final ignoreAnnotation = getAnnotation(annotations.Ignore)!;
-    return !ignoreAnnotation.getField(IgnoreField.forInsert)!.toBoolValue()! ||
-        !ignoreAnnotation.getField(IgnoreField.forUpdate)!.toBoolValue()! ||
-        !ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!
-    ;
-  }
-
-  bool shouldBeIncludedSub() {
-    if (isStatic || isSynthetic || isEmbedded) {
-      return false;
-    }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (!isSub) {
-      return false;
-    }
-
-    final isIgnored = hasAnnotation(annotations.Ignore);
-    if (isIgnored) {
-      throw InvalidGenerationSourceError(
-        'Skip element and sub feature cannot be used in the same field.',
-        todo: 'Consider remove @ignore.',
-        element: this,
-      );
-    }
-    return true;
   }
 }

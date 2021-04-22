@@ -11,6 +11,7 @@ import 'package:floor_generator/misc/extension/dart_type_extension.dart';
 import 'package:floor_generator/misc/extension/type_converter_element_extension.dart';
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
+import 'package:floor_generator/processor/embedded_processor.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:source_gen/src/output_helpers.dart';
@@ -68,12 +69,10 @@ class SchemaGenerator extends Generator {
     final tableName = element.tableName();
     final className = element.displayName;
 
-    final databaseTypeConverters = element.getTypeConverters(TypeConverterScope.dao).toList();
-
     final fields = [
       ...element.fields,
       ...element.allSupertypes.expand((type) => type.element.fields),
-    ].map((e) => e.toColumnData(databaseTypeConverters)).where((e) => e != null).cast<ColumnData>();
+    ].expand((e) => e.isEmbedded ? e.toColumnDataEmbedded() : [e.toColumnData()]).where((e) => e != null).cast<ColumnData>();
 
     final str = StringBuffer();
 
@@ -113,7 +112,18 @@ extension StringExtension on String {
 }
 
 extension on FieldElement {
-  ColumnData toColumnData(List<TypeConverter> databaseTypeConverters) {
+  List<ColumnData> toColumnDataEmbedded() {
+    Set<TypeConverter> converters = {...getTypeConverters(TypeConverterScope.field)};
+    final enclosingElement = this.enclosingElement;
+    if (enclosingElement is ClassElement) {
+      converters = {...converters, ...enclosingElement.getTypeConverters(TypeConverterScope.queryable)};
+    }
+    final fieldProcessed = EmbeddedProcessor(this, converters).process();
+    final fields = [...fieldProcessed.children, ...fieldProcessed.fields];
+    return fields.map((e) => e.fieldElement.toColumnData(fieldProcessed.prefix)).toList();
+  }
+
+  ColumnData toColumnData([String prefix]) {
     if (isStatic || isSynthetic || isEmbedded) {
       return null;
     }
@@ -135,10 +145,11 @@ extension on FieldElement {
         return null;
       }
     }
-
-
-    final allTypeConverters = {...getTypeConverters(TypeConverterScope.field), ...databaseTypeConverters};
-
+    var allTypeConverters = {...getTypeConverters(TypeConverterScope.field)};
+    final enclosingElement = this.enclosingElement;
+    if (enclosingElement is ClassElement) {
+      allTypeConverters = {...allTypeConverters, ...enclosingElement.getTypeConverters(TypeConverterScope.queryable)};
+    }
     final typeConverter = allTypeConverters.getClosestOrNull(type);
 
     DartType databaseType;
@@ -163,7 +174,7 @@ extension on FieldElement {
         }
       } else {
         throw InvalidGenerationSourceError(
-          'Column type is not supported for $type. ${allTypeConverters.length}',
+          '3 - Column type is not supported for $type. ${allTypeConverters.length}',
           todo: 'Either make to use a supported type or supply a type converter.',
           element: this,
         );
@@ -184,8 +195,13 @@ extension on FieldElement {
       }
     }
 
+    String name = displayName;
+    if (prefix != null) {
+      name = '$prefix${name.firstCharToUpper()}';
+    }
+
     return ColumnData(
-      displayName, typeStr, nullable: databaseType.isNullable,
+      name, typeStr, nullable: databaseType.isNullable,
       useInIDelete: !ignoreForDelete,
       useInInsert: !ignoreForInsert,
       useInIUpdate: !ignoreForUpdate,

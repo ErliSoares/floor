@@ -1,3 +1,4 @@
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations
     show Embedded;
@@ -8,16 +9,24 @@ import 'package:floor_generator/processor/field_processor.dart';
 import 'package:floor_generator/processor/processor.dart';
 import 'package:floor_generator/value_object/embedded.dart';
 import 'package:floor_generator/value_object/field.dart';
+import 'package:floor_generator/value_object/type_converter.dart';
+import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 
 class EmbeddedProcessor extends Processor<Embedded> {
   final ClassElement _classElement;
   final FieldElement _fieldElement;
   final String _prefix;
+  final List<FieldElement> _fields;
+  final Set<TypeConverter> converters;
 
-  EmbeddedProcessor(final FieldElement fieldElement, [final String prefix = ''])
+  EmbeddedProcessor(final FieldElement fieldElement, this.converters, [final String prefix = ''])
       : _fieldElement = fieldElement,
         _classElement = fieldElement.type.element as ClassElement,
-        _prefix = prefix;
+        _prefix = prefix,
+        _fields = [
+          ...(fieldElement.type.element as ClassElement).fields,
+          ...(fieldElement.type.element as ClassElement).allSupertypes.expand((type) => type.element.fields),
+        ];
 
   @override
   Embedded process() {
@@ -25,6 +34,7 @@ class EmbeddedProcessor extends Processor<Embedded> {
       _fieldElement,
       _getFields(),
       _getChildren(),
+      _getPrefix(),
     );
   }
 
@@ -36,19 +46,18 @@ class EmbeddedProcessor extends Processor<Embedded> {
   }
 
   List<Field> _getFields() {
-    final fields = _classElement.fields
-        .where((fieldElement) => fieldElement.shouldBeIncluded())
-        .map((field) => FieldProcessor(field, null, _getPrefix()).process())
+    return _fields.where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation())
+        .map((field) {
+          return FieldProcessor(field, converters.getClosestOrNull(field.type), _getPrefix()).process();
+    })
         .toList();
-
-    return fields;
   }
 
   List<Embedded> _getChildren() {
-    return _classElement.fields
+    return _fields
         .where((fieldElement) => fieldElement.isEmbedded)
         // pass the previous prefix so we can prepend it with the old ones
-        .map((embedded) => EmbeddedProcessor(embedded, _getPrefix()).process())
+        .map((embedded) => EmbeddedProcessor(embedded, converters, _getPrefix()).process())
         .toList();
   }
 }

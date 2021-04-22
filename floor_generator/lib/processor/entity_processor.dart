@@ -306,8 +306,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
         className.add(child.fieldElement.displayName);
         for (final field in child.fields) {
           final columnName = field.columnName;
-          final attributeValue =
-          [...className, _getAttributeValue(field)].join('?.');
+          final attributeValue = [...className, _getAttributeValue(field, ignoreAddItem: true)].join('?.');
           keyValue.add("'$columnName': item.$attributeValue");
         }
 
@@ -323,7 +322,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     return '<String, Object?>{${keyValueList.join(', ')}}';
   }
 
-  String _getAttributeValue(final Field field, {String prefix = ''}) {
+  String _getAttributeValue(final Field field, {String prefix = '', bool ignoreAddItem = false}) {
     final fieldElement = field.fieldElement;
     final parameterName = fieldElement.displayName;
     final fieldType = fieldElement.type;
@@ -331,16 +330,16 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     String attributeValue;
 
     if (fieldType.isDefaultSqlType) {
-      attributeValue = 'item.$prefix$parameterName';
+      attributeValue = '${ignoreAddItem ? '' : 'item.'}$prefix$parameterName';
     }  else if (fieldType.element is ClassElement && (fieldType.element as ClassElement).isEnum) {
-      return 'item.$prefix$parameterName.value';
+      return '${ignoreAddItem ? '' : 'item.'}$prefix$parameterName.value';
     } else {
       final typeConverter = [
         ...queryableTypeConverters,
         field.typeConverter,
       ].whereNotNull().getClosest(fieldType);
       attributeValue =
-          '_${typeConverter.name.decapitalize()}.encode(item.$prefix$parameterName)';
+          '_${typeConverter.name.decapitalize()}.encode(${ignoreAddItem ? '' : 'item.'}$prefix$parameterName)';
     }
 
     if (fieldType.isDartCoreBool) {

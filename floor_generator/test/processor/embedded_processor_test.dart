@@ -39,7 +39,7 @@ void main() {
 
     const name = 'Person';
     final fields = classElement.fields
-        .where((fieldElement) => fieldElement.shouldBeIncluded())
+        .where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation())
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
     final embeddeds = classElement.fields
@@ -96,7 +96,7 @@ void main() {
 
     const name = 'Person';
     final fields = classElement.fields
-        .where((fieldElement) => fieldElement.shouldBeIncluded())
+        .where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation())
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
     final embeddeds = classElement.fields
@@ -160,7 +160,7 @@ void main() {
 
     const name = 'Person';
     final fields = classElement.fields
-        .where((fieldElement) => fieldElement.shouldBeIncluded())
+        .where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation())
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
     final embeddeds = classElement.fields

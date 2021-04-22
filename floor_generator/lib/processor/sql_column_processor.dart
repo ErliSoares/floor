@@ -1,11 +1,32 @@
+import 'package:analyzer/dart/element/element.dart';
+import 'package:source_gen/source_gen.dart';
 import 'package:sqlparser/sqlparser.dart' as sqlparser;
 
 class SqlColumnProcessor {
   final _engine = sqlparser.SqlEngine();
 
-  sqlparser.SelectStatement parserSelect(String query){
-    final result = _engine.analyze(query);
-    return result.root as sqlparser.SelectStatement;
+  sqlparser.SelectStatement parserSelect(String query, Element element) {
+    try{
+      final result = _engine.analyze(query);
+      final errors = result.errors.map((e) => e.message).join(', ');
+      if (result.errors.isNotEmpty) {
+        throw InvalidGenerationSourceError(
+          'Não foi possível analisar o SQL: `$query`.\nErros: $errors',
+          todo: 'Ajuste os erros do SQL',
+          element: element,
+        );
+      }
+      return result.root as sqlparser.SelectStatement;
+    } catch(e) {
+      if (e is InvalidGenerationSourceError) {
+        rethrow;
+      }
+      throw InvalidGenerationSourceError(
+        'Não foi possível analisar o SQL: `$query`. Erro: ${e.toString()}',
+        todo: 'Ajuste os erros do SQL',
+        element: element,
+      );
+    }
   }
 
   Map<String, String> getColumns(sqlparser.SelectStatement select) {

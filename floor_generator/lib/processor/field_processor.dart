@@ -74,7 +74,7 @@ class FieldProcessor extends Processor<Field> {
       return typeOfEnum.asSqlType();
     } else {
       throw InvalidGenerationSourceError(
-        'Column type is not supported for $type.',
+        '1 - Column type is not supported for $type.',
         todo: 'Either make to use a supported type or supply a type converter.',
         element: _fieldElement,
       );

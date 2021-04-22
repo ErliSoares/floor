@@ -7,8 +7,9 @@ class Embedded extends Fieldable {
   final ClassElement classElement;
   final List<Field> fields;
   final List<Embedded> children;
+  final String? prefix;
 
-  Embedded(FieldElement fieldElement, this.fields, this.children)
+  Embedded(FieldElement fieldElement, this.fields, this.children, [this.prefix])
       : classElement = fieldElement.type.element as ClassElement,
         super(fieldElement);
 

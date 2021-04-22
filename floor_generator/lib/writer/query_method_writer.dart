@@ -217,7 +217,7 @@ class QueryMethodWriter implements Writer {
 
       parameters.write(', loadOptions: ${loadOptionsParam.name}');
 
-      final select = _sqlColumnProcessor!.parserSelect(query.fromLiteral());
+      final select = _sqlColumnProcessor!.parserSelect(query.fromLiteral(), _queryMethod.methodElement);
 
       final queryInfoParameters = StringBuffer();
 

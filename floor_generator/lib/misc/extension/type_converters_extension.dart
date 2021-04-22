@@ -25,7 +25,7 @@ extension TypeConvertersExtension on Iterable<TypeConverter> {
     final closest = getClosestOrNull(dartType);
     if (closest == null) {
       throw InvalidGenerationSourceError(
-        'Column type is not supported for $dartType',
+        '2 - Column type is not supported for $dartType',
         todo: 'Either use a supported type or supply a type converter.',
       );
     }
