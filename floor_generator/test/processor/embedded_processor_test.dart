@@ -1,5 +1,3 @@
-// @dart=2.9
-
 import 'package:floor_generator/extension/field_element_extension.dart';
 import 'package:floor_generator/processor/embedded_processor.dart';
 import 'package:floor_generator/processor/entity_processor.dart';

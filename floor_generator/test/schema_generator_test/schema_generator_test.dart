@@ -1,5 +1,3 @@
-// @dart=2.9
-
 import 'package:code_builder/code_builder.dart';
 import 'package:floor_generator/schema_generator.dart';
 import 'package:test/test.dart';

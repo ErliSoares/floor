@@ -85,7 +85,6 @@ extension ClassElementExtension on ClassElement {
 
   String tableName() {
     final DartObject? annotation = getAnnotation(annotations.Entity);
-    // ignore: unnecessary_null_comparison
     if (annotation == null) {
       return '';
     }

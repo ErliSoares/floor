@@ -109,7 +109,6 @@ extension _EnumElementExtension on ClassElement {
     return fields
         .map((f) {
       final annotation = checker.firstAnnotationOf(f, throwOnUnresolved: true);
-      // ignore: unnecessary_null_comparison
       return (annotation != null) ? AnnotatedElement(ConstantReader(annotation), f) : null;
     })
         .where((e) => e != null)

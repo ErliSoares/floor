@@ -1,4 +1,3 @@
-// @dart=2.9
 import 'dart:async';
 
 import 'package:analyzer/dart/element/element.dart';
@@ -14,6 +13,7 @@ import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/embedded_processor.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
+import 'package:collection/collection.dart';
 import 'package:source_gen/src/output_helpers.dart';
 import 'package:floor_generator/extension/field_element_extension.dart';
 
@@ -120,10 +120,10 @@ extension on FieldElement {
     }
     final fieldProcessed = EmbeddedProcessor(this, converters).process();
     final fields = [...fieldProcessed.children, ...fieldProcessed.fields];
-    return fields.map((e) => e.fieldElement.toColumnData(fieldProcessed.prefix)).toList();
+    return fields.map((e) => e.fieldElement.toColumnData(fieldProcessed.prefix)).whereNotNull().toList();
   }
 
-  ColumnData toColumnData([String prefix]) {
+  ColumnData? toColumnData([String? prefix]) {
     if (isStatic || isSynthetic || isEmbedded) {
       return null;
     }
@@ -136,11 +136,11 @@ extension on FieldElement {
     var ignoreForDelete = false;
 
     if (isIgnored) {
-      final ignoreAnnotation = getAnnotation(annotations.Ignore);
-      ignoreForQuery = ignoreAnnotation.getField(IgnoreField.forQuery).toBoolValue();
-      ignoreForInsert = ignoreAnnotation.getField(IgnoreField.forInsert).toBoolValue();
-      ignoreForUpdate = ignoreAnnotation.getField(IgnoreField.forUpdate).toBoolValue();
-      ignoreForDelete = ignoreAnnotation.getField(IgnoreField.forDelete).toBoolValue();
+      final ignoreAnnotation = getAnnotation(annotations.Ignore)!;
+      ignoreForQuery = ignoreAnnotation.getField(IgnoreField.forQuery)!.toBoolValue()!;
+      ignoreForInsert = ignoreAnnotation.getField(IgnoreField.forInsert)!.toBoolValue()!;
+      ignoreForUpdate = ignoreAnnotation.getField(IgnoreField.forUpdate)!.toBoolValue()!;
+      ignoreForDelete = ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!;
       if (ignoreForQuery && ignoreForInsert && ignoreForUpdate && ignoreForDelete) {
         return null;
       }
@@ -152,7 +152,7 @@ extension on FieldElement {
     }
     final typeConverter = allTypeConverters.getClosestOrNull(type);
 
-    DartType databaseType;
+    DartType? databaseType;
     String typeStr;
     if (isSub) {
       databaseType = type;
@@ -219,12 +219,12 @@ class ColumnData {
     this.name,
     this.type, {
     this.relationship,
-    this.nullable,
-    this.useInQuery,
-    this.useInInsert,
-    this.useInIUpdate,
-    this.useInIDelete,
-    this.converter,
+    required this.nullable,
+        required this.useInQuery,
+        required this.useInInsert,
+        required this.useInIUpdate,
+        required this.useInIDelete,
+        required this.converter,
   });
 
   final bool useInQuery;
@@ -232,9 +232,9 @@ class ColumnData {
   final bool useInIUpdate;
   final bool useInIDelete;
 
-  TypeConverter converter;
+  TypeConverter? converter;
 
-  annotations.ForeignKey relationship;
+  annotations.ForeignKey? relationship;
 
   bool get isSub => relationship != null;
 
