@@ -6,6 +6,7 @@ import 'package:floor_generator/value_object/queryable.dart';
 
 class View extends Queryable {
   final String query;
+  final bool isQueryView;
 
   View(
     ClassElement classElement,
@@ -16,6 +17,7 @@ class View extends Queryable {
     List<Field> fieldsAll,
     this.query,
     String constructor,
+    this.isQueryView,
   ) : super(classElement: classElement, name: name, fieldsQuery: fieldsQuery, fieldsDataBaseSchema: fieldsDataBaseSchema, fieldsAll: fieldsAll, constructor: constructor, embeddeds: embeddeds);
 
   String getCreateViewStatement() {
@@ -33,7 +35,8 @@ class View extends Queryable {
           const ListEquality<Field>().equals(fieldsQuery, other.fieldsQuery) &&
           const ListEquality<Field>().equals(fieldsDataBaseSchema, other.fieldsDataBaseSchema) &&
           query == other.query &&
-          constructor == other.constructor;
+          constructor == other.constructor &&
+          isQueryView == isQueryView;
 
   @override
   int get hashCode =>
@@ -43,10 +46,11 @@ class View extends Queryable {
       fieldsQuery.hashCode ^
       fieldsDataBaseSchema.hashCode ^
       query.hashCode ^
-      constructor.hashCode;
+      constructor.hashCode ^
+      isQueryView.hashCode;
 
   @override
   String toString() {
-    return 'View{classElement: $classElement, name: $name, fieldsAll: $fieldsAll, fieldsQuery: $fieldsQuery, fieldsDataBaseSchema: $fieldsDataBaseSchema, query: $query, constructor: $constructor}';
+    return 'View{classElement: $classElement, name: $name, fieldsAll: $fieldsAll, fieldsQuery: $fieldsQuery, fieldsDataBaseSchema: $fieldsDataBaseSchema, query: $query, constructor: $constructor, isQueryView: $isQueryView}';
   }
 }

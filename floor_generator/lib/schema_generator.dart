@@ -17,9 +17,11 @@ import 'package:collection/collection.dart';
 import 'package:source_gen/src/output_helpers.dart';
 import 'package:floor_generator/extension/field_element_extension.dart';
 
-
 class SchemaGenerator extends Generator {
   TypeChecker get typeCheckerEntity => const TypeChecker.fromRuntime(annotations.Entity);
+
+  TypeChecker get typeCheckerQueryView => TypeChecker.fromRuntime(annotations.queryView.runtimeType);
+
   TypeChecker get typeCheckerDatabase => const TypeChecker.fromRuntime(annotations.Database);
 
   @override
@@ -28,7 +30,22 @@ class SchemaGenerator extends Generator {
 
     for (var annotatedElement in library.annotatedWith(typeCheckerEntity)) {
       final generatedValue = generateForAnnotatedElement(
-          annotatedElement.element, annotatedElement.annotation, buildStep);
+        annotatedElement.element,
+        annotatedElement.annotation,
+        buildStep,
+      );
+      await for (var value in normalizeGeneratorOutput(generatedValue)) {
+        assert(value.length == value.trim().length);
+        values.add(value);
+      }
+    }
+
+    for (var annotatedElement in library.annotatedWith(typeCheckerQueryView)) {
+      final generatedValue = generateForAnnotatedElement(
+        annotatedElement.element,
+        annotatedElement.annotation,
+        buildStep,
+      );
       await for (var value in normalizeGeneratorOutput(generatedValue)) {
         assert(value.length == value.trim().length);
         values.add(value);
@@ -44,11 +61,11 @@ class SchemaGenerator extends Generator {
     final BuildStep buildStep,
   ) {
     if (element is! ClassElement) {
-      throw InvalidGenerationSourceError('The element annotated with @Entity is not a class.', element: element);
+      throw InvalidGenerationSourceError('The element is not a class.', element: element);
     }
 
     final code = codeForEntity(element);
-    if (code == null || code.isEmpty) {
+    if (code.isEmpty) {
       return '';
     }
 
@@ -59,9 +76,7 @@ class SchemaGenerator extends Generator {
     return library.accept(DartEmitter()).toString();
   }
 
-  String codeForEntity(
-    ClassElement element
-  ) {
+  String codeForEntity(ClassElement element) {
     if (element.isAbstract) {
       throw InvalidGenerationSourceError('The entity class has to be abstract.', element: element);
     }
@@ -72,7 +87,10 @@ class SchemaGenerator extends Generator {
     final fields = [
       ...element.fields,
       ...element.allSupertypes.expand((type) => type.element.fields),
-    ].expand((e) => e.isEmbedded ? e.toColumnDataEmbedded() : [e.toColumnData()]).where((e) => e != null).cast<ColumnData>();
+    ]
+        .expand((e) => e.isEmbedded ? e.toColumnDataEmbedded() : [e.toColumnData()])
+        .where((e) => e != null)
+        .cast<ColumnData>();
 
     final str = StringBuffer();
 
@@ -220,11 +238,11 @@ class ColumnData {
     this.type, {
     this.relationship,
     required this.nullable,
-        required this.useInQuery,
-        required this.useInInsert,
-        required this.useInIUpdate,
-        required this.useInIDelete,
-        required this.converter,
+    required this.useInQuery,
+    required this.useInInsert,
+    required this.useInIUpdate,
+    required this.useInIDelete,
+    required this.converter,
   });
 
   final bool useInQuery;

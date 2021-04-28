@@ -77,7 +77,7 @@ class DatabaseWriter implements Writer {
         .expand((statements) => statements)
         .map((statement) => "await database.execute('$statement');")
         .join('\n');
-    final createViewStatements = database.views
+    final createViewStatements = database.views.where((e) => !e.isQueryView)
         .map((view) => view.getCreateViewStatement())
         .map((statement) => "await database.execute('''$statement''');")
         .join('\n');

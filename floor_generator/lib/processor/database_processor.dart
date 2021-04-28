@@ -190,7 +190,8 @@ class DatabaseProcessor extends Processor<Database> {
   }
 
   bool _isView(final ClassElement classElement) {
-    return classElement.hasAnnotation(annotations.DatabaseView) &&
+    return (classElement.hasAnnotation(annotations.DatabaseView) ||
+        classElement.hasAnnotation(annotations.queryView.runtimeType)) &&
         !classElement.isAbstract;
   }
 }

@@ -23,6 +23,7 @@ export 'src/load_options/summary_info.dart';
 export 'src/on_conflict_strategy.dart';
 export 'src/primary_key.dart';
 export 'src/query.dart';
+export 'src/query_view.dart';
 export 'src/save.dart';
 export 'src/sub.dart';
 export 'src/transaction.dart';

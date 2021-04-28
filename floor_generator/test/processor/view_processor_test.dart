@@ -37,6 +37,7 @@ void main() {
       fields,
       query,
       constructor,
+      false,
     );
     expect(actual, equals(expected));
   });
@@ -71,6 +72,7 @@ void main() {
       fields,
       query,
       constructor,
+      false,
     );
     expect(actual, equals(expected));
   });
@@ -201,6 +203,7 @@ void main() {
       fields,
       query,
       constructor,
+      false,
     );
     expect(actual, equals(expected));
   });

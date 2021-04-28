@@ -23,6 +23,9 @@ class ViewProcessor extends QueryableProcessor<View> {
     final fieldsDataBaseSchema = fieldsAll.where((e) => shouldBeIncludedForDataBaseSchema(e.fieldElement)).toList();
     final embeddeds = getEmbeddeds();
 
+    final isQueryView = classElement
+        .getAnnotation(annotations.queryView.runtimeType) != null;
+
     return View(
       classElement,
       _getName(),
@@ -30,8 +33,9 @@ class ViewProcessor extends QueryableProcessor<View> {
       fieldsQuery,
       fieldsDataBaseSchema,
       fieldsAll,
-      _getQuery(),
+      isQueryView ? '' : _getQuery(),
       getConstructor([...fieldsQuery, ...embeddeds]),
+      isQueryView,
     );
   }
 
