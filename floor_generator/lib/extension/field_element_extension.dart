@@ -118,16 +118,18 @@ extension FieldElementExtension on FieldElement {
   }
 
   bool shouldBeIncludedSub() {
-    if (isStatic || isSynthetic || isEmbedded) {
+    if (isStatic || isSynthetic) {
       return false;
     }
+    final isEmbedded = hasAnnotation(annotations.embedded.runtimeType);
+
     final isSub = hasAnnotation(annotations.sub.runtimeType);
     if (!isSub) {
       return false;
     }
 
     final isIgnored = hasAnnotation(annotations.Ignore);
-    if (isIgnored) {
+    if (isIgnored && !isEmbedded) {
       throw InvalidGenerationSourceError(
         'Skip element and sub feature cannot be used in the same field.',
         todo: 'Consider remove @ignore.',

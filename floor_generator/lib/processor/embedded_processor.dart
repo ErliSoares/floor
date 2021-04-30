@@ -1,7 +1,6 @@
 
 import 'package:analyzer/dart/element/element.dart';
-import 'package:floor_annotation/floor_annotation.dart' as annotations
-    show Embedded;
+import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/extension/field_element_extension.dart';
 import 'package:floor_generator/misc/constants.dart';
 import 'package:floor_generator/misc/type_utils.dart';
@@ -30,11 +29,29 @@ class EmbeddedProcessor extends Processor<Embedded> {
 
   @override
   Embedded process() {
+    final isIgnored = _fieldElement.hasAnnotation(annotations.Ignore);
+    var ignoreForQuery = false;
+    var ignoreForInsert = false;
+    var ignoreForUpdate = false;
+    var ignoreForDelete = false;
+
+    if (isIgnored) {
+      final ignoreAnnotation = _fieldElement.getAnnotation(annotations.Ignore)!;
+      ignoreForQuery = ignoreAnnotation.getField(IgnoreField.forQuery)!.toBoolValue()!;
+      ignoreForInsert = ignoreAnnotation.getField(IgnoreField.forInsert)!.toBoolValue()!;
+      ignoreForUpdate = ignoreAnnotation.getField(IgnoreField.forUpdate)!.toBoolValue()!;
+      ignoreForDelete = ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!;
+    }
+
     return Embedded(
       _fieldElement,
       _getFields(),
       _getChildren(),
-      _getPrefix(),
+      prefix: _getPrefix(),
+      ignoreForDelete: ignoreForDelete,
+      ignoreForInsert: ignoreForInsert,
+      ignoreForQuery: ignoreForQuery,
+      ignoreForUpdate: ignoreForUpdate,
     );
   }
 

@@ -47,7 +47,7 @@ class Entity extends Queryable {
     }).toList();
 
     final embeddedDefinitions = embeddeds
-
+        .where((e) => !e.ignoreForDelete || !e.ignoreForInsert || !e.ignoreForUpdate)
         // dig into children to expand fields
         .expand((embedded) {
           final fields = <Field>[];

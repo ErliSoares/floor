@@ -8,8 +8,19 @@ class Embedded extends Fieldable {
   final List<Field> fields;
   final List<Embedded> children;
   final String? prefix;
+  final bool ignoreForQuery;
+  final bool ignoreForInsert;
+  final bool ignoreForUpdate;
+  final bool ignoreForDelete;
 
-  Embedded(FieldElement fieldElement, this.fields, this.children, [this.prefix])
+  Embedded(FieldElement fieldElement, this.fields, this.children,
+      {
+        this.ignoreForQuery = false,
+        this.ignoreForInsert = false,
+        this.ignoreForUpdate = false,
+        this.ignoreForDelete = false,
+        this.prefix
+      })
       : classElement = fieldElement.type.element as ClassElement,
         super(fieldElement);
 
@@ -19,6 +30,11 @@ class Embedded extends Fieldable {
       other is Embedded &&
           runtimeType == other.runtimeType &&
           fieldElement == other.fieldElement &&
+          prefix == other.prefix &&
+          ignoreForQuery == other.ignoreForQuery &&
+          ignoreForInsert == other.ignoreForInsert &&
+          ignoreForUpdate == other.ignoreForUpdate &&
+          ignoreForDelete == other.ignoreForDelete &&
           const ListEquality<Field>().equals(fields, other.fields) &&
           const ListEquality<Embedded>().equals(children, other.children);
 
@@ -27,6 +43,6 @@ class Embedded extends Fieldable {
 
   @override
   String toString() {
-    return 'Embedded{classElement: $classElement, fieldElement: $fieldElement, fields: $fields, children: $children';
+    return 'Embedded{classElement: $classElement, fieldElement: $fieldElement, fields: $fields, children: $children, prefix: $prefix, ignoreForQuery: $ignoreForQuery, ignoreForInsert: $ignoreForInsert, ignoreForUpdate: $ignoreForUpdate, ignoreForDelete: $ignoreForDelete';
   }
 }

@@ -53,7 +53,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
 
     final fieldsSub = getFieldsSub();
 
-    final saveSub =  fieldsSub.map((e) => _getSaveSub(e, name)).join('\n');
+    final saveSub = fieldsSub.map((e) => _getSaveSub(e, name)).join('\n');
 
     return Entity(
       classElement,
@@ -66,10 +66,10 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       _getForeignKeys(classElement),
       _getIndices(fieldsDataBaseSchema, name),
       _getWithoutRowid(),
-      getConstructor([...fieldsQuery, ...embeddeds]),
-      _getValueMapping(fieldsInsert, embeddeds),
-      _getValueMapping(fieldsUpdate, embeddeds),
-      _getValueMapping(fieldsDelete, embeddeds),
+      getConstructor([...fieldsQuery, ...embeddeds.whereNot((e) => e.ignoreForQuery)]),
+      _getValueMapping(fieldsInsert, embeddeds.whereNot((e) => e.ignoreForInsert).toList()),
+      _getValueMapping(fieldsUpdate, embeddeds.whereNot((e) => e.ignoreForUpdate).toList()),
+      _getValueMapping(fieldsDelete, embeddeds.whereNot((e) => e.ignoreForDelete).toList()),
       _getFts(),
       saveSub,
     );
