@@ -15,6 +15,7 @@ import 'package:floor_generator/value_object/queryable.dart';
 import 'package:floor_generator/value_object/view.dart';
 import 'package:floor_generator/writer/writer.dart';
 import 'package:collection/collection.dart';
+import 'package:sqlparser/sqlparser.dart' as sqlparser;
 
 class QueryMethodWriter implements Writer {
   final QueryMethod _queryMethod;
@@ -31,7 +32,8 @@ class QueryMethodWriter implements Writer {
         withNullability: true,
       ))
       ..name = _queryMethod.name
-      ..requiredParameters.addAll(_generateMethodParameters())
+      ..optionalParameters.addAll(_generateMethodParametersOptional())
+      ..requiredParameters.addAll(_generateMethodParametersRequired())
       ..body = Code(_generateMethodBody());
 
     if (!_queryMethod.returnsStream || _queryMethod.returnsVoid) {
@@ -40,10 +42,25 @@ class QueryMethodWriter implements Writer {
     return builder.build();
   }
 
-  List<Parameter> _generateMethodParameters() {
-    return _queryMethod.parameters.map((parameter) {
+  List<Parameter> _generateMethodParametersRequired() {
+    return _queryMethod.parameters.where((e) => e.isPositional).map((parameter) {
       return Parameter((builder) => builder
         ..name = parameter.name
+        ..type = refer(parameter.type.getDisplayString(
+          // processor disallows nullable method parameters and throws if found,
+          // still interested in nullability here to future-proof codebase
+          withNullability: true,
+        )));
+    }).toList();
+  }
+
+  List<Parameter> _generateMethodParametersOptional() {
+    return _queryMethod.parameters.where((e) => !e.isPositional).map((parameter) {
+      return Parameter((builder) => builder
+        ..name = parameter.name
+        ..named  = parameter.isNamed
+        ..required  = parameter.isRequiredNamed
+        ..defaultTo = parameter.defaultValueCode == null ? null : Code(parameter.defaultValueCode!)
         ..type = refer(parameter.type.getDisplayString(
           // processor disallows nullable method parameters and throws if found,
           // still interested in nullability here to future-proof codebase
@@ -66,7 +83,38 @@ class QueryMethodWriter implements Writer {
     final arguments = _generateArguments();
     final query = _generateQueryString();
 
+    if (_queryMethod.flattenedReturnType.isDartCoreMap) {
+      var parameters = '';
+      if (arguments != null)  parameters = ', arguments: $arguments';
+      _methodBody.writeln('return _queryAdapter.queryMap($query$parameters);');
+      return _methodBody.toString();
+    }
+
     final queryable = _queryMethod.queryable;
+
+    if (!_queryMethod.returnsVoid && queryable == null && _sqlColumnProcessor != null) {
+      final select = _sqlColumnProcessor!.parserQuery(query.fromLiteral(), _queryMethod.methodElement);
+      if (select is sqlparser.SelectStatement) {
+        var parameters = '';
+        if (arguments != null)  parameters = ', arguments: $arguments';
+
+        if (_queryMethod.flattenedReturnType.isDefaultSqlType) {
+          _methodBody.writeln('return _queryAdapter.querySingleValue($query$parameters);');
+          return _methodBody.toString();
+        } else {
+          final typeConverter =
+          _queryMethod.typeConverters.getClosestOrNull(_queryMethod.flattenedReturnType);
+          if (typeConverter != null) {
+            _methodBody.writeln('return _${typeConverter.name.decapitalize()}.decode(_queryAdapter.querySingleValue($query$parameters));');
+            return _methodBody.toString();
+          }
+        }
+        // TODO Validar se tem mais de um campo para retorno simples
+        // TODO Validar caso o valor de retorno não seja null
+        // TODO Validar caso não tenha typeConverter
+      }
+    }
+
     // null queryable implies void-returning query method
     if (_queryMethod.returnsVoid || queryable == null) {
       _methodBody.write(_generateNoReturnQuery(query, arguments));

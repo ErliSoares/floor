@@ -9,6 +9,7 @@ import 'package:floor_generator/processor/dao_processor.dart';
 import 'package:floor_generator/processor/entity_processor.dart';
 import 'package:floor_generator/processor/error/database_processor_error.dart';
 import 'package:floor_generator/processor/processor.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/processor/view_processor.dart';
 import 'package:floor_generator/value_object/dao_getter.dart';
 import 'package:floor_generator/value_object/database.dart';
@@ -20,9 +21,11 @@ import 'package:floor_generator/value_object/view.dart';
 class DatabaseProcessor extends Processor<Database> {
   final DatabaseProcessorError _processorError;
 
+  final SqlColumnProcessor? sqlColumnProcessor;
+
   final ClassElement _classElement;
 
-  DatabaseProcessor(final ClassElement classElement)
+  DatabaseProcessor(final ClassElement classElement, {this.sqlColumnProcessor})
       : _classElement = classElement,
         _processorError = DatabaseProcessorError(classElement);
 
@@ -43,6 +46,13 @@ class DatabaseProcessor extends Processor<Database> {
     });
 
     final entities = _getEntities(_classElement, databaseTypeConverters, allFieldOfDaoWithAllMethods.toList());
+    if (sqlColumnProcessor != null) {
+      for(var item in entities){
+        final sqlCreate = item.getCreateTableStatement();
+        sqlColumnProcessor!.registerSqlCreateTable(sqlCreate);
+      }
+    }
+
     final views = _getViews(_classElement, databaseTypeConverters);
     final daoGetters = _getDaoGetters(
       databaseName,

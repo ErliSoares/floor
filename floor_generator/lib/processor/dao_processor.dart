@@ -7,6 +7,7 @@ import 'package:floor_generator/processor/deletion_method_processor.dart';
 import 'package:floor_generator/processor/insertion_method_processor.dart';
 import 'package:floor_generator/processor/processor.dart';
 import 'package:floor_generator/processor/query_method_processor.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/processor/transaction_method_processor.dart';
 import 'package:floor_generator/processor/update_method_processor.dart';
 import 'package:floor_generator/value_object/dao.dart';
@@ -26,6 +27,7 @@ class DaoProcessor extends Processor<Dao> {
   final List<Entity> _entities;
   final List<View> _views;
   final Set<TypeConverter> _typeConverters;
+  final SqlColumnProcessor? sqlColumnProcessor;
 
   DaoProcessor(
     final ClassElement classElement,
@@ -34,6 +36,7 @@ class DaoProcessor extends Processor<Dao> {
     final List<Entity> entities,
     final List<View> views,
     final Set<TypeConverter> typeConverters,
+    {this.sqlColumnProcessor}
   )   : _classElement = classElement,
         _daoGetterName = daoGetterName,
         _databaseName = databaseName,

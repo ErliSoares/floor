@@ -62,6 +62,24 @@ class QueryAdapter {
     await _database.rawQuery(sql, arguments);
   }
 
+  Future<T?> querySingleValue<T>(
+      final String sql, {
+        final List<Object>? arguments,
+      }) async {
+    final result = await _database.rawQuery(sql, arguments);
+    if (result.isEmpty) {
+      return null;
+    }
+    result[0].values.first;
+  }
+
+  Future<List<Map<String, Object?>>> queryMap(
+      final String sql, {
+        final List<Object>? arguments,
+      }) async {
+    return _database.rawQuery(sql, arguments);
+  }
+
   /// Executes a SQLite query that returns a stream of single query results
   /// or `null`.
   Stream<T?> queryStream<T>(

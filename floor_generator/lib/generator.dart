@@ -23,14 +23,9 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
     final ConstantReader annotation,
     final BuildStep buildStep,
   ) {
-    final database = _getDatabase(element);
-
     final _sqlColumnProcessor = SqlColumnProcessor();
 
-    for(var item in database.entities){
-      final sqlCreate = item.getCreateTableStatement();
-      _sqlColumnProcessor.registerSqlCreateTable(sqlCreate);
-    }
+    final database = _getDatabase(element, _sqlColumnProcessor);
 
     final databaseClass = DatabaseWriter(database).write();
     final daoClasses = database.daoGetters
@@ -40,7 +35,7 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
               database.streamEntities,
               database.hasViewStreams,
               database.name,
-      sqlColumnProcessor: _sqlColumnProcessor,
+              sqlColumnProcessor: _sqlColumnProcessor,
             ).write());
     final distinctTypeConverterFields = database.allTypeConverters
         .distinctBy((element) => element.name)
@@ -64,7 +59,7 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
     return library.accept(DartEmitter()).toString();
   }
 
-  Database _getDatabase(final Element element) {
+  Database _getDatabase(final Element element, SqlColumnProcessor sqlColumnProcessor) {
     if (element is! ClassElement) {
       throw InvalidGenerationSourceError(
           'The element annotated with @Database is not a class.',
@@ -77,6 +72,6 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
           element: element);
     }
 
-    return DatabaseProcessor(element).process();
+    return DatabaseProcessor(element, sqlColumnProcessor: sqlColumnProcessor).process();
   }
 }

@@ -429,6 +429,25 @@ void main() {
       }
     '''));
   });
+
+  test('query single value', () async {
+    final queryMethod = await _createQueryMethod('''
+      @Query('SELECT name FROM Person WHERE id = :id')
+      Future<String?> findById(int id);
+    ''');
+
+    final sqlColumnProcessor = SqlColumnProcessor();
+    const sql = 'CREATE TABLE IF NOT EXISTS `Person` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `picture` BLOB NOT NULL, PRIMARY KEY (`id`))';
+    sqlColumnProcessor.registerSqlCreateTable(sql);
+    final actual = QueryMethodWriter(queryMethod, sqlColumnProcessor: sqlColumnProcessor).write();
+
+    expect(actual, equalsDart(r'''
+      @override
+      Future<String?> findById(int id) async {
+        return _queryAdapter.querySingleValue('SELECT name FROM Person WHERE id = ?1', arguments: [id]);
+      }
+    '''));
+  });
 }
 
 Future<QueryMethod> _createQueryMethod(final String methodSignature) async {
@@ -481,7 +500,7 @@ Future<Dao> createOrderDao(
         }
       }
       ''', (resolver) async {
-    return LibraryReader(await resolver.findLibraryByName('test'));
+    return LibraryReader((await resolver.findLibraryByName('test'))!);
   });
 
   final daoClass = library.classes.firstWhere((classElement) =>
