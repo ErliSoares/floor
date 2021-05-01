@@ -48,6 +48,8 @@ class DaoWriter extends Writer {
     final constructorBuilder = ConstructorBuilder()
       ..requiredParameters.addAll([databaseParameter, changeListenerParameter]);
 
+    final constructorBody = StringBuffer();
+
     final queryMethods = dao.queryMethods;
     if (queryMethods.isNotEmpty) {
       classBuilder
@@ -100,6 +102,17 @@ class DaoWriter extends Writer {
         constructorBuilder
           ..initializers.add(Code(
               "$fieldName = InsertionAdapter(floorDatabase.database, '${entity.name}', $valueMapper$insertedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+
+        final afterOperations = dao.afterOperations.where((e) => e.forUpdate).toList();
+        if (afterOperations.isNotEmpty) {
+          if (afterOperations.length == 1) {
+            constructorBody.writeAll(afterOperations.map<dynamic>((e) => ' $fieldName.afterInsert = super.${e.name};'), '\n');
+          }  else {
+            constructorBody.writeln('$fieldName.afterInsert = (entity) async {');
+            constructorBody.writeAll(afterOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
+            constructorBody.writeln('};');
+          }
+        }
       }
     }
 
@@ -135,6 +148,17 @@ class DaoWriter extends Writer {
         constructorBuilder
           ..initializers.add(Code(
               "$fieldName = UpdateAdapter(floorDatabase.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$updatedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+
+        final afterOperations = dao.afterOperations.where((e) => e.forUpdate).toList();
+        if (afterOperations.isNotEmpty) {
+          if (afterOperations.length == 1) {
+            constructorBody.writeAll(afterOperations.map<dynamic>((e) => ' $fieldName.afterUpdate = super.${e.name};'), '\n');
+          }  else {
+            constructorBody.writeln('$fieldName.afterUpdate = (entity) async {');
+            constructorBody.writeAll(afterOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
+            constructorBody.writeln('};');
+          }
+        }
       }
     }
 
@@ -170,7 +194,22 @@ class DaoWriter extends Writer {
         constructorBuilder
           ..initializers.add(Code(
               "$fieldName = DeletionAdapter(floorDatabase.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$deletedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+
+        final afterOperations = dao.afterOperations.where((e) => e.forUpdate).toList();
+        if (afterOperations.isNotEmpty) {
+          if (afterOperations.length == 1) {
+            constructorBody.writeAll(afterOperations.map<dynamic>((e) => ' $fieldName.afterDelete = super.${e.name};'), '\n');
+          }  else {
+            constructorBody.writeln('$fieldName.afterDelete = (entity) async {');
+            constructorBody.writeAll(afterOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
+            constructorBody.writeln('};');
+          }
+        }
       }
+    }
+
+    if (constructorBody.isNotEmpty) {
+      constructorBuilder.body = Code(constructorBody.toString());
     }
 
     classBuilder

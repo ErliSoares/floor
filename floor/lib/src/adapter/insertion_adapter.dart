@@ -10,6 +10,7 @@ class InsertionAdapter<T> {
   final Map<String, Object?> Function(T) _valueMapper;
   final StreamController<String>? _changeListener;
   final void Function(int id, T entity)? _inserted;
+  FutureOr<void> Function(T entity)? afterInsert;
 
   InsertionAdapter(
     final DatabaseExecutor database,
@@ -18,6 +19,7 @@ class InsertionAdapter<T> {
       {
         final void Function(int id, T entity)? inserted,
         final StreamController<String>? changeListener,
+        this.afterInsert,
       })  : assert(entityName.isNotEmpty),
         _database = database,
         _entityName = entityName,
@@ -37,6 +39,11 @@ class InsertionAdapter<T> {
     final OnConflictStrategy onConflictStrategy,
   ) async {
     if (items.isEmpty) return;
+    if (afterInsert != null) {
+      for(var item in items){
+        await afterInsert!(item);
+      }
+    }
     final batch = _database.batch();
     for (final item in items) {
       batch.insert(
@@ -66,6 +73,11 @@ class InsertionAdapter<T> {
     final OnConflictStrategy onConflictStrategy,
   ) async {
     if (items.isEmpty) return [];
+    if (afterInsert != null) {
+      for(var item in items){
+        await afterInsert!(item);
+      }
+    }
     final batch = _database.batch();
     for (final item in items) {
       batch.insert(
@@ -90,6 +102,9 @@ class InsertionAdapter<T> {
     final T item,
     final OnConflictStrategy onConflictStrategy,
   ) async {
+    if (afterInsert != null) {
+      await afterInsert!(item);
+    }
     final result = await _database.insert(
       _entityName,
       _valueMapper(item),

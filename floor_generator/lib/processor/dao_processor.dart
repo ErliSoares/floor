@@ -3,6 +3,7 @@ import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/extension/set_extension.dart';
 import 'package:floor_generator/misc/extension/type_converter_element_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
+import 'package:floor_generator/processor/after_method_processor.dart';
 import 'package:floor_generator/processor/deletion_method_processor.dart';
 import 'package:floor_generator/processor/insertion_method_processor.dart';
 import 'package:floor_generator/processor/processor.dart';
@@ -10,6 +11,7 @@ import 'package:floor_generator/processor/query_method_processor.dart';
 import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/processor/transaction_method_processor.dart';
 import 'package:floor_generator/processor/update_method_processor.dart';
+import 'package:floor_generator/value_object/after_operation_method.dart';
 import 'package:floor_generator/value_object/dao.dart';
 import 'package:floor_generator/value_object/deletion_method.dart';
 import 'package:floor_generator/value_object/entity.dart';
@@ -57,6 +59,7 @@ class DaoProcessor extends Processor<Dao> {
     final updateMethods = _getUpdateMethods(methods);
     final deletionMethods = _getDeletionMethods(methods);
     final transactionMethods = _getTransactionMethods(methods);
+    final afterOperations = _getAfterOperations(methods);
 
     final streamQueryables = queryMethods.where((method) => method.returnsStream).map((method) => method.queryable);
     final streamEntities = streamQueryables.whereType<Entity>().toSet();
@@ -73,6 +76,7 @@ class DaoProcessor extends Processor<Dao> {
       streamEntities,
       streamViews,
       typeConverters,
+      afterOperations,
     );
   }
 
@@ -105,6 +109,15 @@ class DaoProcessor extends Processor<Dao> {
     return methodElements
         .where((methodElement) => methodElement.hasAnnotation(annotations.Update))
         .map((methodElement) => UpdateMethodProcessor(methodElement, _entities).process())
+        .toList();
+  }
+
+  List<AfterOperationMethod> _getAfterOperations(
+      final List<MethodElement> methodElements,
+      ) {
+    return methodElements
+        .where((methodElement) => methodElement.hasAnnotation(annotations.afterUpdate.runtimeType) || methodElement.hasAnnotation(annotations.afterInsert.runtimeType) || methodElement.hasAnnotation(annotations.afterDelete.runtimeType))
+        .map((methodElement) => AfterMethodProcessor(methodElement, _entities).process())
         .toList();
   }
 

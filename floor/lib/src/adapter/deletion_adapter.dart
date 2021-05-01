@@ -10,6 +10,7 @@ class DeletionAdapter<T> {
   final Map<String, Object?> Function(T) _valueMapper;
   final StreamController<String>? _changeListener;
   final void Function(T entity)? _deleted;
+  FutureOr<void> Function(T entity)? afterDelete;
 
   DeletionAdapter(
     final DatabaseExecutor database,
@@ -19,6 +20,7 @@ class DeletionAdapter<T> {
       {
         final StreamController<String>? changeListener,
         void Function(T entity)? deleted,
+        this.afterDelete,
       }
     )  : assert(entityName.isNotEmpty),
         assert(primaryKeyColumnName.isNotEmpty),
@@ -48,6 +50,9 @@ class DeletionAdapter<T> {
   }
 
   Future<int> _delete(final T item) async {
+    if (afterDelete != null) {
+      await afterDelete!(item);
+    }
     final result = await _database.delete(
       _entityName,
       where: PrimaryKeyHelper.getWhereClause(_primaryKeyColumnNames),
@@ -66,6 +71,11 @@ class DeletionAdapter<T> {
   }
 
   Future<int> _deleteList(final List<T> items) async {
+    if (afterDelete != null) {
+      for(var item in items){
+        await afterDelete!(item);
+      }
+    }
     final batch = _database.batch();
     for (final item in items) {
       batch.delete(

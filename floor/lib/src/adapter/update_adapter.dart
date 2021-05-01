@@ -12,6 +12,7 @@ class UpdateAdapter<T> {
   final Map<String, Object?> Function(T) _valueMapper;
   final StreamController<String>? _changeListener;
   final void Function(T entity)? _updated;
+  FutureOr<void> Function(T entity)? afterUpdate;
 
   UpdateAdapter(
     final DatabaseExecutor database,
@@ -21,6 +22,7 @@ class UpdateAdapter<T> {
       {
         final StreamController<String>? changeListener,
         final void Function(T entity)? updated,
+        this.afterUpdate,
       })  : assert(entityName.isNotEmpty),
         assert(primaryKeyColumnName.isNotEmpty),
         _database = database,
@@ -64,6 +66,9 @@ class UpdateAdapter<T> {
     final T item,
     final OnConflictStrategy onConflictStrategy,
   ) async {
+    if (afterUpdate != null) {
+      await afterUpdate!(item);
+    }
     final values = _valueMapper(item);
 
     final result = await _database.update(
@@ -89,6 +94,11 @@ class UpdateAdapter<T> {
     final List<T> items,
     final OnConflictStrategy onConflictStrategy,
   ) async {
+    if (afterUpdate != null) {
+      for(var item in items){
+        await afterUpdate!(item);
+      }
+    }
     final batch = _database.batch();
     for (final item in items) {
       final values = _valueMapper(item);

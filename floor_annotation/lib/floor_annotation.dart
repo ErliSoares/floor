@@ -1,5 +1,8 @@
 library floor_annotation;
 
+export 'src/after_delete.dart';
+export 'src/after_insert.dart';
+export 'src/after_update.dart';
 export 'src/column_info.dart';
 export 'src/dao.dart';
 export 'src/database.dart';
