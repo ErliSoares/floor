@@ -103,7 +103,7 @@ class DaoWriter extends Writer {
           ..initializers.add(Code(
               "$fieldName = InsertionAdapter(floorDatabase.database, '${entity.name}', $valueMapper$insertedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
 
-        final afterOperations = dao.afterOperations.where((e) => e.forUpdate).toList();
+        final afterOperations = dao.afterOperations.where((e) => e.forInsert).toList();
         if (afterOperations.isNotEmpty) {
           if (afterOperations.length == 1) {
             constructorBody.writeAll(afterOperations.map<dynamic>((e) => ' $fieldName.afterInsert = super.${e.name};'), '\n');
@@ -195,7 +195,7 @@ class DaoWriter extends Writer {
           ..initializers.add(Code(
               "$fieldName = DeletionAdapter(floorDatabase.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$deletedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
 
-        final afterOperations = dao.afterOperations.where((e) => e.forUpdate).toList();
+        final afterOperations = dao.afterOperations.where((e) => e.forDelete).toList();
         if (afterOperations.isNotEmpty) {
           if (afterOperations.length == 1) {
             constructorBody.writeAll(afterOperations.map<dynamic>((e) => ' $fieldName.afterDelete = super.${e.name};'), '\n');

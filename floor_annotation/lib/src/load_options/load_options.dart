@@ -25,7 +25,7 @@ class LoadOptions {
     int? take,
     List<SortingInfo>? sort,
     List<GroupingInfo>? group,
-    List<Object>? filter,
+    List<Object?>? filter,
     List<SummaryInfo>? totalSummary,
     List<SummaryInfo>? groupSummary,
     List<String>? select,
@@ -112,7 +112,7 @@ class LoadOptions {
   /// ```DART
   /// final filter = [ 'fieldName', 'in', [1, 2, 3, 4] ];
   /// ```
-  List<Object>? filter;
+  List<Object?>? filter;
 
   /// Uma expressão sumária total.
   List<SummaryInfo>? totalSummary;

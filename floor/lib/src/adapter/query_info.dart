@@ -6,6 +6,7 @@ class QueryInfo {
     required this.sqlColumns,
     required this.columnsIndex,
     this.orderByClauseIndex,
+    this.groupByClauseIndex,
     this.whereClauseIndex,
     this.whereExpressionIndex,
     this.limitClauseIndex,
@@ -16,6 +17,8 @@ class QueryInfo {
   RangeIndex columnsIndex;
 
   RangeIndex? orderByClauseIndex;
+
+  RangeIndex? groupByClauseIndex;
 
   RangeIndex? limitClauseIndex;
 
@@ -29,10 +32,10 @@ class RangeIndex {
   const RangeIndex(this.start, this.end);
 
   /// The value of the start.
-  final double start;
+  final int start;
 
   /// The value of the end.
-  final double end;
+  final int end;
 
   @override
   bool operator ==(Object other) {

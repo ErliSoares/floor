@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:floor/floor.dart';
+import 'package:floor/src/adapter/load_options_compiler/load_options_compiler.dart';
 import 'package:sqflite/sqflite.dart';
 
 /// This class knows how to execute database queries.
@@ -9,10 +10,9 @@ class QueryAdapter {
   final StreamController<String>? _changeListener;
 
   QueryAdapter(
-    final DatabaseExecutor database,
-    {
-      final StreamController<String>? changeListener,
-    })  : _database = database,
+    final DatabaseExecutor database, {
+    final StreamController<String>? changeListener,
+  })  : _database = database,
         _changeListener = changeListener;
 
   /// Executes a SQLite query that may return a single value.
@@ -47,8 +47,9 @@ class QueryAdapter {
     if (queryInfo == null) {
       throw StateError('queryInfo is required when loadOptions is not null.');
     }
-    final sqlProcessed = processSqlWithLoadOptions(sql, loadOptions, queryInfo);
-    final rows = await _database.rawQuery(sqlProcessed, arguments);
+    final argumentsNew = arguments ?? <Object>[];
+    final sqlProcessed = processSqlWithLoadOptions(sql, loadOptions, queryInfo, argumentsNew);
+    final rows = await _database.rawQuery(sqlProcessed, argumentsNew);
     return rows.map((row) => mapper(row)).toList();
   }
 
@@ -63,9 +64,9 @@ class QueryAdapter {
   }
 
   Future<T?> querySingleValue<T>(
-      final String sql, {
-        final List<Object>? arguments,
-      }) async {
+    final String sql, {
+    final List<Object>? arguments,
+  }) async {
     final result = await _database.rawQuery(sql, arguments);
     if (result.isEmpty) {
       return null;
@@ -74,9 +75,9 @@ class QueryAdapter {
   }
 
   Future<List<Map<String, Object?>>> queryMap(
-      final String sql, {
-        final List<Object>? arguments,
-      }) async {
+    final String sql, {
+    final List<Object>? arguments,
+  }) async {
     return _database.rawQuery(sql, arguments);
   }
 
@@ -88,8 +89,6 @@ class QueryAdapter {
     required final String queryableName,
     required final bool isView,
     required final T Function(Map<String, Object?>) mapper,
-    LoadOptions? loadOptions,
-    QueryInfo? queryInfo,
   }) {
     // ignore: close_sinks
     final changeListener = ArgumentError.checkNotNull(_changeListener);
@@ -104,9 +103,7 @@ class QueryAdapter {
 
     // listen on all updates if the stream is on a view, only listen to the
     // name of the table if the stream is on a entity.
-    final subscription = changeListener.stream
-        .where((updatedTable) => updatedTable == queryableName || isView)
-        .listen(
+    final subscription = changeListener.stream.where((updatedTable) => updatedTable == queryableName || isView).listen(
           (_) async => executeQueryAndNotifyController(),
           onDone: () => controller.close(),
         );
@@ -136,9 +133,7 @@ class QueryAdapter {
     controller.onListen = () async => executeQueryAndNotifyController();
 
     // Views listen on all events, Entities only on events that changed the same entity.
-    final subscription = changeListener.stream
-        .where((updatedTable) => isView || updatedTable == queryableName)
-        .listen(
+    final subscription = changeListener.stream.where((updatedTable) => isView || updatedTable == queryableName).listen(
           (_) async => executeQueryAndNotifyController(),
           onDone: () => controller.close(),
         );
@@ -148,7 +143,12 @@ class QueryAdapter {
     return controller.stream;
   }
 
-  String processSqlWithLoadOptions(String sql, LoadOptions loadOptions, QueryInfo queryInfo) {
-    throw UnimplementedError('Não foi implementado para fazer o processamento de SQL');
+  String processSqlWithLoadOptions(String sql, LoadOptions loadOptions, QueryInfo queryInfo, List<Object?> arguments) {
+    return LoadOptionsCompiler(
+      loadOptions: loadOptions,
+      queryInfo: queryInfo,
+      sql: sql,
+      arguments: arguments,
+    ).compile();
   }
 }
