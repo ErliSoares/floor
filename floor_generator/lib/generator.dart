@@ -42,8 +42,13 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
         .map((typeConverter) =>
             TypeConverterFieldWriter(typeConverter.name).write());
 
+    const ignore = '// ignore_for_file: cast_nullable_to_non_nullable\n'
+        '// ignore_for_file: avoid_types_on_closure_parameters\n'
+        '// ignore_for_file: prefer_interpolation_to_compose_strings\n\n';
+
     final library = Library((builder) {
       builder
+      ..body.add(const Code(ignore))
         ..body.add(FloorWriter(database.name).write())
         ..body.add(DatabaseBuilderWriter(database.name).write())
         ..body.add(databaseClass)

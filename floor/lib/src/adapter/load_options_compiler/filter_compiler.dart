@@ -51,12 +51,12 @@ class FilterCompiler extends ExpressionCompiler {
       final expressionType = _translateBinaryOperation(clientOperation);
       if (clientValue == null) {
         if (expressionType == '=') {
-          return 'ISNULL($accessorExpr)';
+          return '$accessorExpr IS NULL';
         }
         if (expressionType == '<>') {
-          return '!ISNULL($accessorExpr)';
+          return '$accessorExpr IS NOT NULL';
         }
-        return 'FALSE';
+        return '0';
       }
 
       final valueExpr = addParameterAndGetKey(clientValue);
@@ -107,13 +107,13 @@ class FilterCompiler extends ExpressionCompiler {
 
   String _compileInFunction(String accessorExpr, Object? value) {
     if (value == null) {
-      return 'FALSE';
+      return '0';
     }
     if (!(value is List)) {
       throw Exception('Não foi definido a lista de valores validos para o filtro com IN().');
     }
     if (value.isEmpty) {
-      return 'FALSE';
+      return '0';
     }
     final strBuffer = StringBuffer();
     strBuffer.write(accessorExpr);
@@ -173,7 +173,7 @@ class FilterCompiler extends ExpressionCompiler {
   }
 
   String _compileUnary(List<Object?> filter) {
-    return '!(${compile(filter[1] as List)})';
+    return 'NOT (${compile(filter[1] as List)})';
   }
 
   String _translateBinaryOperation(String clientOperation) {

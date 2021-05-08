@@ -208,6 +208,11 @@ class DaoWriter extends Writer {
       }
     }
 
+    final unnamedConstructor = dao.classElement.unnamedConstructor;
+    if (unnamedConstructor != null && unnamedConstructor.parameters.isNotEmpty) {
+      constructorBuilder.initializers.add(const Code('super($databaseFieldName)'));
+    }
+
     if (constructorBody.isNotEmpty) {
       constructorBuilder.body = Code(constructorBody.toString());
     }
