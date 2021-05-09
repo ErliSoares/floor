@@ -269,13 +269,11 @@ class QueryMethodWriter implements Writer {
       final queryInfoParameters = StringBuffer();
 
       final sqlColumns = StringBuffer();
-      sqlColumns.writeln('{');
       final mapColumns = _sqlColumnProcessor!.getColumns(select);
       for(var field in mapColumns.entries) {
-        sqlColumns.writeln(" '${field.key}': '${field.value}',");
+        sqlColumns.writeln('ColumnSql(${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}Schema.col${field.key.firstCharToUpper()}, sqlField: \'${field.value}\'),');
       }
-      sqlColumns.write('}');
-      queryInfoParameters.writeln('sqlColumns: $sqlColumns,');
+      queryInfoParameters.writeln('columns: [$sqlColumns],');
 
       var whereClauseStartIndex = 0;
       final columns = select.columns;

@@ -11,6 +11,7 @@ import 'package:floor_generator/value_object/database.dart';
 import 'package:floor_generator/writer/dao_writer.dart';
 import 'package:floor_generator/writer/database_builder_writer.dart';
 import 'package:floor_generator/writer/database_writer.dart';
+import 'package:floor_generator/writer/enum_values_writer.dart';
 import 'package:floor_generator/writer/floor_writer.dart';
 import 'package:floor_generator/writer/type_converter_field_writer.dart';
 import 'package:source_gen/source_gen.dart';
@@ -42,6 +43,7 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
         .map((typeConverter) =>
             TypeConverterFieldWriter(typeConverter.name).write());
 
+
     const ignore = '// ignore_for_file: cast_nullable_to_non_nullable\n'
         '// ignore_for_file: avoid_types_on_closure_parameters\n'
         '// ignore_for_file: prefer_interpolation_to_compose_strings\n\n';
@@ -59,6 +61,8 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
           ..body.add(const Code('// ignore_for_file: unused_element\n'))
           ..body.addAll(distinctTypeConverterFields);
       }
+      builder
+        ..body.add(EnumValuesWriter(database.entities).write());
     });
 
     return library.accept(DartEmitter()).toString();

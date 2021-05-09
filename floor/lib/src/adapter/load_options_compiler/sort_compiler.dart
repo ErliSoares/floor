@@ -19,8 +19,12 @@ class SortCompiler extends ExpressionCompiler {
         orderByBuffer.write(',');
       }
 
-      final accessorExpr = compileAccessorExpression(item.selector);
-      orderByBuffer.write(accessorExpr);
+      final columnSql = getSqlColumn(item.selector);
+      orderByBuffer.write(columnSql);
+
+      if (columnSql.type == DbType.text && columnSql.converter == null) {
+        orderByBuffer.write(' COLLATE NOCASE');
+      }
 
       if (item.desc) {
         orderByBuffer.write(' ');

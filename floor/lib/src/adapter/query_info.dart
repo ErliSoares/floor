@@ -1,9 +1,10 @@
+import 'package:floor/src/schema/column_sql.dart';
 import 'package:flutter/foundation.dart';
 
 /// Data to process loadOptions
 class QueryInfo {
   QueryInfo({
-    required this.sqlColumns,
+    required this.columns,
     required this.columnsIndex,
     this.orderByClauseIndex,
     this.groupByClauseIndex,
@@ -12,7 +13,7 @@ class QueryInfo {
     this.limitClauseIndex,
   });
 
-  Map<String, String> sqlColumns;
+  List<ColumnSql> columns;
 
   RangeIndex columnsIndex;
 

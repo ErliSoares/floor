@@ -9,6 +9,7 @@ import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/processor.dart';
 import 'package:floor_generator/value_object/field.dart';
+import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -28,7 +29,7 @@ class FieldProcessor extends Processor<Field> {
   @override
   Field process() {
     final name = _fieldElement.name;
-    final columnName = '$_prefix${_getColumnName(name)}';
+    final columnName = '$_prefix${_prefix == '' ?  _getColumnName(name) : _getColumnName(name).firstCharToUpper()}';
     final isNullable = _fieldElement.type.isNullable;
     final typeConverter = {
       ..._fieldElement.getTypeConverters(TypeConverterScope.field),

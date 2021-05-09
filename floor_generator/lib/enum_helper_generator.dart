@@ -4,14 +4,13 @@ import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
-import 'package:floor_annotation/floor_annotation.dart';
 import 'package:floor_generator/misc/constants.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
 
 class EnumHelperGenerator extends Generator {
   final TypeChecker hasEnumValueAnnotation = const TypeChecker.fromRuntime(annotations.EnumValue);
-  final TypeChecker hasDescriptionAnnotation = const TypeChecker.fromRuntime(Description);
+  final TypeChecker hasDescriptionAnnotation = const TypeChecker.fromRuntime(annotations.Description);
 
   @override
   FutureOr<String> generate(LibraryReader library, BuildStep buildStep) {

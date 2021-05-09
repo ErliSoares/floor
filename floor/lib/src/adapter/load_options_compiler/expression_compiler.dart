@@ -1,3 +1,5 @@
+import 'package:collection/collection.dart';
+
 import '../../../floor.dart';
 
 abstract class ExpressionCompiler {
@@ -14,15 +16,23 @@ abstract class ExpressionCompiler {
   final List<Object?> arguments;
 
   String addParameterAndGetKey(Object? value) {
-    arguments.add(value);
+    if (value is bool) {
+      if (value) {
+        arguments.add(1);
+      } else {
+        arguments.add(0);
+      }
+    } else {
+      arguments.add(value);
+    }
     return '?${arguments.length}';
   }
 
-  String compileAccessorExpression(String expression){
-    final expressionSql = queryInfo.sqlColumns[expression];
-    if (expressionSql == null) {
-      throw Exception('Expression `$expression` is not valid column result in query `$sql`');
+  ColumnSql getSqlColumn(String name) {
+    final column = queryInfo.columns.firstWhereOrNull((e) => e.name == name);
+    if (column == null) {
+      throw Exception('Name of column `$name` is not valid column result in query `$sql`');
     }
-    return expressionSql;
+    return column;
   }
 }

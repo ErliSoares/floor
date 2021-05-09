@@ -14,13 +14,14 @@ class ColumnCompiler extends ExpressionCompiler {
     if (columns != null && columns.isNotEmpty) {
       for (var nameColumn in columns) {
         if (columnsExclude == null || !columnsExclude.any((c) => c == nameColumn)) {
-          fields.add(compileAccessorExpression(nameColumn) + ' ' + nameColumn);
+          fields.add(getSqlColumn(nameColumn).sqlField + ' ' + nameColumn);
         }
       }
     } else if (columnsExclude != null && columnsExclude.isNotEmpty) {
-      for (var nameColumn in queryInfo.sqlColumns.keys) {
+      for (var column in queryInfo.columns) {
+        final nameColumn = column.name;
         if (!columnsExclude.any((c) => c == nameColumn)) {
-          fields.add(compileAccessorExpression(nameColumn) + ' ' + nameColumn);
+          fields.add(getSqlColumn(nameColumn).sqlField + ' ' + nameColumn);
         }
       }
     }

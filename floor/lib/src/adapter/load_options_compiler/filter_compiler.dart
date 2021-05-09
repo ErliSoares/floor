@@ -39,29 +39,29 @@ class FilterCompiler extends ExpressionCompiler {
         clientOperation == _subString;
     final isInOperation = clientOperation == _in;
 
-    final accessorExpr = compileAccessorExpression(clientAccessor);
+    final sqlColumn = getSqlColumn(clientAccessor);
 
     String valueReturn;
 
     if (isStringOperation) {
-      valueReturn = _compileStringFunction(accessorExpr, clientOperation, clientValue.toString(), filter);
+      valueReturn = _compileStringFunction(sqlColumn.sqlField, clientOperation, clientValue.toString(), filter);
     } else if (isInOperation) {
-      valueReturn = _compileInFunction(accessorExpr, clientValue);
+      valueReturn = _compileInFunction(sqlColumn.sqlField, clientValue);
     } else {
       final expressionType = _translateBinaryOperation(clientOperation);
       if (clientValue == null) {
         if (expressionType == '=') {
-          return '$accessorExpr IS NULL';
+          return '$sqlColumn IS NULL';
         }
         if (expressionType == '<>') {
-          return '$accessorExpr IS NOT NULL';
+          return '$sqlColumn IS NOT NULL';
         }
         return '0';
       }
 
       final valueExpr = addParameterAndGetKey(clientValue);
 
-      valueReturn = accessorExpr + ' ' + expressionType + ' ' + valueExpr;
+      valueReturn = sqlColumn.sqlField + ' ' + expressionType + ' ' + valueExpr;
     }
 
     return valueReturn;

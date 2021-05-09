@@ -15,6 +15,7 @@ import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:collection/collection.dart';
 import 'package:source_gen/src/output_helpers.dart';
+import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/extension/field_element_extension.dart';
 
 class SchemaGenerator extends Generator {
@@ -117,15 +118,6 @@ ${fields.map((e) => e.writeCol()).join('\n')}
     str.write(code);
 
     return str.toString();
-  }
-}
-
-extension StringExtension on String {
-  String firstCharToUpper() {
-    if (isEmpty) {
-      return this;
-    }
-    return '${this[0].toUpperCase()}${substring(1)}';
   }
 }
 

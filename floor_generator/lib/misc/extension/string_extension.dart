@@ -1,5 +1,12 @@
 extension StringExtension on String {
-  /// Returns a copy of this string having its first letter lowercased, or the
+  String firstCharToUpper() {
+    if (isEmpty) {
+      return this;
+    }
+    return '${this[0].toUpperCase()}${substring(1)}';
+  }
+
+/// Returns a copy of this string having its first letter lowercased, or the
   /// original string, if it's empty or already starts with a lower case letter.
   ///
   /// ```dart
