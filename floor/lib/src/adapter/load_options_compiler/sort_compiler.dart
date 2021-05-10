@@ -20,7 +20,7 @@ class SortCompiler extends ExpressionCompiler {
       }
 
       final columnSql = getSqlColumn(item.selector);
-      orderByBuffer.write(columnSql);
+      orderByBuffer.write(columnSql.sqlField);
 
       if (columnSql.type == DbType.text && columnSql.converter == null) {
         orderByBuffer.write(' COLLATE NOCASE');

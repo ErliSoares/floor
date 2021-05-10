@@ -278,8 +278,8 @@ class QueryMethodWriter implements Writer {
       var whereClauseStartIndex = 0;
       final columns = select.columns;
       if (columns.isNotEmpty && columns.first.span != null) {
+        final offsetStart = columns.first.span!.start.offset;
         // TODO Tem de somar mais um parece que o index da biblioteca está errado
-        final offsetStart = columns.first.span!.start.offset + 1;
         final offsetEnd = columns.last.span!.end.offset + 1;
         queryInfoParameters.writeln('columnsIndex: const RangeIndex($offsetStart, $offsetEnd),');
         whereClauseStartIndex = offsetEnd;

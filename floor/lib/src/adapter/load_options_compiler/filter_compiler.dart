@@ -51,10 +51,10 @@ class FilterCompiler extends ExpressionCompiler {
       final expressionType = _translateBinaryOperation(clientOperation);
       if (clientValue == null) {
         if (expressionType == '=') {
-          return '$sqlColumn IS NULL';
+          return '${sqlColumn.sqlField} IS NULL';
         }
         if (expressionType == '<>') {
-          return '$sqlColumn IS NOT NULL';
+          return '${sqlColumn.sqlField} IS NOT NULL';
         }
         return '0';
       }

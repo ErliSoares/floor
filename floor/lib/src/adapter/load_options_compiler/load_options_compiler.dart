@@ -22,7 +22,7 @@ class LoadOptionsCompiler {
     String? columns;
     String? limit;
 
-    if (loadOptions.filter != null) {
+    if (loadOptions.filter?.isNotEmpty ?? false) {
       filter = FilterCompiler(
         sql: sql,
         arguments: arguments,
@@ -79,14 +79,14 @@ class LoadOptionsCompiler {
 
     if (filter?.isNotEmpty ?? false) {
       if (queryInfo.whereExpressionIndex != null) {
-        partsSql.add('(${sql.substring(lastIndex, queryInfo.whereExpressionIndex!.end - lastIndex)})');
+        partsSql.add('(${sql.substring(lastIndex, queryInfo.whereExpressionIndex!.end)})');
         lastIndex = queryInfo.whereExpressionIndex!.end;
         partsSql.add(' AND ($filter)');
       } else {
         final nextClause = queryInfo.groupByClauseIndex ?? queryInfo.orderByClauseIndex ?? queryInfo.limitClauseIndex;
         final lastIndexClause = nextClause?.start ?? sql.length;
         if (lastIndexClause > lastIndex) {
-          partsSql.add(sql.substring(lastIndex, lastIndexClause - lastIndex));
+          partsSql.add(sql.substring(lastIndex, lastIndexClause));
         }
         lastIndex = lastIndexClause;
         partsSql.add(' WHERE $filter');
@@ -96,14 +96,14 @@ class LoadOptionsCompiler {
     if (sort?.isNotEmpty ?? false) {
       if (queryInfo.orderByClauseIndex != null) {
         if (queryInfo.orderByClauseIndex!.start > lastIndex) {
-          partsSql.add(sql.substring(lastIndex, queryInfo.orderByClauseIndex!.start - lastIndex));
+          partsSql.add(sql.substring(lastIndex, queryInfo.orderByClauseIndex!.start));
           lastIndex = queryInfo.orderByClauseIndex!.start;
         }
       } else {
         final nextClause = queryInfo.limitClauseIndex;
         final lastIndexClause = nextClause?.start ?? sql.length;
         if (lastIndexClause > lastIndex) {
-          partsSql.add(sql.substring(lastIndex, lastIndexClause - lastIndex));
+          partsSql.add(sql.substring(lastIndex, lastIndexClause));
         }
         lastIndex = lastIndexClause;
       }
@@ -113,12 +113,12 @@ class LoadOptionsCompiler {
     if (limit?.isNotEmpty ?? false) {
       if (queryInfo.limitClauseIndex != null) {
         if (queryInfo.limitClauseIndex!.start > lastIndex) {
-          partsSql.add(sql.substring(lastIndex, queryInfo.limitClauseIndex!.start - lastIndex));
+          partsSql.add(sql.substring(lastIndex, queryInfo.limitClauseIndex!.start));
           lastIndex = queryInfo.limitClauseIndex!.start;
         }
       } else {
         if (sql.length > lastIndex) {
-          partsSql.add(sql.substring(lastIndex, sql.length - lastIndex));
+          partsSql.add(sql.substring(lastIndex, sql.length));
         }
         lastIndex = sql.length;
       }
@@ -126,7 +126,7 @@ class LoadOptionsCompiler {
     }
 
     if (sql.length > lastIndex) {
-      partsSql.add(sql.substring(lastIndex, sql.length - lastIndex));
+      partsSql.add(sql.substring(lastIndex, sql.length));
     }
     return partsSql.map((e) => e.trim()).join(' ');
   }
