@@ -410,7 +410,7 @@ void main() {
   test('query list with load options', () async {
     final queryMethod = await _createQueryMethod('''
       @Query('SELECT pe.*, 1 + 2 AS test, address.name FROM person as pe INNER JOIN address ON (address.personId = pe.id)WHERE pe.id = 2 GROUP BY pe.name ORDER BY pe.name DESC LIMIT 1, 10')
-      Future<List<Person>> findAll(LoadOptions loadOptions);
+      Future<List<Person>> findAll(LoadOptionsEntry loadOptions);
     ''');
 
     final _sqlColumnProcessor = SqlColumnProcessor();
@@ -424,7 +424,7 @@ void main() {
 
     expect(actual, equalsDart('''
       @override
-      Future<List<Person>> findAll(LoadOptions loadOptions) async {
+      Future<List<Person>> findAll(LoadOptionsEntry loadOptions) async {
         return _queryAdapter.queryList('SELECT * FROM Person', mapper: (Map<String, Object?> row) => Person(row['id'] as int, row['name'] as String), loadOptions: loadOptions, sqlColumns: { 'id': 'Person.id', 'name': 'Person.name' });
       }
     '''));

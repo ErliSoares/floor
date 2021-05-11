@@ -131,7 +131,7 @@ class QueryMethodWriter implements Writer {
     // We establish the conventions that we provide the fixed parameters first and then append the list parameters one by one.
     // parameters 1,2,... start-1 are already used by fixed (non-list) parameters.
     final start = _queryMethod.parameters
-            .where((param) => !param.type.isDartCoreList && !param.type.isLoadOptions)
+            .where((param) => !param.type.isDartCoreList && !param.type.isLoadOptions && !param.type.isLoadOptionsEntry)
             .length +
         1;
 
@@ -163,7 +163,7 @@ class QueryMethodWriter implements Writer {
     //first, take fixed parameters, then insert list parameters.
     return [
       ..._queryMethod.parameters
-          .where((parameter) => !parameter.type.isDartCoreList && !parameter.type.isLoadOptions)
+          .where((parameter) => !parameter.type.isDartCoreList && !parameter.type.isLoadOptions && !parameter.type.isLoadOptionsEntry)
           .map((parameter) {
         if (parameter.type.isDefaultSqlType) {
           if (parameter.type.isDartCoreBool) {
@@ -256,7 +256,7 @@ class QueryMethodWriter implements Writer {
         ..write(', isView: ${queryable is View}');
     }
 
-    final loadOptionsParam = _queryMethod.parameters.firstWhereOrNull((param) => param.type.isLoadOptions);
+    final loadOptionsParam = _queryMethod.parameters.firstWhereOrNull((param) => param.type.isLoadOptions || param.type.isLoadOptionsEntry);
     if (loadOptionsParam != null) {
       if (_sqlColumnProcessor == null) {
         throw Exception('Não foi informado _sqlColumnProcessor para processar as colunas para o loadOptions');

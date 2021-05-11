@@ -41,4 +41,14 @@ class QueryMethodProcessorError {
       element: _methodElement,
     );
   }
+
+  ProcessorError invalidLoadOptionsQueryMethodParameterToProcessEntry(
+      final ParameterElement parameterElement,
+      ) {
+    return ProcessorError(
+      message: 'LoadOptions is not supported when return entry.',
+      todo: 'Change to LoadOptionsEntry or change the return to Future<List<Map<String, Object?>>> ${parameterElement.displayName}.',
+      element: parameterElement,
+    );
+  }
 }

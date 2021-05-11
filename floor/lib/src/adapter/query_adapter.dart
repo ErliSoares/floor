@@ -37,7 +37,7 @@ class QueryAdapter {
     final String sql, {
     final List<Object>? arguments,
     required final T Function(Map<String, Object?>) mapper,
-    LoadOptions? loadOptions,
+    LoadOptionsEntry? loadOptions,
     QueryInfo? queryInfo,
   }) async {
     if (loadOptions == null) {
@@ -48,7 +48,14 @@ class QueryAdapter {
       throw StateError('queryInfo is required when loadOptions is not null.');
     }
     final argumentsNew = arguments ?? <Object>[];
-    final sqlProcessed = processSqlWithLoadOptions(sql, loadOptions, queryInfo, argumentsNew);
+    final loadOptionsComplete = LoadOptions(
+      skip: loadOptions.skip,
+      sort: loadOptions.sort,
+      expand: loadOptions.expand,
+      filter: loadOptions.filter,
+      take: loadOptions.take,
+    );
+    final sqlProcessed = processSqlWithLoadOptions(sql, loadOptionsComplete, queryInfo, argumentsNew);
     final rows = await _database.rawQuery(sqlProcessed, argumentsNew);
     return rows.map((row) => mapper(row)).toList();
   }

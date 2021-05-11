@@ -1,22 +1,29 @@
 import 'package:floor_annotation/floor_annotation.dart';
 
-class LoadOptions {
+class LoadOptions extends LoadOptionsEntry {
   LoadOptions({
+    int? skip,
+    int? take,
+    List<SortingInfo>? sort,
+    List<Object?>? filter,
+    List<ExpandInfo>? expand,
+    this.group,
     this.requireTotalCount,
     this.requireGroupCount,
     this.isCountQuery,
-    this.skip,
-    this.take,
-    this.sort,
-    this.group,
-    this.filter,
     this.totalSummary,
     this.groupSummary,
     this.select,
     this.notSelect,
-    this.expand,
-  });
+  }) : super(
+          expand: expand,
+          filter: filter,
+          skip: skip,
+          sort: sort,
+          take: take,
+        );
 
+  @override
   LoadOptions copyWith({
     bool? requireTotalCount,
     bool? requireGroupCount,
@@ -58,61 +65,8 @@ class LoadOptions {
   /// Um sinalizador indicando se a consulta atual é feita para obter o número total de objetos de dados.
   bool? isCountQuery;
 
-  /// O número de objetos de dados a serem ignorados desde o início do conjunto resultante.
-  int? skip;
-
-  /// O número de objetos de dados a serem carregados.
-  int? take;
-
-  /// Uma expressão de classificação.
-  List<SortingInfo>? sort;
-
   /// Uma expressão de grupo.
   List<GroupingInfo>? group;
-
-  /// Uma expressão de filtro.
-  ///
-  /// Os operadores disponíveis são: '=', '<>', '>', '>=', '<', '<=', 'startswith', 'endswith', 'contains', 'notcontains', 'substring' e 'in'.
-  ///
-  /// ## Exemplos
-  ///
-  /// ### Filtro binário
-  /// ```DART
-  /// final filter = ['fieldOne', '=', 1];
-  /// ```
-  ///
-  /// ### Filtro unário
-  /// ```DART
-  /// final filter = ['!', ['fieldOne', '=', 1] ];
-  /// ```
-  ///
-  /// ### Filtro complexo
-  /// ```DART
-  /// final filter = [
-  ///   [ 'fieldOne', '=', 8 ],
-  ///   'and',
-  ///   [
-  ///     [ 'fieldTwo', '<', 3 ],
-  ///     'or',
-  ///     [ 'fieldTwo', '>', 11 ]
-  ///   ]
-  /// ];
-  /// ```
-  ///
-  /// ### Filtro com substring
-  ///
-  /// `[ fieldName, 'substring', position, length, valueCompare ]`
-  ///
-  /// ```DART
-  /// final filter = [ 'fieldName', 'substring', 1, 1, 'T' ];
-  /// ```
-  ///
-  /// ### Filtro com in
-  ///
-  /// ```DART
-  /// final filter = [ 'fieldName', 'in', [1, 2, 3, 4] ];
-  /// ```
-  List<Object?>? filter;
 
   /// Uma expressão sumária total.
   List<SummaryInfo>? totalSummary;
@@ -126,7 +80,4 @@ class LoadOptions {
   /// Propriedades que não devem ser retornadas, retornam todas menos as que forem definidas aqui,
   /// essa tem prioridade sobre o select.
   List<String>? notSelect;
-
-  /// Uma expressão de expansão.
-  List<ExpandInfo>? expand;
 }

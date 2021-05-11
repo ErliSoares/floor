@@ -74,6 +74,7 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
         parameterTypeConverters;
 
     if (queryable != null) {
+      _assertLoadOptionsToProcessEntry();
       final fieldTypeConverters =
           queryable.fieldsAll.mapNotNull((field) => field.typeConverter);
       allTypeConverters.addAll(fieldTypeConverters);
@@ -143,6 +144,13 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
       } else {
         throw _processorError.doesNotReturnNullableFuture;
       }
+    }
+  }
+
+  void _assertLoadOptionsToProcessEntry() {
+    final parameter = _methodElement.parameters.firstWhereOrNull((e) => e.type.isLoadOptions);
+    if (parameter != null) {
+      throw _processorError.invalidLoadOptionsQueryMethodParameterToProcessEntry(parameter);
     }
   }
 }

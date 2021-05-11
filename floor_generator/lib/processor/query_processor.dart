@@ -90,14 +90,14 @@ class QueryProcessor extends Processor<Query> {
   void _assertAllParametersAreUsed(List<VariableToken> variables) {
     final queryVariables = variables.map((e) => e.name.substring(1)).toSet();
     for (final param in _parameters) {
-      if (!queryVariables.contains(param.displayName) && !param.type.isLoadOptions) {
+      if (!queryVariables.contains(param.displayName) && !param.type.isLoadOptions && !param.type.isLoadOptionsEntry) {
         throw _processorError.unusedQueryMethodParameter(param);
       }
     }
   }
 
   void _assertOneLoadOptions(List<VariableToken> variables) {
-    final parameters = _parameters.where((e) => e.type.isLoadOptions).toList();
+    final parameters = _parameters.where((e) => e.type.isLoadOptions || e.type.isLoadOptionsEntry).toList();
     if (parameters.length > 1) {
       throw _processorError.moreOneLoadOptionsQueryMethodParameter(parameters[1]);
     }

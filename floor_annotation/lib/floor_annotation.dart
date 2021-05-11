@@ -21,6 +21,7 @@ export 'src/load_options/expand_info.dart';
 export 'src/load_options/expand_info.dart';
 export 'src/load_options/grouping_info.dart';
 export 'src/load_options/load_options.dart';
+export 'src/load_options/load_options_entry.dart';
 export 'src/load_options/sorting_info.dart';
 export 'src/load_options/summary_info.dart';
 export 'src/on_conflict_strategy.dart';
