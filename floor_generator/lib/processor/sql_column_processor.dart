@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/element/element.dart';
+import 'package:build/build.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:sqlparser/sqlparser.dart' as sqlparser;
 
@@ -116,9 +117,15 @@ class SqlColumnProcessor {
   }
 
   void registerSqlCreateTable(String sql) {
-    final table = _engine.schemaReader.read(
-      _engine.parse(sql).rootNode as sqlparser.TableInducingStatement,
-    );
-    _engine.registerTable(table);
+    try{
+      final rootNode = _engine.parse(sql).rootNode;
+      final tableInducingStatement = rootNode as sqlparser.TableInducingStatement;
+      final table = _engine.schemaReader.read(tableInducingStatement);
+      // TODO Error https://github.com/simolus3/moor/issues/1194
+      _engine.registerTable(table);
+    } catch(e){
+      log.warning('Não foi possível registrar o create table `$sql` para analisar.', e);
+    }
+
   }
 }

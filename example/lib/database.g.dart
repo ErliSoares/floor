@@ -6,6 +6,10 @@ part of 'database.dart';
 // FloorGenerator
 // **************************************************************************
 
+// ignore_for_file: cast_nullable_to_non_nullable
+// ignore_for_file: avoid_types_on_closure_parameters
+// ignore_for_file: prefer_interpolation_to_compose_strings
+
 class $FloorFlutterDatabase {
   /// Creates a database builder for a persistent database.
   /// Once a database is built, you should keep a reference to it and re-use it.
@@ -68,6 +72,7 @@ class _$FlutterDatabase extends FlutterDatabase {
       version: 1,
       onConfigure: (database) async {
         await database.execute('PRAGMA foreign_keys = ON');
+        await callback?.onConfigure?.call(database);
       },
       onOpen: (database) async {
         await callback?.onOpen?.call(database);
@@ -80,7 +85,7 @@ class _$FlutterDatabase extends FlutterDatabase {
       },
       onCreate: (database, version) async {
         await database.execute(
-            'CREATE TABLE IF NOT EXISTS `Task` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `message` TEXT NOT NULL, `time_created_at` TEXT NOT NULL, `time_updated_at` TEXT NOT NULL)');
+            'CREATE TABLE IF NOT EXISTS `Task` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `message` TEXT NOT NULL, `time_Created_at` TEXT NOT NULL, `time_Updated_at` TEXT NOT NULL)');
 
         await callback?.onCreate?.call(database, version);
       },
@@ -90,47 +95,48 @@ class _$FlutterDatabase extends FlutterDatabase {
 
   @override
   TaskDao get taskDao {
-    return _taskDaoInstance ??= _$TaskDao(database, changeListener);
+    return _taskDaoInstance ??= _$TaskDao(this, changeListener);
   }
 }
 
 class _$TaskDao extends TaskDao {
-  _$TaskDao(this.database, this.changeListener)
-      : _queryAdapter = QueryAdapter(database, changeListener),
+  _$TaskDao(this.floorDatabase, this.changeListener)
+      : _queryAdapter = QueryAdapter(floorDatabase.database,
+            changeListener: changeListener),
         _taskInsertionAdapter = InsertionAdapter(
-            database,
+            floorDatabase.database,
             'Task',
             (Task item) => <String, Object?>{
                   'id': item.id,
                   'message': item.message,
-                  'time_created_at': item.timestamp.createdAt,
-                  'time_updated_at': item.timestamp.updatedAt
+                  'time_Created_at': item.timestamp?.createdAt,
+                  'time_Updated_at': item.timestamp?.updatedAt
                 },
-            changeListener),
+            changeListener: changeListener),
         _taskUpdateAdapter = UpdateAdapter(
-            database,
+            floorDatabase.database,
             'Task',
             ['id'],
             (Task item) => <String, Object?>{
                   'id': item.id,
                   'message': item.message,
-                  'time_created_at': item.timestamp.createdAt,
-                  'time_updated_at': item.timestamp.updatedAt
+                  'time_Created_at': item.timestamp?.createdAt,
+                  'time_Updated_at': item.timestamp?.updatedAt
                 },
-            changeListener),
+            changeListener: changeListener),
         _taskDeletionAdapter = DeletionAdapter(
-            database,
+            floorDatabase.database,
             'Task',
             ['id'],
             (Task item) => <String, Object?>{
                   'id': item.id,
                   'message': item.message,
-                  'time_created_at': item.timestamp.createdAt,
-                  'time_updated_at': item.timestamp.updatedAt
+                  'time_Created_at': item.timestamp?.createdAt,
+                  'time_Updated_at': item.timestamp?.updatedAt
                 },
-            changeListener);
+            changeListener: changeListener);
 
-  final sqflite.DatabaseExecutor database;
+  final _$FlutterDatabase floorDatabase;
 
   final StreamController<String> changeListener;
 
@@ -149,8 +155,8 @@ class _$TaskDao extends TaskDao {
             row['id'] as int?,
             row['message'] as String,
             Timestamp(
-                createdAt: row['time_created_at'] as String,
-                updatedAt: row['time_updated_at'] as String)),
+                createdAt: row['time_Created_at'] as String,
+                updatedAt: row['time_Updated_at'] as String)),
         arguments: [id]);
   }
 
@@ -161,8 +167,8 @@ class _$TaskDao extends TaskDao {
             row['id'] as int?,
             row['message'] as String,
             Timestamp(
-                createdAt: row['time_created_at'] as String,
-                updatedAt: row['time_updated_at'] as String)));
+                createdAt: row['time_Created_at'] as String,
+                updatedAt: row['time_Updated_at'] as String)));
   }
 
   @override
@@ -172,8 +178,8 @@ class _$TaskDao extends TaskDao {
             row['id'] as int?,
             row['message'] as String,
             Timestamp(
-                createdAt: row['time_created_at'] as String,
-                updatedAt: row['time_updated_at'] as String)),
+                createdAt: row['time_Created_at'] as String,
+                updatedAt: row['time_Updated_at'] as String)),
         queryableName: 'Task',
         isView: false);
   }
@@ -208,3 +214,5 @@ class _$TaskDao extends TaskDao {
     await _taskDeletionAdapter.deleteList(tasks);
   }
 }
+
+final Map<Object, Object> enumValues = {};

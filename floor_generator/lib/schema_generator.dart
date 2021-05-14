@@ -14,6 +14,7 @@ import 'package:floor_generator/processor/embedded_processor.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:collection/collection.dart';
+// ignore: implementation_imports
 import 'package:source_gen/src/output_helpers.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/extension/field_element_extension.dart';
@@ -97,7 +98,6 @@ class SchemaGenerator extends Generator {
 
     final code = """mixin ${className}Mixin {
   @ignore
-  @JsonKey(ignore: true)
   ${className}Schema get schema => ${className}Schema.instance;
 }
 

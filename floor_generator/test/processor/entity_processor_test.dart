@@ -5,6 +5,7 @@ import 'package:floor_generator/misc/constants.dart';
 import 'package:floor_generator/processor/entity_processor.dart';
 import 'package:floor_generator/processor/error/entity_processor_error.dart';
 import 'package:floor_generator/processor/field_processor.dart';
+import 'package:floor_generator/value_object/embedded.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/foreign_key.dart';
 import 'package:floor_generator/value_object/fts.dart';
@@ -12,6 +13,7 @@ import 'package:floor_generator/value_object/index.dart';
 import 'package:floor_generator/value_object/primary_key.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:test/test.dart';
+import 'package:floor_generator/misc/type_utils.dart';
 
 import '../fakes.dart';
 import '../misc/test_file_utils.dart';
@@ -99,12 +101,17 @@ void main() {
     final expected = Entity(
       classElement,
       name,
+      [],
+      fields,
+      fields,
       fields,
       primaryKey,
       foreignKeys,
       indices,
       false,
       constructor,
+      valueMapping,
+      valueMapping,
       valueMapping,
       Fts3(annotations.FtsTokenizer.simple, []),
     );
@@ -185,12 +192,17 @@ void main() {
     final expected = Entity(
       classElement,
       name,
+      [],
+      fields,
+      fields,
       fields,
       primaryKey,
       foreignKeys,
       indices,
       false,
       constructor,
+      valueMapping,
+      valueMapping,
       valueMapping,
       null,
     );
@@ -585,9 +597,9 @@ void main() {
       final processor = EntityProcessor(classElements[0], {});
       expect(
           processor.process,
-          throwsInvalidGenerationSourceError(
-              EntityProcessorError(classElements[0])
-                  .foreignKeyDoesNotReferenceEntity));
+          throwsInvalidGenerationSourceError( EntityProcessorError(classElements[0])
+                  .foreignKeyDoesNotReferenceEntity(classElements[0]))
+      );
     }, skip: 'Can not reproduce error case');
     test('foreign key reference does not exist', () async {
       final classElements = await createClassElement('''
@@ -752,6 +764,7 @@ void main() {
     final expected = Entity(
       classElement,
       name,
+      [],
       fields,
       fields,
       fields,

@@ -42,7 +42,7 @@ void main() {
         .toList();
     final embeddeds = classElement.fields
         .where((fieldElement) => fieldElement.isEmbedded)
-        .map((embedded) => EmbeddedProcessor(embedded).process())
+        .map((embedded) => EmbeddedProcessor(embedded, {}).process())
         .toList();
     final primaryKey = PrimaryKey([fields[0]], false);
     const foreignKeys = <ForeignKey>[];
@@ -99,7 +99,7 @@ void main() {
         .toList();
     final embeddeds = classElement.fields
         .where((fieldElement) => fieldElement.isEmbedded)
-        .map((embedded) => EmbeddedProcessor(embedded).process())
+        .map((embedded) => EmbeddedProcessor(embedded, {}).process())
         .toList();
     final primaryKey = PrimaryKey([fields[0]], false);
     const foreignKeys = <ForeignKey>[];
@@ -163,7 +163,7 @@ void main() {
         .toList();
     final embeddeds = classElement.fields
         .where((fieldElement) => fieldElement.isEmbedded)
-        .map((fieldElement) => EmbeddedProcessor(fieldElement).process())
+        .map((fieldElement) => EmbeddedProcessor(fieldElement, {}).process())
         .toList();
     final primaryKey = PrimaryKey([fields[0]], false);
     const foreignKeys = <ForeignKey>[];

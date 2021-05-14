@@ -12,7 +12,6 @@ import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 
 class EmbeddedProcessor extends Processor<Embedded> {
-  final ClassElement _classElement;
   final FieldElement _fieldElement;
   final String _prefix;
   final List<FieldElement> _fields;
@@ -20,7 +19,6 @@ class EmbeddedProcessor extends Processor<Embedded> {
 
   EmbeddedProcessor(final FieldElement fieldElement, this.converters, [final String prefix = ''])
       : _fieldElement = fieldElement,
-        _classElement = fieldElement.type.element as ClassElement,
         _prefix = prefix,
         _fields = [
           ...(fieldElement.type.element as ClassElement).fields,

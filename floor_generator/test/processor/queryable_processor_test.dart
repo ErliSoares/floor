@@ -196,7 +196,7 @@ void main() {
     ''');
 
       final actual = TestProcessor(classElement).process();
-      final fieldNames = actual.fields.map((field) => field.name).toList();
+      final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
@@ -228,7 +228,7 @@ void main() {
     ''');
 
       final actual = TestProcessor(classElement).process();
-      final fieldNames = actual.fields.map((field) => field.name).toList();
+      final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'foo', 'name'];
       const expectedConstructor =
@@ -254,7 +254,7 @@ void main() {
     ''');
 
       final actual = TestProcessor(classElement).process();
-      final fieldNames = actual.fields.map((field) => field.name).toList();
+      final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
@@ -282,7 +282,7 @@ void main() {
     ''');
 
       final actual = TestProcessor(classElement).process();
-      final fieldNames = actual.fields.map((field) => field.name).toList();
+      final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
@@ -327,7 +327,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process();
 
-      expect(actual.fields.length, equals(2));
+      expect(actual.fieldsAll.length, equals(2));
     });
 
     test('Ignore hashCode field', () async {
@@ -346,7 +346,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process();
 
-      expect(actual.fields.length, equals(2));
+      expect(actual.fieldsAll.length, equals(2));
     });
 
     test('Ignore getter', () async {
@@ -364,7 +364,7 @@ void main() {
 
       final actual = TestProcessor(classElement)
           .process()
-          .fields
+          .fieldsAll
           .map((field) => field.name)
           .toList();
 
@@ -389,7 +389,7 @@ void main() {
 
       final actual = TestProcessor(classElement)
           .process()
-          .fields
+          .fieldsAll
           .map((field) => field.name)
           .toList();
 
@@ -585,7 +585,7 @@ void main() {
 
       final actual = TestProcessor(classElement)
           .process()
-          .fields
+          .fieldsAll
           .map((field) => field.name);
 
       const expected = 'foo';

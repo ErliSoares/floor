@@ -91,7 +91,9 @@ class DaoWriter extends Writer {
         final insertedBody = StringBuffer();
         if (entity.primaryKey.fields.length == 1) {
           final primaryKeyField = entity.primaryKey.fields[0];
-          if (entity.primaryKey.autoGenerateId && primaryKeyField.fieldElement.type.isDartCoreInt) {
+          if (entity.primaryKey.autoGenerateId
+              && primaryKeyField.fieldElement.type.isDartCoreInt
+              && !primaryKeyField.fieldElement.isFinal) {
             insertedBody.writeln('entity.${primaryKeyField.name} = id;');
           }
         }

@@ -1,5 +1,7 @@
 import 'package:floor/floor.dart';
 
+part 'mail.g.dart';
+
 @Entity(
   tableName: 'mail',
 )

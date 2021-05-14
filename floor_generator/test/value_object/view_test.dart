@@ -37,6 +37,7 @@ void main() {
       allFields,
       'SELECT * FROM x',
       '',
+      true,
     );
 
     final actual = view.getCreateViewStatement();
