@@ -1,3 +1,4 @@
+import 'package:floor/floor.dart';
 import 'package:floor/src/schema/column_sql.dart';
 import 'package:flutter/foundation.dart';
 
@@ -11,6 +12,7 @@ class QueryInfo {
     this.whereClauseIndex,
     this.whereExpressionIndex,
     this.limitClauseIndex,
+    this.expand = const [],
   });
 
   List<ColumnSql> columns;
@@ -25,6 +27,8 @@ class QueryInfo {
 
   RangeIndex? whereClauseIndex;
   RangeIndex? whereExpressionIndex;
+
+  List<ExpandInfoSql> expand;
 }
 
 /// pair of start and end values

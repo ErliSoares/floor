@@ -13,10 +13,6 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
-      return false;
-    }
 
     final isIgnored = hasAnnotation(annotations.Ignore);
     if (!isIgnored) {
@@ -33,8 +29,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
+    if (isSub() || isJunction()) {
       return false;
     }
 
@@ -50,8 +45,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
+    if (isSub() || isJunction()) {
       return false;
     }
 
@@ -67,8 +61,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
+    if (isSub() || isJunction()) {
       return false;
     }
 
@@ -84,8 +77,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
+    if (isSub() || isJunction()) {
       return false;
     }
 
@@ -101,8 +93,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (isSub) {
+    if (isSub() || isJunction()) {
       return false;
     }
 
@@ -117,14 +108,19 @@ extension FieldElementExtension on FieldElement {
     ;
   }
 
+  bool isSub(){
+    return hasAnnotation(annotations.sub.runtimeType);
+  }
+
+  bool isJunction(){
+    return hasAnnotation(annotations.Junction);
+  }
+
   bool shouldBeIncludedSub() {
     if (isStatic || isSynthetic) {
       return false;
     }
-    final isEmbedded = hasAnnotation(annotations.embedded.runtimeType);
-
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
-    if (!isSub) {
+    if (!isSub()) {
       return false;
     }
 

@@ -137,8 +137,6 @@ extension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return null;
     }
-    // TODO Tratar quando for sub
-    final isSub = hasAnnotation(annotations.sub.runtimeType);
     final isIgnored = hasAnnotation(annotations.Ignore);
     var ignoreForQuery = false;
     var ignoreForInsert = false;
@@ -164,7 +162,7 @@ extension on FieldElement {
 
     DartType? databaseType;
     String typeStr;
-    if (isSub) {
+    if (isSub() || isJunction()) {
       databaseType = type;
       typeStr = 'expand';
     } else {

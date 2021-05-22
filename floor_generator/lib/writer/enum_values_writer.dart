@@ -44,9 +44,9 @@ class EnumValuesWriter extends Writer {
   List<ClassElement> _removeDuplicate(List<ClassElement> list) {
     for (int i = 0; i < list.length; i++) {
       final classElement = list[i];
-      int index = i + 2;
+      int index = i + 1;
       do {
-        index = list.indexWhere((sub) => sub.name == classElement.name, index - 1);
+        index = list.indexWhere((sub) => sub.name == classElement.name, index);
         if (index != -1) {
           list.removeAt(index);
         }

@@ -8,6 +8,7 @@ part of 'database.dart';
 
 // ignore_for_file: cast_nullable_to_non_nullable
 // ignore_for_file: avoid_types_on_closure_parameters
+// ignore_for_file: invalid_null_aware_operator
 // ignore_for_file: prefer_interpolation_to_compose_strings
 
 class $FloorFlutterDatabase {

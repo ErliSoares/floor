@@ -120,6 +120,16 @@ class EntityProcessorError {
   }
 
   ProcessorError noMethodWithSaveAnnotation(
+      final Element entity,
+      ) {
+    return ProcessorError(
+      message: 'The type ${entity.getDisplayString(withNullability: false)} not have DAO with method @save.',
+      todo: 'Create DAO with method @save for type ${entity.getDisplayString(withNullability: false)}.',
+      element: entity,
+    );
+  }
+
+  ProcessorError typeOfFieldIsNotClass(
       final FieldElement field,
       ) {
     final type = field.type.isDartCoreList ? field.type.flatten() : field.type;

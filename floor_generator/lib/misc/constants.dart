@@ -68,3 +68,7 @@ abstract class EnumValueField {
 abstract class DescriptionField {
   static const description = 'description';
 }
+
+abstract class JunctionField {
+  static const entityJunction = 'entityJunction';
+}

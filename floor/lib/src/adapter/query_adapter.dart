@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:floor/floor.dart';
 import 'package:floor/src/adapter/load_options_compiler/load_options_compiler.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:collection/collection.dart';
 
 /// This class knows how to execute database queries.
 class QueryAdapter {
@@ -57,7 +58,18 @@ class QueryAdapter {
     );
     final sqlProcessed = processSqlWithLoadOptions(sql, loadOptionsComplete, queryInfo, argumentsNew);
     final rows = await _database.rawQuery(sqlProcessed, argumentsNew);
-    return rows.map((row) => mapper(row)).toList();
+    final entities = rows.map((row) => mapper(row)).toList();
+    final expands = loadOptions.expand;
+    if (expands != null) {
+      for(var expand in expands) {
+        final expandInfo = queryInfo.expand.firstWhereOrNull((e) => e.nameProperty == expand.selector);
+        if (expandInfo == null) {
+          throw Exception('O selector `${expand.selector}` não é uma Junction ou uma Relation da entidade `${T.toString()}` para expanção');
+        }
+        await expandInfo.process(entities, expand.expand ?? []);
+      }
+    }
+    return entities;
   }
 
   Future<void> queryNoReturn(

@@ -9,6 +9,7 @@ import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/error/processor_error.dart';
 import 'package:floor_generator/processor/sql_column_processor.dart';
+import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/query.dart';
 import 'package:floor_generator/value_object/query_method.dart';
 import 'package:floor_generator/value_object/queryable.dart';
@@ -315,6 +316,10 @@ class QueryMethodWriter implements Writer {
         queryInfoParameters.writeln('whereExpressionIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
       }
 
+      final junctions = _queryMethod.queryable?.fieldsAll.where((element) => element.junction != null).map((e) => e.junction!) ?? [];
+      if (junctions.isNotEmpty) {
+        queryInfoParameters.writeln('expand: [${_writeJunctions(junctions)}],');
+      }
       parameters..write(', queryInfo: QueryInfo($queryInfoParameters),');
 
     }
@@ -323,6 +328,34 @@ class QueryMethodWriter implements Writer {
     final stream = _queryMethod.returnsStream ? 'Stream' : '';
 
     return 'return _queryAdapter.query$list$stream($parameters);';
+  }
+
+  String  _writeJunctions(Iterable<Junction> junctions) {
+    final str = StringBuffer();
+    for(final junction in junctions){
+      str.writeln(_writeJunction(junction));
+    }
+    return str.toString();
+  }
+
+  String  _writeJunction(Junction junction) {
+    final name = junction.nameProperty;
+    final junctionFieldForeignKeyParent = junction.foreignKeyJunctionParent.childColumns[0];
+    final primaryKeyParent = junction.foreignKeyJunctionParent.parentColumns[0];
+    final junctionFieldForeignKeyChild = junction.foreignKeyJunctionChild.childColumns[0];
+    final primaryKeyChild = junction.foreignKeyJunctionChild.parentColumns[0];
+    final parentClassName = junction.parentElement.name;
+    return '''ExpandInfoSql<$parentClassName>('$name', (entities, expandChild) async {
+          final filterRelation = ['$junctionFieldForeignKeyParent', 'in', entities.map((e) => e.$primaryKeyParent).toList()];
+          final relations = await floorDatabase.pessoaEndereco.getAll(LoadOptionsEntry(filter: filterRelation));
+          final filterChildren = ['$primaryKeyChild', 'in', relations.map((e) => e.$junctionFieldForeignKeyChild).toList()];
+          final loadOptions = LoadOptionsEntry(expand: expandChild, filter: filterChildren);
+          final children = await floorDatabase.endereco.getAll(loadOptions);
+          for (final entry in entities) {
+            entry.$name =
+                children.where((e) => relations.any((r) => r.$junctionFieldForeignKeyChild == e.$primaryKeyChild && r.$junctionFieldForeignKeyParent == entry.$primaryKeyParent)).toList();
+          }
+        }),''';
   }
 }
 
