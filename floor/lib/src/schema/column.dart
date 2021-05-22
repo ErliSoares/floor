@@ -6,7 +6,6 @@ class Column {
   Column(
     this.name,
     this.type, {
-    this.relationship,
     required this.nullable,
     required this.useInQuery,
     required this.useInInsert,
@@ -19,7 +18,6 @@ class Column {
     String name,
     DbType type, {
     required bool nullable,
-    ForeignKey? relationship,
     TypeConverterBase? converter,
   }) =>
       Column(
@@ -30,7 +28,6 @@ class Column {
         useInIDelete: true,
         useInInsert: true,
         useInIUpdate: true,
-        relationship: relationship,
         converter: converter,
       );
 
@@ -38,7 +35,6 @@ class Column {
     String name,
     DbType type, {
     required bool nullable,
-    ForeignKey? relationship,
     TypeConverterBase? converter,
   }) =>
       Column(
@@ -49,7 +45,6 @@ class Column {
         useInIDelete: false,
         useInInsert: false,
         useInIUpdate: false,
-        relationship: relationship,
         converter: converter,
       );
 
@@ -57,7 +52,6 @@ class Column {
     String name,
     DbType type, {
     required bool nullable,
-    ForeignKey? relationship,
     TypeConverterBase? converter,
   }) =>
       Column(
@@ -68,7 +62,6 @@ class Column {
         useInIDelete: false,
         useInInsert: true,
         useInIUpdate: false,
-        relationship: relationship,
         converter: converter,
       );
 
@@ -76,7 +69,6 @@ class Column {
     String name,
     DbType type, {
     required bool nullable,
-    ForeignKey? relationship,
     TypeConverterBase? converter,
   }) =>
       Column(
@@ -87,7 +79,6 @@ class Column {
         useInIDelete: true,
         useInInsert: false,
         useInIUpdate: false,
-        relationship: relationship,
         converter: converter,
       );
 
@@ -95,7 +86,6 @@ class Column {
     String name,
     DbType type, {
     required bool nullable,
-    ForeignKey? relationship,
     TypeConverterBase? converter,
   }) =>
       Column(
@@ -106,7 +96,6 @@ class Column {
         useInIDelete: false,
         useInInsert: false,
         useInIUpdate: true,
-        relationship: relationship,
         converter: converter,
       );
 
@@ -116,10 +105,6 @@ class Column {
   final bool useInIDelete;
 
   TypeConverterBase? converter;
-
-  ForeignKey? relationship;
-
-  bool get isSub => relationship != null;
 
   final DbType type;
 

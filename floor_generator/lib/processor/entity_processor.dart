@@ -52,9 +52,9 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       throw _processorError.autoIncrementInWithoutRowid;
     }
 
-    var saveSub = getFieldsSub().map((e) => _getSaveSub(e, name)).join('\n');
+    var actionsSave = getFieldsRelation().map((e) => _getSaveRelaction(e, name)).join('\n');
 
-    saveSub = saveSub + fieldsAll
+    actionsSave = actionsSave + fieldsAll
         .where((e) => e.junction != null)
         .map((e) => _getSaveJunction(e.junction!, name)).join('\n');
 
@@ -74,7 +74,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       _getValueMapping(fieldsUpdate, embeddeds.whereNot((e) => e.ignoreForUpdate).toList()),
       _getValueMapping(fieldsDelete, embeddeds.whereNot((e) => e.ignoreForDelete).toList()),
       _getFts(),
-      saveSub,
+      actionsSave,
     );
   }
 
@@ -368,7 +368,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     }
   }
 
-  String _getSaveSub(final FieldElement field, String tableName) {
+  String _getSaveRelaction(final FieldElement field, String tableName) {
     final String code;
 
     final fieldType = field.type.isDartCoreList ? field.type.flatten() : field.type;

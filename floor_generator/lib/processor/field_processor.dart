@@ -39,14 +39,14 @@ class FieldProcessor extends Processor<Field> {
     }.whereNotNull().closestOrNull;
 
     final junction = JunctionProcessor(_fieldElement).process();
-    final isSub = _fieldElement.isSub();
+    final isRelation = _fieldElement.isRelation();
 
     return Field(
       _fieldElement,
       name,
       columnName,
       isNullable,
-      junction != null || isSub ? '' : _getSqlType(typeConverter),
+      junction != null || isRelation ? '' : _getSqlType(typeConverter),
       typeConverter,
       junction,
     );

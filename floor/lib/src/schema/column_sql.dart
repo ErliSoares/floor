@@ -11,7 +11,6 @@ class ColumnSql extends Column {
           useInInsert: column.useInInsert,
           useInIUpdate: column.useInIUpdate,
           useInQuery: column.useInQuery,
-          relationship: column.relationship,
           converter: column.converter,
         );
 

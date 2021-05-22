@@ -162,7 +162,7 @@ extension on FieldElement {
 
     DartType? databaseType;
     String typeStr;
-    if (isSub() || isJunction()) {
+    if (isRelation() || isJunction()) {
       databaseType = type;
       typeStr = 'expand';
     } else {
@@ -214,8 +214,6 @@ extension on FieldElement {
       useInInsert: !ignoreForInsert,
       useInIUpdate: !ignoreForUpdate,
       useInQuery: !ignoreForQuery,
-      relationship: null,
-      // TODO Set relationship
       converter: typeConverter,
       // TODO Set converter
     );
@@ -226,7 +224,6 @@ class ColumnData {
   ColumnData(
     this.name,
     this.type, {
-    this.relationship,
     required this.nullable,
     required this.useInQuery,
     required this.useInInsert,
@@ -241,10 +238,6 @@ class ColumnData {
   final bool useInIDelete;
 
   TypeConverter? converter;
-
-  annotations.ForeignKey? relationship;
-
-  bool get isSub => relationship != null;
 
   final String type;
 
@@ -277,11 +270,6 @@ class ColumnData {
     if (setAllUse) {
       str.write(
           ', useInQuery: $useInQuery, useInInsert: $useInInsert, useInIUpdate: $useInIUpdate, useInIDelete: $useInIDelete');
-    }
-
-    if (relationship != null) {
-      throw Exception('NotImplemented');
-      // TODO Implementar
     }
 
     if (converter != null) {

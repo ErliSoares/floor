@@ -57,12 +57,12 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
   }
 
   @protected
-  List<FieldElement> getFieldsSub() {
+  List<FieldElement> getFieldsRelation() {
     if (classElement.mixins.isNotEmpty) {
       throw _queryableProcessorError.prohibitedMixinUsage;
     }
     return _fields
-        .where((fieldElement) => fieldElement.shouldBeIncludedSub())
+        .where((fieldElement) => fieldElement.shouldBeIncludedRelation())
         .toList();
   }
 

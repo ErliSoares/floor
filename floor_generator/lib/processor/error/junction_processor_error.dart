@@ -42,7 +42,7 @@ class JunctionProcessorError {
 
   InvalidGenerationSourceError get ignoreAndJunctionSameField {
     return InvalidGenerationSourceError(
-      'Skip element and sub feature cannot be used in the same field.',
+      'Skip element and junction feature cannot be used in the same field.',
       todo: 'Consider remove @ignore.',
       element: _fieldElement,
     );

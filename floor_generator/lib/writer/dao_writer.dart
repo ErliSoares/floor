@@ -97,8 +97,8 @@ class DaoWriter extends Writer {
             insertedBody.writeln('entity.${primaryKeyField.name} = id;');
           }
         }
-        if (entity.saveSub.isNotEmpty) {
-          insertedBody.writeln(entity.saveSub);
+        if (entity.actionsSave.isNotEmpty) {
+          insertedBody.writeln(entity.actionsSave);
         }
         final insertedCode = insertedBody.isEmpty ? '' : ', inserted: (id, entity) { $insertedBody }';
         constructorBuilder
@@ -141,8 +141,8 @@ class DaoWriter extends Writer {
             dbHasViewStreams || streamEntities.contains(entity);
 
         final String updatedCode;
-        if (entity.saveSub.isNotEmpty) {
-          updatedCode = ', updated: (entity) { ${entity.saveSub} }';
+        if (entity.actionsSave.isNotEmpty) {
+          updatedCode = ', updated: (entity) { ${entity.actionsSave} }';
         } else{
           updatedCode = '';
         }
@@ -187,7 +187,7 @@ class DaoWriter extends Writer {
             dbHasViewStreams || streamEntities.contains(entity);
 
         final String deletedCode;
-        if (entity.saveSub.isNotEmpty) {
+        if (entity.actionsSave.isNotEmpty) {
           deletedCode = '';
         } else{
           deletedCode = '';

@@ -29,7 +29,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isSub() || isJunction()) {
+    if (isRelation() || isJunction()) {
       return false;
     }
 
@@ -45,7 +45,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isSub() || isJunction()) {
+    if (isRelation() || isJunction()) {
       return false;
     }
 
@@ -61,7 +61,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isSub() || isJunction()) {
+    if (isRelation() || isJunction()) {
       return false;
     }
 
@@ -77,7 +77,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isSub() || isJunction()) {
+    if (isRelation() || isJunction()) {
       return false;
     }
 
@@ -93,7 +93,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isSub() || isJunction()) {
+    if (isRelation() || isJunction()) {
       return false;
     }
 
@@ -108,26 +108,26 @@ extension FieldElementExtension on FieldElement {
     ;
   }
 
-  bool isSub(){
-    return hasAnnotation(annotations.sub.runtimeType);
+  bool isRelation(){
+    return hasAnnotation(annotations.relation.runtimeType);
   }
 
   bool isJunction(){
     return hasAnnotation(annotations.Junction);
   }
 
-  bool shouldBeIncludedSub() {
+  bool shouldBeIncludedRelation() {
     if (isStatic || isSynthetic) {
       return false;
     }
-    if (!isSub()) {
+    if (!isRelation()) {
       return false;
     }
 
     final isIgnored = hasAnnotation(annotations.Ignore);
     if (isIgnored && !isEmbedded) {
       throw InvalidGenerationSourceError(
-        'Skip element and sub feature cannot be used in the same field.',
+        'Skip element and relation feature cannot be used in the same field.',
         todo: 'Consider remove @ignore.',
         element: this,
       );

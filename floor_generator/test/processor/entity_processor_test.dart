@@ -744,8 +744,8 @@ void main() {
     expect(actual, equals(expected));
   });
 
-  test('Process entity sub', () async {
-    final path = testFilePath('processor', 'source', 'entity_processor_test_sub.dart');
+  test('Process entity relation', () async {
+    final path = testFilePath('processor', 'source', 'entity_processor_test_relation.dart');
     final _library = await resolveCompilationUnit(path);
     final classElement = _library.classes.first;
 
@@ -753,7 +753,7 @@ void main() {
 
     const name = 'Person';
     final fields = classElement.fields
-        .where((element) => !element.hasAnnotation(annotations.sub.runtimeType))
+        .where((element) => !element.hasAnnotation(annotations.relation.runtimeType))
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
     final primaryKey = PrimaryKey([fields[0]], false);

@@ -7,7 +7,7 @@ class Person {
 
   final String name;
 
-  @annotations.sub
+  @annotations.relation
   final List<PersonSub> sub;
 
   Person(this.id, this.name, this.sub);

@@ -46,7 +46,7 @@ class EnumValuesWriter extends Writer {
       final classElement = list[i];
       int index = i + 1;
       do {
-        index = list.indexWhere((sub) => sub.name == classElement.name, index);
+        index = list.indexWhere((m) => m.name == classElement.name, index);
         if (index != -1) {
           list.removeAt(index);
         }

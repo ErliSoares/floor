@@ -64,7 +64,7 @@ extension ClassElementExtension on ClassElement {
       final method = list[i];
       int index = i + 2;
       do {
-        index = list.indexWhere((sub) => sub.name == method.name, index - 1);
+        index = list.indexWhere((m) => m.name == method.name, index - 1);
         if (index != -1) {
           list.removeAt(index);
         }
