@@ -2,7 +2,6 @@ import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:floor_generator/processor/error/processor_error.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:floor_generator/misc/type_utils.dart';
 
 class EntityProcessorError {
   final ClassElement _classElement;
@@ -32,14 +31,6 @@ class EntityProcessorError {
     return InvalidGenerationSourceError(
       'No child columns defined for foreign key.',
       todo: 'Add child columns to the foreign key.',
-      element: _classElement,
-    );
-  }
-
-  InvalidGenerationSourceError twoForeignKeysForTheSameParentTable(ClassElement _classElement){
-    return InvalidGenerationSourceError(
-      'More than one link from the child table to the same parent table, it was not implemented for two or more fields to link to the child table.',
-      todo: 'Open a issue to implement the feature.',
       element: _classElement,
     );
   }
@@ -126,17 +117,6 @@ class EntityProcessorError {
       message: 'The type ${entity.getDisplayString(withNullability: false)} not have DAO with method @save.',
       todo: 'Create DAO with method @save for type ${entity.getDisplayString(withNullability: false)}.',
       element: entity,
-    );
-  }
-
-  ProcessorError typeOfFieldIsNotClass(
-      final FieldElement field,
-      ) {
-    final type = field.type.isDartCoreList ? field.type.flatten() : field.type;
-    return ProcessorError(
-      message: 'The type ${type.getDisplayString(withNullability: false)} of fields with the @save annotation must be an entity.',
-      todo: 'Remove the @save annotation or change the property type to an entity.',
-      element: field,
     );
   }
 }

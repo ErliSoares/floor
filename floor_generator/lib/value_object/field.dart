@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:floor_generator/value_object/fieldable.dart';
 import 'package:floor_generator/value_object/junction.dart';
+import 'package:floor_generator/value_object/relation.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 
 /// Represents an Entity field and thus a table column.
@@ -11,6 +12,7 @@ class Field extends Fieldable {
   final String sqlType;
   final TypeConverter? typeConverter;
   final Junction? junction;
+  final Relation? relation;
 
   Field(
     FieldElement fieldElement,
@@ -19,7 +21,10 @@ class Field extends Fieldable {
     this.isNullable,
     this.sqlType,
     this.typeConverter,
-    [this.junction]
+    {
+      this.junction,
+      this.relation,
+    }
   ) : super(fieldElement);
 
   /// The database column definition.

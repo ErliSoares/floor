@@ -66,7 +66,7 @@ class QueryAdapter {
         if (expandInfo == null) {
           throw Exception('O selector `${expand.selector}` não é uma Junction ou uma Relation da entidade `${T.toString()}` para expanção');
         }
-        await expandInfo.process(entities, expand.expand ?? []);
+        await expandInfo.process(entities, expand, expand.expand ?? []);
       }
     }
     return entities;

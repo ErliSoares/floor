@@ -9,11 +9,11 @@ import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/junction_processor.dart';
 import 'package:floor_generator/processor/processor.dart';
+import 'package:floor_generator/processor/relation_processor.dart';
 import 'package:floor_generator/value_object/field.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:floor_generator/extension/field_element_extension.dart';
 
 class FieldProcessor extends Processor<Field> {
   final FieldElement _fieldElement;
@@ -39,16 +39,17 @@ class FieldProcessor extends Processor<Field> {
     }.whereNotNull().closestOrNull;
 
     final junction = JunctionProcessor(_fieldElement).process();
-    final isRelation = _fieldElement.isRelation();
+    final relation = RelationProcessor(_fieldElement).process();
 
     return Field(
       _fieldElement,
       name,
       columnName,
       isNullable,
-      junction != null || isRelation ? '' : _getSqlType(typeConverter),
+      junction != null || relation != null ? '' : _getSqlType(typeConverter),
       typeConverter,
-      junction,
+      junction: junction,
+      relation: relation,
     );
   }
 

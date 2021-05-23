@@ -2,7 +2,6 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/constants.dart';
 import 'package:floor_generator/misc/type_utils.dart';
-import 'package:source_gen/source_gen.dart';
 
 extension FieldElementExtension on FieldElement {
   bool get isEmbedded {
@@ -116,22 +115,4 @@ extension FieldElementExtension on FieldElement {
     return hasAnnotation(annotations.Junction);
   }
 
-  bool shouldBeIncludedRelation() {
-    if (isStatic || isSynthetic) {
-      return false;
-    }
-    if (!isRelation()) {
-      return false;
-    }
-
-    final isIgnored = hasAnnotation(annotations.Ignore);
-    if (isIgnored && !isEmbedded) {
-      throw InvalidGenerationSourceError(
-        'Skip element and relation feature cannot be used in the same field.',
-        todo: 'Consider remove @ignore.',
-        element: this,
-      );
-    }
-    return true;
-  }
 }

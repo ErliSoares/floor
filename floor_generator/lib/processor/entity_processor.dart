@@ -21,6 +21,7 @@ import 'package:floor_generator/value_object/fts.dart';
 import 'package:floor_generator/value_object/index.dart';
 import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/primary_key.dart';
+import 'package:floor_generator/value_object/relation.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 
 class EntityProcessor extends QueryableProcessor<Entity> {
@@ -52,7 +53,8 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       throw _processorError.autoIncrementInWithoutRowid;
     }
 
-    var actionsSave = getFieldsRelation().map((e) => _getSaveRelaction(e, name)).join('\n');
+    var actionsSave = fieldsAll
+        .where((e) => e.relation != null).map((e) => _getSaveRelation(e.relation!, name)).join('\n');
 
     actionsSave = actionsSave + fieldsAll
         .where((e) => e.junction != null)
@@ -66,7 +68,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       fieldsDataBaseSchema,
       fieldsQuery,
       _getPrimaryKey(fieldsDataBaseSchema),
-      _getForeignKeys(classElement),
+      getForeignKeys(classElement),
       _getIndices(fieldsDataBaseSchema, name),
       _getWithoutRowid(),
       getConstructor([...fieldsQuery, ...embeddeds.whereNot((e) => e.ignoreForQuery)]),
@@ -78,7 +80,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     );
   }
 
-  List<ForeignKey> _getForeignKeys(ClassElement classElement) {
+  List<ForeignKey> getForeignKeys(ClassElement classElement) {
     return classElement
             .getAnnotation(annotations.Entity)
             ?.getField(AnnotationField.entityForeignKeys)
@@ -368,15 +370,11 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     }
   }
 
-  String _getSaveRelaction(final FieldElement field, String tableName) {
+  String _getSaveRelation(final Relation relation, String tableName) {
     final String code;
 
+    final field = relation.fieldElement;
     final fieldType = field.type.isDartCoreList ? field.type.flatten() : field.type;
-
-    final fieldTypeElement = fieldType.element;
-    if (!(fieldTypeElement is ClassElement)) {
-      throw _processorError.typeOfFieldIsNotClass(field);
-    }
 
     final fieldOfDaoWithAllMethods = _findMethodsDaoSaveToEntity(fieldType.element!);
 
@@ -384,17 +382,8 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       throw _processorError.noMethodWithSaveAnnotation(field);
     }
 
-    final foreignKeys = _getForeignKeys(fieldTypeElement);
-    final foreignKeysRelation = foreignKeys.where((e) => e.parentName == tableName);
-    if (foreignKeysRelation.isEmpty) {
-      throw _processorError.foreignKeyDoesNotReferenceEntity(fieldTypeElement);
-    }
-    if (foreignKeysRelation.length > 1) {
-      throw _processorError.twoForeignKeysForTheSameParentTable(fieldTypeElement);
-    }
-
     final setFields = StringBuffer();
-    final foreignKey = foreignKeysRelation.first;
+    final foreignKey = relation.foreignKey;
 
     if (field.type.isDartCoreList) {
       for(var i = 0; i < foreignKey.parentColumns.length; i++){

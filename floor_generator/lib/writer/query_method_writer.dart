@@ -345,11 +345,17 @@ class QueryMethodWriter implements Writer {
     final junctionFieldForeignKeyChild = junction.foreignKeyJunctionChild.childColumns[0];
     final primaryKeyChild = junction.foreignKeyJunctionChild.parentColumns[0];
     final parentClassName = junction.parentElement.name;
-    return '''ExpandInfoSql<$parentClassName>('$name', (entities, expandChild) async {
+    return '''ExpandInfoSql<$parentClassName>('$name', (entities, expand, expandChild) async {
           final filterRelation = ['$junctionFieldForeignKeyParent', 'in', entities.map((e) => e.$primaryKeyParent).toList()];
           final relations = await floorDatabase.pessoaEndereco.getAll(LoadOptionsEntry(filter: filterRelation));
           final filterChildren = ['$primaryKeyChild', 'in', relations.map((e) => e.$junctionFieldForeignKeyChild).toList()];
+          if (expand.filter?.isNotEmpty ?? false) {
+            filterChildren.add(expand.filter!);
+          }
           final loadOptions = LoadOptionsEntry(expand: expandChild, filter: filterChildren);
+          if (expand.sort != null) {
+            loadOptions.sort = expand.sort;
+          }
           final children = await floorDatabase.endereco.getAll(loadOptions);
           for (final entry in entities) {
             entry.$name =
