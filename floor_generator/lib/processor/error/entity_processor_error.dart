@@ -119,4 +119,12 @@ class EntityProcessorError {
       element: entity,
     );
   }
+
+  InvalidGenerationSourceError twoForeignKeysForTheSameParentTable(ClassElement _classElement){
+    return InvalidGenerationSourceError(
+      'More than one link from the child table to the same parent table, it was not implemented for two or more fields to link to the child table.',
+      todo: 'Open a issue to implement the feature.',
+      element: _classElement,
+    );
+  }
 }

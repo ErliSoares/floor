@@ -60,6 +60,10 @@ class EntityProcessor extends QueryableProcessor<Entity> {
         .where((e) => e.junction != null)
         .map((e) => _getSaveJunction(e.junction!, name)).join('\n');
 
+    actionsSave = actionsSave + embeddeds
+        .where((e) => e.saveToSeparateEntity)
+        .map((e) => _getSaveEmbeddedEntity(e.fieldElement, name)).join('\n');
+
     return Entity(
       classElement,
       name,
@@ -72,9 +76,9 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       _getIndices(fieldsDataBaseSchema, name),
       _getWithoutRowid(),
       getConstructor([...fieldsQuery, ...embeddeds.whereNot((e) => e.ignoreForQuery)]),
-      _getValueMapping(fieldsInsert, embeddeds.whereNot((e) => e.ignoreForInsert).toList()),
-      _getValueMapping(fieldsUpdate, embeddeds.whereNot((e) => e.ignoreForUpdate).toList()),
-      _getValueMapping(fieldsDelete, embeddeds.whereNot((e) => e.ignoreForDelete).toList()),
+      _getValueMapping(fieldsInsert, embeddeds.whereNot((e) => e.ignoreForInsert || e.saveToSeparateEntity).toList()),
+      _getValueMapping(fieldsUpdate, embeddeds.whereNot((e) => e.ignoreForUpdate || e.saveToSeparateEntity).toList()),
+      _getValueMapping(fieldsDelete, embeddeds.whereNot((e) => e.ignoreForDelete || e.saveToSeparateEntity).toList()),
       _getFts(),
       actionsSave,
     );
@@ -470,20 +474,93 @@ class EntityProcessor extends QueryableProcessor<Entity> {
 
   FieldOfDaoWithAllMethods? _findMethodsDaoSaveToEntity(Element element) {
     return _allFieldOfDaoWithAllMethods.firstWhereOrNull((e) {
-    if (!e.method.hasAnnotation(annotations.save.runtimeType)) {
-      return false;
+      if (!e.method.hasAnnotation(annotations.save.runtimeType)) {
+        return false;
+      }
+      if (e.method.parameters.length != 1) {
+        throw _processorError.saveMethodParameterHaveMoreOne(e.method);
+      }
+      final parameter = e.method.parameters[0];
+      if (parameter.type.isNullable) {
+        throw _processorError.saveMethodParameterIsNullable(parameter);
+      }
+      if (parameter.type.element != element) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  String _getSaveEmbeddedEntity(final FieldElement field, String tableName) {
+    final String code;
+
+    final fieldType = field.type.isDartCoreList ? field.type.flatten() : field.type;
+
+    final fieldTypeElement = fieldType.element;
+    if (!(fieldTypeElement is ClassElement)) {
+      throw _processorError.noMethodWithSaveAnnotation(field);
     }
-    if (e.method.parameters.length != 1) {
-      throw _processorError.saveMethodParameterHaveMoreOne(e.method);
+
+    final fieldOfDaoWithAllMethods = _allFieldOfDaoWithAllMethods.firstWhereOrNull((e) {
+      if (!e.method.hasAnnotation(annotations.save.runtimeType)) {
+        return false;
+      }
+      if (e.method.parameters.length != 1) {
+        throw _processorError.saveMethodParameterHaveMoreOne(e.method);
+      }
+      final parameter = e.method.parameters[0];
+      if (parameter.type.isNullable) {
+        throw _processorError.saveMethodParameterIsNullable(parameter);
+      }
+      if (parameter.type != fieldType) {
+        return false;
+      }
+      return true;
+    });
+
+    if (fieldOfDaoWithAllMethods == null) {
+      throw _processorError.noMethodWithSaveAnnotation(field);
     }
-    final parameter = e.method.parameters[0];
-    if (parameter.type.isNullable) {
-      throw _processorError.saveMethodParameterIsNullable(parameter);
+
+    final foreignKeys = getForeignKeys(fieldTypeElement);
+    final foreignKeysRelation = foreignKeys.where((e) => e.parentName == tableName);
+    if (foreignKeysRelation.isEmpty) {
+      throw _processorError.foreignKeyDoesNotReferenceEntity(fieldTypeElement);
     }
-    if (parameter.type.element != element) {
-      return false;
+    if (foreignKeysRelation.length > 1) {
+      throw _processorError.twoForeignKeysForTheSameParentTable(fieldTypeElement);
     }
-    return true;
-  });
+
+    final setFields = StringBuffer();
+    final foreignKey = foreignKeysRelation.first;
+
+    if (field.type.isDartCoreList) {
+      for(var i = 0; i < foreignKey.parentColumns.length; i++){
+        setFields.writeln('sub.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
+      }
+    } else {
+      for(var i = 0; i < foreignKey.parentColumns.length; i++){
+        setFields.writeln('entity.${field.name}.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
+      }
+    }
+    if (field.type.isNullable && field.type.isDartCoreList) {
+      code = '''          if (entity.${field.name} != null) {
+            for(final sub in entity.${field.name}) {
+              ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(sub);
+            }
+          }''';
+    } else if (field.type.isDartCoreList) {
+      code = '''          for(final sub in entity.${field.name}) {
+            ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(sub);
+          }''';
+    } else if(field.type.isNullable) {
+      code = '''          if (entity.${field.name} != null) {
+            ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(entity.${field.name});
+          }''';
+    } else{
+      code = '''                ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(entity.${field.name});''';
+    }
+
+    return code;
   }
 }

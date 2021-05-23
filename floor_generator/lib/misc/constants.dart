@@ -69,6 +69,10 @@ abstract class DescriptionField {
   static const description = 'description';
 }
 
+abstract class EmbeddedField {
+  static const saveToSeparateEntity = 'saveToSeparateEntity';
+}
+
 abstract class JunctionField {
   static const entityJunction = 'entityJunction';
 }

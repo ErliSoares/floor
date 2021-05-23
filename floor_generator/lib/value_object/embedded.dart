@@ -12,6 +12,7 @@ class Embedded extends Fieldable {
   final bool ignoreForInsert;
   final bool ignoreForUpdate;
   final bool ignoreForDelete;
+  final bool saveToSeparateEntity;
 
   Embedded(FieldElement fieldElement, this.fields, this.children,
       {
@@ -19,6 +20,7 @@ class Embedded extends Fieldable {
         this.ignoreForInsert = false,
         this.ignoreForUpdate = false,
         this.ignoreForDelete = false,
+        this.saveToSeparateEntity = false,
         this.prefix
       })
       : classElement = fieldElement.type.element as ClassElement,

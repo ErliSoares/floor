@@ -41,6 +41,9 @@ class EmbeddedProcessor extends Processor<Embedded> {
       ignoreForDelete = ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!;
     }
 
+    final embeddedAnnotation = _fieldElement.getAnnotation(annotations.embedded.runtimeType)!;
+    final saveToSeparateEntity = embeddedAnnotation.getField(EmbeddedField.saveToSeparateEntity)!.toBoolValue()!;
+
     return Embedded(
       _fieldElement,
       _getFields(),
@@ -50,6 +53,7 @@ class EmbeddedProcessor extends Processor<Embedded> {
       ignoreForInsert: ignoreForInsert,
       ignoreForQuery: ignoreForQuery,
       ignoreForUpdate: ignoreForUpdate,
+      saveToSeparateEntity: saveToSeparateEntity,
     );
   }
 
