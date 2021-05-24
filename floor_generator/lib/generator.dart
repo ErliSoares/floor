@@ -37,6 +37,7 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
               database.hasViewStreams,
               database.name,
               sqlColumnProcessor: _sqlColumnProcessor,
+              allFieldOfDaoWithAllMethods: database.allFieldOfDaoWithAllMethods,
             ).write());
     final distinctTypeConverterFields = database.allTypeConverters
         .distinctBy((element) => element.name)

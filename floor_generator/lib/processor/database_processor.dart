@@ -76,6 +76,7 @@ class DatabaseProcessor extends Processor<Database> {
       version,
       databaseTypeConverters,
       allTypeConverters,
+      allFieldOfDaoWithAllMethods.toList(),
     );
   }
 

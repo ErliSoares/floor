@@ -7,23 +7,29 @@ import 'package:floor_generator/misc/annotation_expression.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
+import 'package:floor_generator/processor/database_processor.dart';
 import 'package:floor_generator/processor/error/processor_error.dart';
 import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/query.dart';
 import 'package:floor_generator/value_object/query_method.dart';
 import 'package:floor_generator/value_object/queryable.dart';
+import 'package:floor_generator/value_object/relation.dart';
 import 'package:floor_generator/value_object/view.dart';
 import 'package:floor_generator/writer/writer.dart';
 import 'package:collection/collection.dart';
+import 'package:floor_annotation/floor_annotation.dart' as annotations;
+import 'package:floor_generator/misc/extension/dart_type_extension.dart';
 import 'package:sqlparser/sqlparser.dart' as sqlparser;
 
 class QueryMethodWriter implements Writer {
   final QueryMethod _queryMethod;
   final SqlColumnProcessor? _sqlColumnProcessor;
+  final List<FieldOfDaoWithAllMethods> _allFieldOfDaoWithAllMethods;
 
-  QueryMethodWriter(final QueryMethod queryMethod, {final SqlColumnProcessor? sqlColumnProcessor})
-      : _queryMethod = queryMethod, _sqlColumnProcessor = sqlColumnProcessor;
+
+  QueryMethodWriter(final QueryMethod queryMethod, {final SqlColumnProcessor? sqlColumnProcessor, final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods = const []})
+      : _queryMethod = queryMethod, _sqlColumnProcessor = sqlColumnProcessor, _allFieldOfDaoWithAllMethods = allFieldOfDaoWithAllMethods;
 
   @override
   Method write() {
@@ -316,12 +322,20 @@ class QueryMethodWriter implements Writer {
         queryInfoParameters.writeln('whereExpressionIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
       }
 
+      final expands = StringBuffer();
+      final relations = _queryMethod.queryable?.fieldsAll.where((element) => element.relation != null).map((e) => e.relation!) ?? [];
+      if (relations.isNotEmpty) {
+        expands.writeln(_writeRelationsExpand(relations));
+      }
       final junctions = _queryMethod.queryable?.fieldsAll.where((element) => element.junction != null).map((e) => e.junction!) ?? [];
       if (junctions.isNotEmpty) {
-        queryInfoParameters.writeln('expand: [${_writeJunctions(junctions)}],');
+        expands.writeln(_writeJunctionsExpand(junctions));
       }
-      parameters..write(', queryInfo: QueryInfo($queryInfoParameters),');
+      if (expands.isNotEmpty) {
+        queryInfoParameters.writeln('expand: [$expands],');
+      }
 
+      parameters..write(', queryInfo: QueryInfo($queryInfoParameters),');
     }
 
     final list = _queryMethod.returnsList ? 'List' : '';
@@ -330,24 +344,45 @@ class QueryMethodWriter implements Writer {
     return 'return _queryAdapter.query$list$stream($parameters);';
   }
 
-  String  _writeJunctions(Iterable<Junction> junctions) {
+  String _writeJunctionsExpand(Iterable<Junction> junctions) {
     final str = StringBuffer();
     for(final junction in junctions){
-      str.writeln(_writeJunction(junction));
+      str.writeln(_writeJunctionExpand(junction));
     }
     return str.toString();
   }
 
-  String  _writeJunction(Junction junction) {
+  String _writeJunctionExpand(Junction junction) {
     final name = junction.nameProperty;
     final junctionFieldForeignKeyParent = junction.foreignKeyJunctionParent.childColumns[0];
     final primaryKeyParent = junction.foreignKeyJunctionParent.parentColumns[0];
     final junctionFieldForeignKeyChild = junction.foreignKeyJunctionChild.childColumns[0];
     final primaryKeyChild = junction.foreignKeyJunctionChild.parentColumns[0];
     final parentClassName = junction.parentElement.name;
+
+    final junctionClass = junction.entityJunction.classElement;
+    final fieldQueryDaoJunction = _findMethodLoadWithLoadOptions(junctionClass);
+    if (fieldQueryDaoJunction == null) {
+      throw ProcessorError(
+        message: 'The type ${junctionClass.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
+        todo: 'Create DAO with method @Query with return List<${junctionClass.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
+        element: junction.fieldElement,
+      );
+    }
+
+    final childClass = junction.childElement;
+    final fieldQueryDaoChild = _findMethodLoadWithLoadOptions(childClass);
+    if (fieldQueryDaoChild == null) {
+      throw ProcessorError(
+        message: 'The type ${childClass.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
+        todo: 'Create DAO with method @Query with return List<${childClass.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
+        element: junction.fieldElement,
+      );
+    }
+
     return '''ExpandInfoSql<$parentClassName>('$name', (entities, expand, expandChild) async {
           final filterRelation = ['$junctionFieldForeignKeyParent', 'in', entities.map((e) => e.$primaryKeyParent).toList()];
-          final relations = await floorDatabase.pessoaEndereco.getAll(LoadOptionsEntry(filter: filterRelation));
+          final relations = await floorDatabase.${fieldQueryDaoJunction.field.name}.${fieldQueryDaoChild.method.name}(LoadOptionsEntry(filter: filterRelation));
           final filterChildren = ['$primaryKeyChild', 'in', relations.map((e) => e.$junctionFieldForeignKeyChild).toList()];
           if (expand.filter?.isNotEmpty ?? false) {
             filterChildren.add(expand.filter!);
@@ -356,12 +391,91 @@ class QueryMethodWriter implements Writer {
           if (expand.sort != null) {
             loadOptions.sort = expand.sort;
           }
-          final children = await floorDatabase.endereco.getAll(loadOptions);
+          final children = await floorDatabase.${fieldQueryDaoChild.field.name}.${fieldQueryDaoChild.method.name}(loadOptions);
           for (final entry in entities) {
             entry.$name =
                 children.where((e) => relations.any((r) => r.$junctionFieldForeignKeyChild == e.$primaryKeyChild && r.$junctionFieldForeignKeyParent == entry.$primaryKeyParent)).toList();
           }
         }),''';
+  }
+
+  String _writeRelationsExpand(Iterable<Relation> relations) {
+    final str = StringBuffer();
+    for(final relation in relations){
+      str.writeln(_writeRelationExpand(relation));
+    }
+    return str.toString();
+  }
+
+  String _writeRelationExpand(Relation relation) {
+    final name = relation.nameProperty;
+    final parentClass = relation.parentElement;
+    final childFieldForeignKey = relation.foreignKey.childColumns[0];
+    final parentFieldForeignKey = relation.foreignKey.parentColumns[0];
+    // TODO Validar no relation para as relações terem somente um campo
+
+    final fieldQueryDao = _findMethodLoadWithLoadOptions(relation.childElement);
+    if (fieldQueryDao == null) {
+      throw ProcessorError(
+        message: 'The type ${relation.childElement.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
+        todo: 'Create DAO with method @Query with return List<${relation.childElement.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
+        element: relation.fieldElement,
+      );
+    }
+
+    final String methodFilterResultCast;
+    final String methodFilter;
+    if (relation.fieldElement.type.isDartCoreList) {
+      methodFilter = 'where';
+      methodFilterResultCast = '.toList()';
+    }  else if(relation.fieldElement.type.isNullable) {
+      methodFilter = 'firstWhereOrNull';
+      methodFilterResultCast = '';
+    } else {
+      methodFilter = 'firstWhere';
+      methodFilterResultCast = '';
+    }
+    return '''            ExpandInfoSql<${parentClass.name}>('$name', (entities, expand, expandChild) async {
+              final filterChildren = ['$childFieldForeignKey', 'in', entities.map((e) => e.$parentFieldForeignKey).toList()];
+              if (expand.filter?.isNotEmpty ?? false) {
+                filterChildren.add(expand.filter!);
+              }
+              final loadOptions = LoadOptionsEntry(expand: expandChild, filter: filterChildren);
+              if (expand.sort != null) {
+                loadOptions.sort = expand.sort;
+              }
+              final children = await floorDatabase.${fieldQueryDao.field.name}.${fieldQueryDao.method.name}(loadOptions);
+              for (final entry in entities) {
+                entry.$name = children.$methodFilter((e) => e.$childFieldForeignKey == entry.$parentFieldForeignKey)$methodFilterResultCast;
+              }
+            }),''';
+  }
+
+  FieldOfDaoWithAllMethods? _findMethodLoadWithLoadOptions(Element element) {
+    return _allFieldOfDaoWithAllMethods.firstWhereOrNull((e) {
+      if (!e.method.hasAnnotation(annotations.Query)) {
+        return false;
+      }
+      if (e.method.parameters.length != 1) {
+        return false;
+      }
+
+      final parameter = e.method.parameters[0];
+      if (!parameter.type.isLoadOptions && !parameter.type.isLoadOptionsEntry) {
+        return false;
+      }
+
+      var returnType = e.method.returnType;
+      if (returnType.isDartAsyncFuture) {
+        returnType = returnType.flatten();
+      }
+
+      if (!returnType.isDartCoreList || returnType.flatten().element != element) {
+        return false;
+      }
+
+      return true;
+    });
   }
 }
 

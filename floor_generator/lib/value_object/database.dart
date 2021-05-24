@@ -1,6 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:collection/collection.dart';
 import 'package:floor_generator/misc/extension/set_equality_extension.dart';
+import 'package:floor_generator/processor/database_processor.dart';
 import 'package:floor_generator/value_object/dao_getter.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
@@ -18,6 +19,7 @@ class Database {
   final Set<TypeConverter> allTypeConverters;
   final bool hasViewStreams;
   final Set<Entity> streamEntities;
+  final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods;
 
   Database(
     this.classElement,
@@ -28,6 +30,7 @@ class Database {
     this.version,
     this.databaseTypeConverters,
     this.allTypeConverters,
+    this.allFieldOfDaoWithAllMethods,
   )   : streamEntities =
             daoGetters.expand((dg) => dg.dao.streamEntities).toSet(),
         hasViewStreams = daoGetters.any((dg) => dg.dao.streamViews.isNotEmpty);

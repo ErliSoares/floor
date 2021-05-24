@@ -1,5 +1,6 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
+import 'package:floor_generator/processor/database_processor.dart';
 import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/dao.dart';
 import 'package:floor_generator/value_object/deletion_method.dart';
@@ -22,8 +23,9 @@ class DaoWriter extends Writer {
   final bool dbHasViewStreams;
   final String databaseNameType;
   final SqlColumnProcessor? sqlColumnProcessor;
+  final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods;
 
-  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams, this.databaseNameType, {this.sqlColumnProcessor});
+  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams, this.databaseNameType, {this.sqlColumnProcessor, this.allFieldOfDaoWithAllMethods = const []});
 
   @override
   Class write() {
@@ -273,7 +275,7 @@ class DaoWriter extends Writer {
 
   List<Method> _generateQueryMethods(final List<QueryMethod> queryMethods) {
     return queryMethods
-        .map((method) => QueryMethodWriter(method, sqlColumnProcessor: sqlColumnProcessor).write())
+        .map((method) => QueryMethodWriter(method, sqlColumnProcessor: sqlColumnProcessor, allFieldOfDaoWithAllMethods: allFieldOfDaoWithAllMethods).write())
         .toList();
   }
 
