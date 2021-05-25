@@ -212,22 +212,13 @@ class QueryMethodWriter implements Writer {
     final code = StringBuffer();
     int start = 0;
     final originalQuery = _queryMethod.query.sql;
-    for (final listParameter in _queryMethod.query.listParameters) {
-      code.write(
-          originalQuery.substring(start, listParameter.position).toLiteral());
-      code.write(' + _sqliteVariablesFor${listParameter.name.capitalize()} + ');
-      start = listParameter.position + varlistPlaceholder.length;
-    }
-    code.write(originalQuery.substring(start).toLiteral());
 
-    var sql = code.toString();
-
+    var tableName = '';
     final flattenedReturnTypeElement = _queryMethod.flattenedReturnType.element;
     if (flattenedReturnTypeElement is ClassElement) {
-      final tableName = flattenedReturnTypeElement.tableName();
-      sql = sql.replaceAll(r'$table_name_of_return_type', tableName);
+      tableName = flattenedReturnTypeElement.tableName();
     } else {
-      if (sql.contains(r'$table_name_of_return_type')) {
+      if (originalQuery.contains(r'$table_name_of_return_type')) {
         throw ProcessorError(
           message:
           r'The $table_name_of_return_type variable in the query string cannot be used when the method return is not an entity',
@@ -237,7 +228,18 @@ class QueryMethodWriter implements Writer {
         );
       }
     }
-    return sql;
+
+    for (final listParameter in _queryMethod.query.listParameters) {
+      code.write(
+          originalQuery.substring(start, listParameter.position)
+              .replaceAll(r'$table_name_of_return_type', tableName).toLiteral());
+      code.write(' + _sqliteVariablesFor${listParameter.name.capitalize()} + ');
+      start = listParameter.position + varlistPlaceholder.length;
+    }
+    code.write(originalQuery.substring(start)
+        .replaceAll(r'$table_name_of_return_type', tableName).toLiteral());
+
+    return code.toString();
   }
 
   String _generateNoReturnQuery(final String query, final String? arguments) {
@@ -335,7 +337,7 @@ class QueryMethodWriter implements Writer {
         queryInfoParameters.writeln('expand: [$expands],');
       }
 
-      parameters..write(', queryInfo: QueryInfo($queryInfoParameters),');
+      parameters..write(', queryInfo: QueryInfo<${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}>($queryInfoParameters),');
     }
 
     final list = _queryMethod.returnsList ? 'List' : '';

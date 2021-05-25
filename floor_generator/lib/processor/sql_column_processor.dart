@@ -24,7 +24,7 @@ class SqlColumnProcessor {
       final errors = result.errors.map((e) => e.message).join(', ');
       if (result.errors.isNotEmpty) {
         throw InvalidGenerationSourceError(
-          'Não foi possível analisar o SQL: `$query`.\nErros: $errors',
+          'Não foi possível analisar a query: `$query`.\nErros: $errors',
           todo: 'Ajuste os erros do SQL',
           element: element,
         );

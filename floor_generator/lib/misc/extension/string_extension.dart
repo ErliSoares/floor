@@ -1,3 +1,12 @@
+const int _asciiEnd = 0x7f;
+
+const int _asciiStart = 0x0;
+
+const int _c0End = 0x1f;
+
+const int _c0Start = 0x00;
+
+
 extension StringExtension on String {
   String firstCharToUpper() {
     if (isEmpty) {
@@ -55,9 +64,68 @@ extension NullableStringExtension on String? {
     if (this == null) {
       return 'null';
     } else {
-      //TODO escape correctly
-      return "'$this'";
+      return "'${escape(this!)}'";
     }
+  }
+
+  /// Returns an escaped string.
+  ///
+  /// Example:
+  ///     print(escape("Hello 'world' \n"));
+  ///     => Hello \'world\' \n
+  String escape(String string) {
+    if (string.isEmpty) {
+      return string;
+    }
+
+    final sb = StringBuffer();
+
+    for(int i = 0; i<string.length; i++) {
+      final s = string[i];
+      final runes = s.runes;
+      if (runes.length == 1) {
+        final c = runes.first;
+        if (c >= _c0Start && c <= _c0End) {
+          switch (c) {
+            case 9:
+              sb.write('\\t');
+              break;
+            case 10:
+              sb.write('\\n');
+              break;
+            case 13:
+              sb.write('\\r');
+              break;
+            default:
+              sb.write(c);
+          }
+        } else if (c >= _asciiStart && c <= _asciiEnd) {
+          switch (c) {
+            case 34:
+              sb.write('\\\"');
+              break;
+            case 36:
+              sb.write('\\\$');
+              break;
+            case 39:
+              sb.write("\\\'");
+              break;
+            case 92:
+              sb.write('\\\\');
+              break;
+            default:
+              sb.write(s);
+          }
+        } else {
+          sb.write(s);
+        }
+      } else {
+        // Experimental: Assuming that all clusters does not need to be escaped
+        sb.write(s);
+      }
+    }
+
+    return sb.toString();
   }
 
   /// Remove ['] or ["]

@@ -3,7 +3,7 @@ import 'package:floor/src/schema/column_sql.dart';
 import 'package:flutter/foundation.dart';
 
 /// Data to process loadOptions
-class QueryInfo {
+class QueryInfo<T> {
   QueryInfo({
     required this.columns,
     required this.columnsIndex,
@@ -28,7 +28,7 @@ class QueryInfo {
   RangeIndex? whereClauseIndex;
   RangeIndex? whereExpressionIndex;
 
-  List<ExpandInfoSql> expand;
+  List<ExpandInfoSql<T>> expand;
 }
 
 /// pair of start and end values

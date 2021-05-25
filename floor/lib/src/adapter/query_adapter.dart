@@ -39,7 +39,7 @@ class QueryAdapter {
     final List<Object>? arguments,
     required final T Function(Map<String, Object?>) mapper,
     LoadOptionsEntry? loadOptions,
-    QueryInfo? queryInfo,
+    QueryInfo<T>? queryInfo,
   }) async {
     if (loadOptions == null) {
       final rows = await _database.rawQuery(sql, arguments);

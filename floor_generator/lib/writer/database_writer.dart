@@ -1,5 +1,6 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:floor_generator/misc/annotation_expression.dart';
+import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/value_object/database.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/writer/writer.dart';
@@ -70,16 +71,16 @@ class DatabaseWriter implements Writer {
   Method _generateOpenMethod(final Database database) {
     final createTableStatements =
         _generateCreateTableSqlStatements(database.entities)
-            .map((statement) => "await database.execute('$statement');")
+            .map((statement) => 'await database.execute(${statement.toLiteral()});')
             .join('\n');
     final createIndexStatements = database.entities
         .map((entity) => entity.indices.map((index) => index.createQuery()))
         .expand((statements) => statements)
-        .map((statement) => "await database.execute('$statement');")
+        .map((statement) => 'await database.execute(${statement.toLiteral()});')
         .join('\n');
     final createViewStatements = database.views.where((e) => !e.isQueryView)
-        .map((view) => view.getCreateViewStatement())
-        .map((statement) => "await database.execute('''$statement''');")
+        .map((view) => view.getCreateViewStatement().toLiteral())
+        .map((statement) => 'await database.execute(${statement.toLiteral()});')
         .join('\n');
 
     final pathParameter = Parameter((builder) => builder
