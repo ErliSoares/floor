@@ -75,4 +75,5 @@ abstract class EmbeddedField {
 
 abstract class JunctionField {
   static const entityJunction = 'entityJunction';
+  static const ignoreSaveChild = 'ignoreSaveChild';
 }

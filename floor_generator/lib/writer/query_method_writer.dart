@@ -394,9 +394,11 @@ class QueryMethodWriter implements Writer {
             loadOptions.sort = expand.sort;
           }
           final children = await floorDatabase.${fieldQueryDaoChild.field.name}.${fieldQueryDaoChild.method.name}(loadOptions);
-          for (final entry in entities) {
-            entry.$name =
-                children.where((e) => relations.any((r) => r.$junctionFieldForeignKeyChild == e.$primaryKeyChild && r.$junctionFieldForeignKeyParent == entry.$primaryKeyParent)).toList();
+          if (children.isNotEmpty) {
+            for (final entry in entities) {
+              entry.$name =
+                  children.where((e) => relations.any((r) => r.$junctionFieldForeignKeyChild == e.$primaryKeyChild && r.$junctionFieldForeignKeyParent == entry.$primaryKeyParent)).toList();
+            }
           }
         }),''';
   }
@@ -447,8 +449,10 @@ class QueryMethodWriter implements Writer {
                 loadOptions.sort = expand.sort;
               }
               final children = await floorDatabase.${fieldQueryDao.field.name}.${fieldQueryDao.method.name}(loadOptions);
-              for (final entry in entities) {
-                entry.$name = children.$methodFilter((e) => e.$childFieldForeignKey == entry.$parentFieldForeignKey)$methodFilterResultCast;
+              if (children.isNotEmpty) {
+                for (final entry in entities) {
+                  entry.$name = children.$methodFilter((e) => e.$childFieldForeignKey == entry.$parentFieldForeignKey)$methodFilterResultCast;
+                }
               }
             }),''';
   }

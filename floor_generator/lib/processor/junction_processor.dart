@@ -36,6 +36,8 @@ class JunctionProcessor extends Processor<Junction?> {
     final junctionAnnotation = _fieldElement.getAnnotation(annotations.Junction)!;
     final entityJunctionAnnotation = junctionAnnotation.getField(JunctionField.entityJunction)!.toTypeValue()!;
 
+    final ignoreSaveChild = junctionAnnotation.getField(JunctionField.ignoreSaveChild)!.toBoolValue()!;
+
     final parentElement = _fieldElement.enclosingElement as ClassElement;
     final tableNameParent = parentElement.tableName();
 
@@ -76,6 +78,7 @@ class JunctionProcessor extends Processor<Junction?> {
       fieldElement: _fieldElement,
       foreignKeyJunctionChild: foreignKeyChild,
       foreignKeyJunctionParent: foreignKeyParent,
+      ignoreSaveChild: ignoreSaveChild,
     );
   }
 }

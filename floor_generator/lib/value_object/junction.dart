@@ -10,6 +10,7 @@ class Junction {
   final ForeignKey foreignKeyJunctionParent;
   final Entity entityJunction;
   final ClassElement childElement;
+  final bool ignoreSaveChild;
 
   Junction({
     required this.parentElement,
@@ -19,5 +20,6 @@ class Junction {
     required this.foreignKeyJunctionParent,
     required this.entityJunction,
     required this.childElement,
+    required this.ignoreSaveChild,
   });
 }

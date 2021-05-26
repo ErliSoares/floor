@@ -401,19 +401,19 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     if (field.type.isNullable && field.type.isDartCoreList) {
       code = '''          if (entity.${field.name} != null) {
             for(final sub in entity.${field.name}) {
-              ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(sub);
+              ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
             }
           }''';
     } else if (field.type.isDartCoreList) {
       code = '''          for(final sub in entity.${field.name}) {
-            ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(sub);
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
           }''';
     } else if(field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
-            ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(entity.${field.name});
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});
           }''';
     } else{
-      code = '''                ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(entity.${field.name});''';
+      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
     }
 
     return code;
@@ -435,37 +435,65 @@ class EntityProcessor extends QueryableProcessor<Entity> {
 
     final field = junction.fieldElement;
     if (field.type.isNullable && field.type.isDartCoreList) {
+      final String saveChildCode;
+      if (junction.ignoreSaveChild) {
+        saveChildCode = '';
+      } else {
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
+      }
       code = '''          if (entity.${field.name} != null) {
             for(final sub in entity.${field.name}) {
-              floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.save(sub);
-              floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.save(${entityJunctionClass.name}(
+              $saveChildCode
+              await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
                 ${junction.foreignKeyJunctionChild.childColumns[0]}: sub.${junction.foreignKeyJunctionChild.parentColumns[0]},
                 ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
+                deleted: sub.deleted,
               ));
             }
           }''';
     } else if (field.type.isDartCoreList) {
+      final String saveChildCode;
+      if (junction.ignoreSaveChild) {
+        saveChildCode = '';
+      } else {
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
+      }
       code = '''          for(final sub in entity.${field.name}) {
-              floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.save(sub);
-              floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.save(${entityJunctionClass.name}(
+              $saveChildCode
+              await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
                 ${junction.foreignKeyJunctionChild.childColumns[0]}: sub.${junction.foreignKeyJunctionChild.parentColumns[0]},
                 ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
+                deleted: sub.deleted,
               ));
             }''';
     } else if(field.type.isNullable) {
+      final String saveChildCode;
+      if (junction.ignoreSaveChild) {
+        saveChildCode = '';
+      } else {
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name});';
+      }
       code = '''          if (entity.${field.name} != null) {
-              floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.save(entity.${field.name});
-              floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.save(${entityJunctionClass.name}(
+              $saveChildCode
+              await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
                 ${junction.foreignKeyJunctionChild.childColumns[0]}: entity.${field.name}.${junction.foreignKeyJunctionChild.parentColumns[0]},
                 ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
+                deleted: entity.${field.name}!.deleted,
               ));
             }''';
-    } else{
+    } else {
+      final String saveChildCode;
+      if (junction.ignoreSaveChild) {
+        saveChildCode = '';
+      } else {
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name});';
+      }
       code = '''
-              floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.save(entity.${field.name});
-              floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.save(${entityJunctionClass.name}(
+              $saveChildCode
+              await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
                 ${junction.foreignKeyJunctionChild.childColumns[0]}: entity.${field.name}.${junction.foreignKeyJunctionChild.parentColumns[0]},
                 ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
+                deleted: entity.${field.name}!.deleted, // TODO todos esses lugares de deleted pegar os campos da pai e setar na filha
               ));''';
     }
 
@@ -546,19 +574,19 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     if (field.type.isNullable && field.type.isDartCoreList) {
       code = '''          if (entity.${field.name} != null) {
             for(final sub in entity.${field.name}) {
-              ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(sub);
+              ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
             }
           }''';
     } else if (field.type.isDartCoreList) {
       code = '''          for(final sub in entity.${field.name}) {
-            ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(sub);
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
           }''';
     } else if(field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
-            ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(entity.${field.name});
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});
           }''';
     } else{
-      code = '''                ${setFields}floorDatabase.${fieldOfDaoWithAllMethods.field.name}.save(entity.${field.name});''';
+      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
     }
 
     return code;

@@ -9,7 +9,7 @@ class DeletionAdapter<T> {
   final List<String> _primaryKeyColumnNames;
   final Map<String, Object?> Function(T) _valueMapper;
   final StreamController<String>? _changeListener;
-  final void Function(T entity)? _deleted;
+  final Future<void> Function(T entity)? _deleted;
   FutureOr<void> Function(T entity)? afterDelete;
 
   DeletionAdapter(
@@ -19,7 +19,7 @@ class DeletionAdapter<T> {
     final Map<String, Object?> Function(T) valueMapper,
       {
         final StreamController<String>? changeListener,
-        void Function(T entity)? deleted,
+        Future<void> Function(T entity)? deleted,
         this.afterDelete,
       }
     )  : assert(entityName.isNotEmpty),
@@ -61,11 +61,11 @@ class DeletionAdapter<T> {
         _valueMapper(item),
       ),
     );
+    if (_deleted != null) {
+      await _deleted!(item);
+    }
     if (result != 0) {
       _changeListener?.add(_entityName);
-      if (_deleted != null) {
-        _deleted!(item);
-      }
     }
     return result;
   }
@@ -88,12 +88,12 @@ class DeletionAdapter<T> {
       );
     }
     final result = (await batch.commit(noResult: false)).cast<int>();
-    if (result.isNotEmpty) {
-      _changeListener?.add(_entityName);
-      if (_deleted != null) {
-        items.forEach(_deleted!);
+    if (_deleted != null) {
+      for (final entity in items) {
+        await _deleted!(entity);
       }
     }
+    _changeListener?.add(_entityName);
     return result.isNotEmpty
         ? result.reduce((sum, element) => sum + element)
         : 0;

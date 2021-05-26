@@ -1,5 +1,7 @@
 class Junction {
   final Type entityJunction;
 
-  const Junction(this.entityJunction);
+  final bool ignoreSaveChild;
+
+  const Junction(this.entityJunction, {this.ignoreSaveChild = false});
 }

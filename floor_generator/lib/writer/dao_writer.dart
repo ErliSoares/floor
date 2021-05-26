@@ -65,7 +65,7 @@ class DaoWriter extends Writer {
 
       constructorBuilder
         ..initializers.add(Code(
-            "_queryAdapter = QueryAdapter(floorDatabase.database${queriesRequireChangeListener ? ', changeListener: changeListener' : ''})"));
+            "_queryAdapter = QueryAdapter($databaseFieldName.database${queriesRequireChangeListener ? ', changeListener: changeListener' : ''})"));
     }
 
     final insertionMethods = dao.insertionMethods;
@@ -102,10 +102,10 @@ class DaoWriter extends Writer {
         if (entity.actionsSave.isNotEmpty) {
           insertedBody.writeln(entity.actionsSave);
         }
-        final insertedCode = insertedBody.isEmpty ? '' : ', inserted: (id, entity) { $insertedBody }';
+        final insertedCode = insertedBody.isEmpty ? '' : ', inserted: (id, entity) async { $insertedBody }';
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = InsertionAdapter(floorDatabase.database, '${entity.name}', $valueMapper$insertedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+              "$fieldName = InsertionAdapter($databaseFieldName.database, '${entity.name}', $valueMapper$insertedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
 
         final afterOperations = dao.afterOperations.where((e) => e.forInsert).toList();
         if (afterOperations.isNotEmpty) {
@@ -144,14 +144,14 @@ class DaoWriter extends Writer {
 
         final String updatedCode;
         if (entity.actionsSave.isNotEmpty) {
-          updatedCode = ', updated: (entity) { ${entity.actionsSave} }';
+          updatedCode = ', updated: (entity) async { ${entity.actionsSave} }';
         } else{
           updatedCode = '';
         }
 
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = UpdateAdapter(floorDatabase.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$updatedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+              "$fieldName = UpdateAdapter($databaseFieldName.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$updatedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
 
         final afterOperations = dao.afterOperations.where((e) => e.forUpdate).toList();
         if (afterOperations.isNotEmpty) {
@@ -197,7 +197,7 @@ class DaoWriter extends Writer {
 
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = DeletionAdapter(floorDatabase.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$deletedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+              "$fieldName = DeletionAdapter($databaseFieldName.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$deletedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
 
         final afterOperations = dao.afterOperations.where((e) => e.forDelete).toList();
         if (afterOperations.isNotEmpty) {

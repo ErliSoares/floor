@@ -11,7 +11,7 @@ class UpdateAdapter<T> {
   final List<String> _primaryKeyColumnName;
   final Map<String, Object?> Function(T) _valueMapper;
   final StreamController<String>? _changeListener;
-  final void Function(T entity)? _updated;
+  final Future<void> Function(T entity)? _updated;
   FutureOr<void> Function(T entity)? afterUpdate;
 
   UpdateAdapter(
@@ -21,7 +21,7 @@ class UpdateAdapter<T> {
     final Map<String, Object?> Function(T) valueMapper,
       {
         final StreamController<String>? changeListener,
-        final void Function(T entity)? updated,
+        final Future<void> Function(T entity)? updated,
         this.afterUpdate,
       })  : assert(entityName.isNotEmpty),
         assert(primaryKeyColumnName.isNotEmpty),
@@ -81,11 +81,11 @@ class UpdateAdapter<T> {
       ),
       conflictAlgorithm: onConflictStrategy.asSqfliteConflictAlgorithm(),
     );
+    if (_updated != null) {
+      await _updated!(item);
+    }
     if (result != 0) {
       _changeListener?.add(_entityName);
-      if (_updated != null) {
-        _updated!(item);
-      }
     }
     return result;
   }
@@ -115,11 +115,13 @@ class UpdateAdapter<T> {
       );
     }
     final result = (await batch.commit(noResult: false)).cast<int>();
+    if (_updated != null) {
+      for (final entity in items) {
+        await _updated!(entity);
+      }
+    }
     if (result.isNotEmpty) {
       _changeListener?.add(_entityName);
-      if (_updated != null) {
-        items.forEach(_updated!);
-      }
     }
     return result.isNotEmpty
         ? result.reduce((sum, element) => sum + element)

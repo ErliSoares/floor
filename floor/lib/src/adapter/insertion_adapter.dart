@@ -9,7 +9,7 @@ class InsertionAdapter<T> {
   final String _entityName;
   final Map<String, Object?> Function(T) _valueMapper;
   final StreamController<String>? _changeListener;
-  final void Function(int id, T entity)? _inserted;
+  final Future<void> Function(int id, T entity)? _inserted;
   FutureOr<void> Function(T entity)? afterInsert;
 
   InsertionAdapter(
@@ -17,7 +17,7 @@ class InsertionAdapter<T> {
     final String entityName,
     final Map<String, Object?> Function(T) valueMapper,
       {
-        final void Function(int id, T entity)? inserted,
+        final Future<void> Function(int id, T entity)? inserted,
         final StreamController<String>? changeListener,
         this.afterInsert,
       })  : assert(entityName.isNotEmpty),
@@ -55,7 +55,7 @@ class InsertionAdapter<T> {
     final result = (await batch.commit(noResult: false)).cast<int>();
     if (_inserted != null) {
       for (var i = 0; i < result.length; i++) {
-        _inserted!(result[i], items[i]);
+        await _inserted!(result[i], items[i]);
       }
     }
     _changeListener?.add(_entityName);
@@ -87,13 +87,13 @@ class InsertionAdapter<T> {
       );
     }
     final result = (await batch.commit(noResult: false)).cast<int>();
+    if (_inserted != null) {
+      for (var i = 0; i < result.length; i++) {
+        await _inserted!(result[i], items[i]);
+      }
+    }
     if (result.isNotEmpty) {
       _changeListener?.add(_entityName);
-      if (_inserted != null) {
-        for (var i = 0; i < result.length; i++) {
-          _inserted!(result[i], items[i]);
-        }
-      }
     }
     return result;
   }
@@ -110,10 +110,10 @@ class InsertionAdapter<T> {
       _valueMapper(item),
       conflictAlgorithm: onConflictStrategy.asSqfliteConflictAlgorithm(),
     );
+    if (_inserted != null) {
+      await _inserted!(result, item);
+    }
     if (result != 0) {
-      if (_inserted != null) {
-        _inserted!(result, item);
-      }
       _changeListener?.add(_entityName);
     }
     return result;
