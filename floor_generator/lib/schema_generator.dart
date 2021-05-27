@@ -14,6 +14,7 @@ import 'package:floor_generator/processor/embedded_processor.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:collection/collection.dart';
+import 'package:floor_generator/extension/class_extension.dart';
 // ignore: implementation_imports
 import 'package:source_gen/src/output_helpers.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
@@ -89,16 +90,17 @@ class SchemaGenerator extends Generator {
     final fields = [
       ...element.fields,
       ...element.allSupertypes.expand((type) => type.element.fields),
-    ]
-        .expand((e) => e.isEmbedded ? e.toColumnDataEmbedded() : [e.toColumnData()])
-        .where((e) => e != null)
-        .cast<ColumnData>();
+    ].expand((e) => e.isEmbedded ? e.toColumnDataEmbedded() : [e.toColumnData()]).whereNotNull();
+
+    final cloneCode = _generateClone(element);
 
     final str = StringBuffer();
 
     final code = """mixin ${className}Mixin {
   @ignore
   ${className}Schema get schema => ${className}Schema.instance;
+  
+  $cloneCode
 }
 
 class ${className}Schema extends Table {
@@ -118,6 +120,94 @@ ${fields.map((e) => e.writeCol()).join('\n')}
     str.write(code);
 
     return str.toString();
+  }
+
+  String _generateClone(ClassElement classElement) {
+    final fields = [
+      ...classElement.fields,
+      ...classElement.allSupertypes.expand((type) => type.element.fields),
+    ];
+
+    final constructorParameters = classElement.constructors.first.parameters.where((e) => fields.any((f) => e.name == f.name) );
+    final fieldsOutsideConstructor = fields
+        .where((f) => constructorParameters.every((e) => e.name != f.name))
+        .toList();
+
+    final parametersConstructor = constructorParameters
+        .map((parameterElement) => _getParametersValuesConstructor(parameterElement, fields))
+        .join(', ');
+
+    final parametersOutsideConstructor = _getValueMappingOutsideConstructor(fields, fieldsOutsideConstructor);
+
+    return '''  ${classElement.name} clone() {
+    final entry = this as ${classElement.name};
+    return ${classElement.name}(
+      $parametersConstructor
+    )$parametersOutsideConstructor;
+  }''';
+  }
+
+  String _getValueMappingOutsideConstructor(final List<FieldElement> fields, final List<FieldElement> fieldsOutsideConstructor) {
+    final keyValueList = fieldsOutsideConstructor.map((fieldElement) {
+      final parameterName = fieldElement.name;
+      final field = fields.firstWhereOrNull((field) => field.name == parameterName);
+      if (field != null && field.setter != null) {
+        String parameterValue;
+        final typeParameter = fieldElement.type.element;
+        if (typeParameter is ClassElement && typeParameter.isEntity) {
+          final nullableText = field.type.isNullable ? '?' : '';
+          parameterValue = 'entry.$parameterName$nullableText.clone()';
+        } else if(fieldElement.type.isDartCoreList) {
+          final typeCollection = fieldElement.type.flatten().element;
+          final nullableText = field.type.isNullable ? '?' : '';
+          if (typeCollection is ClassElement && typeCollection.isEntity) {
+            parameterValue = 'entry.$parameterName$nullableText.map((e) => e.clone()).toList()';
+          } else {
+            parameterValue = '[...entry.$parameterName$nullableText]';
+          }
+        } else {
+          parameterValue = 'entry.$parameterName';
+        }
+
+        return '..$parameterName = $parameterValue';
+      }
+      return null;
+    }).whereNotNull().toList();
+
+    return keyValueList.join('\n');
+  }
+
+
+
+  String _getParametersValuesConstructor(
+    final ParameterElement parameterElement,
+    final List<FieldElement> fields,
+  ) {
+    final parameterName = parameterElement.name;
+
+    final field = fields.firstWhere((e) => e.name == parameterName);
+
+    String parameterValue;
+    final typeParameter = parameterElement.type.element;
+    if (typeParameter is ClassElement && typeParameter.isEntity) {
+      final nullableText = field.type.isNullable ? '?' : '';
+      parameterValue = 'entry.$parameterName$nullableText.clone()';
+    } else if(parameterElement.type.isDartCoreList) {
+      final typeCollection = parameterElement.type.flatten().element;
+      final nullableText = field.type.isNullable ? '?' : '';
+      if (typeCollection is ClassElement && typeCollection.isEntity) {
+        parameterValue = 'entry.$parameterName$nullableText.map((e) => e.clone()).toList()';
+      } else {
+        parameterValue = '[...entry.$parameterName$nullableText]';
+      }
+    } else {
+      parameterValue = 'entry.$parameterName';
+    }
+
+    if (parameterElement.isNamed) {
+      return '$parameterName: $parameterValue';
+    }
+    return parameterValue;
   }
 }
 

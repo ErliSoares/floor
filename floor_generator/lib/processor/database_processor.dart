@@ -17,6 +17,7 @@ import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/queryable.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:floor_generator/value_object/view.dart';
+import 'package:floor_generator/extension/class_extension.dart';
 
 class DatabaseProcessor extends Processor<Database> {
   final DatabaseProcessorError _processorError;
@@ -196,8 +197,7 @@ class DatabaseProcessor extends Processor<Database> {
   }
 
   bool _isEntity(final ClassElement classElement) {
-    return classElement.hasAnnotation(annotations.Entity) &&
-        !classElement.isAbstract;
+    return classElement.isEntity;
   }
 
   bool _isView(final ClassElement classElement) {
