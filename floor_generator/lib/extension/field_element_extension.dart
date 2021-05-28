@@ -111,6 +111,15 @@ extension FieldElementExtension on FieldElement {
     return hasAnnotation(annotations.relation.runtimeType);
   }
 
+  String nameColumnInSql(){
+    return hasAnnotation(annotations.ColumnInfo)
+        ? getAnnotation(annotations.ColumnInfo)
+        ?.getField(AnnotationField.columnInfoName)
+        ?.toStringValue() ??
+        name
+        : name;
+  }
+
   bool isJunction(){
     return hasAnnotation(annotations.Junction);
   }

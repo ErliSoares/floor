@@ -15,6 +15,7 @@ import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:collection/collection.dart';
 import 'package:floor_generator/extension/class_extension.dart';
+
 // ignore: implementation_imports
 import 'package:source_gen/src/output_helpers.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
@@ -85,7 +86,7 @@ class SchemaGenerator extends Generator {
     }
 
     final tableName = element.tableName();
-    final className = element.displayName;
+    final className = element.name;
 
     final fields = [
       ...element.fields,
@@ -94,6 +95,8 @@ class SchemaGenerator extends Generator {
 
     final cloneCode = _generateClone(element);
 
+    final fieldsCode = _generateFields(element);
+
     final str = StringBuffer();
 
     final code = """mixin ${className}Mixin {
@@ -101,6 +104,8 @@ class SchemaGenerator extends Generator {
   ${className}Schema get schema => ${className}Schema.instance;
   
   $cloneCode
+  
+  $fieldsCode
 }
 
 class ${className}Schema extends Table {
@@ -122,16 +127,86 @@ ${fields.map((e) => e.writeCol()).join('\n')}
     return str.toString();
   }
 
+  String _generateFields(ClassElement classElement) {
+    final fields = [
+      ...classElement.fields,
+      ...classElement.allSupertypes.expand((type) => type.element.fields),
+    ].where((e) => !e.isSynthetic && !e.isStatic);
+
+    final fieldsCode = fields.map((e) {
+      final isIgnored = e.hasAnnotation(annotations.Ignore);
+      var ignoreForQuery = false;
+      var ignoreForInsert = false;
+      var ignoreForUpdate = false;
+      var ignoreForDelete = false;
+
+      if (isIgnored) {
+        final ignoreAnnotation = e.getAnnotation(annotations.Ignore)!;
+        ignoreForQuery = ignoreAnnotation.getField(IgnoreField.forQuery)!.toBoolValue()!;
+        ignoreForInsert = ignoreAnnotation.getField(IgnoreField.forInsert)!.toBoolValue()!;
+        ignoreForUpdate = ignoreAnnotation.getField(IgnoreField.forUpdate)!.toBoolValue()!;
+        ignoreForDelete = ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!;
+      }
+
+      final String code;
+      int totalIgnores = 0;
+      if (ignoreForQuery) totalIgnores += 1;
+      if (ignoreForInsert) totalIgnores += 1;
+      if (ignoreForUpdate) totalIgnores += 1;
+      if (ignoreForDelete) totalIgnores += 1;
+
+      final valueDataBase = _getFieldValueDataBase(e);
+
+      if (totalIgnores > 2) {
+        var ignores = '';
+        if (!ignoreForQuery) {
+          ignores += ', ignoreForQuery: false';
+        }
+        if (!ignoreForInsert) {
+          ignores += ', ignoreForInsert: false';
+        }
+        if (!ignoreForUpdate) {
+          ignores += ', ignoreForUpdate: false';
+        }
+        if (!ignoreForDelete) {
+          ignores += ', ignoreForDelete: false';
+        }
+        code =
+            '''FieldData.ignoreAll('${e.name}', entry.${e.name}, $valueDataBase, '${e.nameColumnInSql()}'$ignores)''';
+      } else {
+        var ignores = '';
+        if (ignoreForQuery) {
+          ignores += ', ignoreForQuery: true';
+        }
+        if (ignoreForInsert) {
+          ignores += ', ignoreForInsert: true';
+        }
+        if (ignoreForUpdate) {
+          ignores += ', ignoreForUpdate: true';
+        }
+        if (ignoreForDelete) {
+          ignores += ', ignoreForDelete: true';
+        }
+        code = '''FieldData('${e.name}', entry.${e.name}, $valueDataBase, '${e.nameColumnInSql()}'$ignores)''';
+      }
+      return code;
+    }).join(',');
+    return '''  @ignore
+  List<FieldData> get fields {
+    final entry = this as ${classElement.name};
+    return [$fieldsCode];
+  }''';
+  }
+
   String _generateClone(ClassElement classElement) {
     final fields = [
       ...classElement.fields,
       ...classElement.allSupertypes.expand((type) => type.element.fields),
     ];
 
-    final constructorParameters = classElement.constructors.first.parameters.where((e) => fields.any((f) => e.name == f.name) );
-    final fieldsOutsideConstructor = fields
-        .where((f) => constructorParameters.every((e) => e.name != f.name))
-        .toList();
+    final constructorParameters =
+        classElement.constructors.first.parameters.where((e) => fields.any((f) => e.name == f.name));
+    final fieldsOutsideConstructor = fields.where((f) => constructorParameters.every((e) => e.name != f.name)).toList();
 
     final parametersConstructor = constructorParameters
         .map((parameterElement) => _getParametersValuesConstructor(parameterElement, fields))
@@ -147,37 +222,39 @@ ${fields.map((e) => e.writeCol()).join('\n')}
   }''';
   }
 
-  String _getValueMappingOutsideConstructor(final List<FieldElement> fields, final List<FieldElement> fieldsOutsideConstructor) {
-    final keyValueList = fieldsOutsideConstructor.map((fieldElement) {
-      final parameterName = fieldElement.name;
-      final field = fields.firstWhereOrNull((field) => field.name == parameterName);
-      if (field != null && field.setter != null) {
-        String parameterValue;
-        final typeParameter = fieldElement.type.element;
-        if (typeParameter is ClassElement && typeParameter.isEntity) {
-          final nullableText = field.type.isNullable ? '?' : '';
-          parameterValue = 'entry.$parameterName$nullableText.clone()';
-        } else if(fieldElement.type.isDartCoreList) {
-          final typeCollection = fieldElement.type.flatten().element;
-          final nullableText = field.type.isNullable ? '?' : '';
-          if (typeCollection is ClassElement && typeCollection.isEntity) {
-            parameterValue = 'entry.$parameterName$nullableText.map((e) => e.clone()).toList()';
-          } else {
-            parameterValue = '[...entry.$parameterName$nullableText]';
-          }
-        } else {
-          parameterValue = 'entry.$parameterName';
-        }
+  String _getValueMappingOutsideConstructor(
+      final List<FieldElement> fields, final List<FieldElement> fieldsOutsideConstructor) {
+    final keyValueList = fieldsOutsideConstructor
+        .map((fieldElement) {
+          final parameterName = fieldElement.name;
+          final field = fields.firstWhereOrNull((field) => field.name == parameterName);
+          if (field != null && field.setter != null) {
+            String parameterValue;
+            final typeParameter = fieldElement.type.element;
+            if (typeParameter is ClassElement && typeParameter.isEntity) {
+              final nullableText = field.type.isNullable ? '?' : '';
+              parameterValue = 'entry.$parameterName$nullableText.clone()';
+            } else if (fieldElement.type.isDartCoreList) {
+              final typeCollection = fieldElement.type.flatten().element;
+              final nullableText = field.type.isNullable ? '?' : '';
+              if (typeCollection is ClassElement && typeCollection.isEntity) {
+                parameterValue = 'entry.$parameterName$nullableText.map((e) => e.clone()).toList()';
+              } else {
+                parameterValue = '[...entry.$parameterName$nullableText]';
+              }
+            } else {
+              parameterValue = 'entry.$parameterName';
+            }
 
-        return '..$parameterName = $parameterValue';
-      }
-      return null;
-    }).whereNotNull().toList();
+            return '..$parameterName = $parameterValue';
+          }
+          return null;
+        })
+        .whereNotNull()
+        .toList();
 
     return keyValueList.join('\n');
   }
-
-
 
   String _getParametersValuesConstructor(
     final ParameterElement parameterElement,
@@ -192,7 +269,7 @@ ${fields.map((e) => e.writeCol()).join('\n')}
     if (typeParameter is ClassElement && typeParameter.isEntity) {
       final nullableText = field.type.isNullable ? '?' : '';
       parameterValue = 'entry.$parameterName$nullableText.clone()';
-    } else if(parameterElement.type.isDartCoreList) {
+    } else if (parameterElement.type.isDartCoreList) {
       final typeCollection = parameterElement.type.flatten().element;
       final nullableText = field.type.isNullable ? '?' : '';
       if (typeCollection is ClassElement && typeCollection.isEntity) {
@@ -209,18 +286,41 @@ ${fields.map((e) => e.writeCol()).join('\n')}
     }
     return parameterValue;
   }
+
+  String _getFieldValueDataBase(FieldElement parameter) {
+    if (parameter.type.isDefaultSqlType) {
+      if (parameter.type.isDartCoreBool) {
+        return 'entry.${parameter.name} ? 1 : 0';
+      } else {
+        return 'entry.${parameter.name}';
+      }
+    } else if (parameter.type.element is ClassElement && (parameter.type.element as ClassElement).isEnum) {
+      return 'entry.${parameter.name}.value';
+    } else {
+      final typeConverter = parameter.getAllTypeConverters().getClosestOrNull(parameter.type);
+      if (typeConverter == null) {
+        return 'null';
+      }
+      return '${typeConverter.name.decapitalize()}.encode(entry.${parameter.name})';
+    }
+  }
 }
 
 extension on FieldElement {
   List<ColumnData> toColumnDataEmbedded() {
+    final converters = getAllTypeConverters();
+    final fieldProcessed = EmbeddedProcessor(this, converters).process();
+    final fields = [...fieldProcessed.children, ...fieldProcessed.fields];
+    return fields.map((e) => e.fieldElement.toColumnData(fieldProcessed.prefix)).whereNotNull().toList();
+  }
+
+  Set<TypeConverter> getAllTypeConverters() {
     Set<TypeConverter> converters = {...getTypeConverters(TypeConverterScope.field)};
     final enclosingElement = this.enclosingElement;
     if (enclosingElement is ClassElement) {
       converters = {...converters, ...enclosingElement.getTypeConverters(TypeConverterScope.queryable)};
     }
-    final fieldProcessed = EmbeddedProcessor(this, converters).process();
-    final fields = [...fieldProcessed.children, ...fieldProcessed.fields];
-    return fields.map((e) => e.fieldElement.toColumnData(fieldProcessed.prefix)).whereNotNull().toList();
+    return converters;
   }
 
   ColumnData? toColumnData([String? prefix]) {
@@ -293,7 +393,7 @@ extension on FieldElement {
       }
     }
 
-    String name = displayName;
+    String name = this.name;
     if (prefix != null) {
       name = '$prefix${name.firstCharToUpper()}';
     }
