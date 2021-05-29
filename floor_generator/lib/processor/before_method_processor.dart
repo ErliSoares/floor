@@ -3,27 +3,27 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/change_method_processor_helper.dart';
 import 'package:floor_generator/misc/type_utils.dart';
-import 'package:floor_generator/processor/error/after_method_processor_error.dart';
+import 'package:floor_generator/processor/error/before_method_processor_error.dart';
 import 'package:floor_generator/processor/processor.dart';
-import 'package:floor_generator/value_object/after_operation_method.dart';
+import 'package:floor_generator/value_object/before_operation_method.dart';
 import 'package:floor_generator/value_object/entity.dart';
 
-class AfterMethodProcessor implements Processor<AfterOperationMethod> {
+class BeforeMethodProcessor implements Processor<BeforeOperationMethod> {
   final MethodElement _methodElement;
   final ChangeMethodProcessorHelper _helper;
-  final AfterMethodProcessorError _errors;
+  final BeforeMethodProcessorError _errors;
 
-  AfterMethodProcessor(
+  BeforeMethodProcessor(
     final MethodElement methodElement,
     final List<Entity> entities, [
     final ChangeMethodProcessorHelper? changeMethodProcessorHelper,
   ])  : _methodElement = methodElement,
-        _errors = AfterMethodProcessorError(methodElement),
+        _errors = BeforeMethodProcessorError(methodElement),
         _helper = changeMethodProcessorHelper ??
             ChangeMethodProcessorHelper(methodElement, entities);
 
   @override
-  AfterOperationMethod process() {
+  BeforeOperationMethod process() {
     final name = _methodElement.name;
     final returnType = _methodElement.returnType;
 
@@ -42,11 +42,11 @@ class AfterMethodProcessor implements Processor<AfterOperationMethod> {
       throw _errors.doesNotReturnVoid;
     }
 
-    final forDelete = _methodElement.hasAnnotation(annotations.afterDelete.runtimeType);
-    final forInsert = _methodElement.hasAnnotation(annotations.afterInsert.runtimeType);
-    final forUpdate = _methodElement.hasAnnotation(annotations.afterUpdate.runtimeType);
+    final forDelete = _methodElement.hasAnnotation(annotations.beforeDelete.runtimeType);
+    final forInsert = _methodElement.hasAnnotation(annotations.beforeInsert.runtimeType);
+    final forUpdate = _methodElement.hasAnnotation(annotations.beforeUpdate.runtimeType);
 
-    return AfterOperationMethod(
+    return BeforeOperationMethod(
       methodElement: _methodElement,
       name: name,
       entity: entity,

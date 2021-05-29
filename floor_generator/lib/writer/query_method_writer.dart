@@ -10,6 +10,7 @@ import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/database_processor.dart';
 import 'package:floor_generator/processor/error/processor_error.dart';
 import 'package:floor_generator/processor/sql_column_processor.dart';
+import 'package:floor_generator/value_object/foreign_key_relation.dart';
 import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/query.dart';
 import 'package:floor_generator/value_object/query_method.dart';
@@ -333,6 +334,10 @@ class QueryMethodWriter implements Writer {
       if (junctions.isNotEmpty) {
         expands.writeln(_writeJunctionsExpand(junctions));
       }
+      final foreignKeyRelations = _queryMethod.queryable?.fieldsAll.where((element) => element.foreignKeyRelation != null).map((e) => e.foreignKeyRelation!) ?? [];
+      if (foreignKeyRelations.isNotEmpty) {
+        expands.writeln(_writeForeignKeyRelationsExpand(foreignKeyRelations));
+      }
       if (expands.isNotEmpty) {
         queryInfoParameters.writeln('expand: [$expands],');
       }
@@ -482,6 +487,54 @@ class QueryMethodWriter implements Writer {
 
       return true;
     });
+  }
+
+  String _writeForeignKeyRelationsExpand(Iterable<ForeignKeyRelation> foreignKeyRelations) {
+    final str = StringBuffer();
+    for(final foreignKeyRelation in foreignKeyRelations){
+      str.writeln(_writeForeignKeyRelationExpand(foreignKeyRelation));
+    }
+    return str.toString();
+  }
+
+  String _writeForeignKeyRelationExpand(ForeignKeyRelation foreignKeyRelation) {
+    final name = foreignKeyRelation.nameProperty;
+    final childClass = foreignKeyRelation.childElement;
+    final childFieldForeignKey = foreignKeyRelation.foreignKey.childColumns[0];
+    final parentFieldForeignKey = foreignKeyRelation.foreignKey.parentColumns[0];
+    // TODO Validar no relation para as relações terem somente um campo
+
+    final fieldQueryDao = _findMethodLoadWithLoadOptions(foreignKeyRelation.parentElement);
+    if (fieldQueryDao == null) {
+      throw ProcessorError(
+        message: 'The type ${foreignKeyRelation.parentElement.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
+        todo: 'Create DAO with method @Query with return List<${foreignKeyRelation.parentElement.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
+        element: foreignKeyRelation.fieldElement,
+      );
+    }
+
+    final String methodFilter;
+    if(foreignKeyRelation.fieldElement.type.isNullable) {
+      methodFilter = 'firstWhereOrNull';
+    } else {
+      methodFilter = 'firstWhere';
+    }
+    return '''            ExpandInfoSql<${childClass.name}>('$name', (entities, expand, expandChild) async {
+              final filterChildren = ['$parentFieldForeignKey', 'in', entities.map((e) => e.$childFieldForeignKey).toList()];
+              if (expand.filter?.isNotEmpty ?? false) {
+                filterChildren.add(expand.filter!);
+              }
+              final loadOptions = LoadOptionsEntry(expand: expandChild, filter: filterChildren);
+              if (expand.sort != null) {
+                loadOptions.sort = expand.sort;
+              }
+              final children = await floorDatabase.${fieldQueryDao.field.name}.${fieldQueryDao.method.name}(loadOptions);
+              if (children.isNotEmpty) {
+                for (final entry in entities) {
+                  entry.$name = children.$methodFilter((e) => e.$parentFieldForeignKey == entry.$childFieldForeignKey);
+                }
+              }
+            }),''';
   }
 }
 

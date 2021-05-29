@@ -77,3 +77,8 @@ abstract class JunctionField {
   static const entityJunction = 'entityJunction';
   static const ignoreSaveChild = 'ignoreSaveChild';
 }
+
+abstract class ForeignKeyRelationField {
+  static const field = 'field';
+  static const save = 'save';
+}

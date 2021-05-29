@@ -10,7 +10,7 @@ class InsertionAdapter<T> {
   final Map<String, Object?> Function(T) _valueMapper;
   final StreamController<String>? _changeListener;
   final Future<void> Function(int id, T entity)? _inserted;
-  FutureOr<void> Function(T entity)? afterInsert;
+  FutureOr<void> Function(T entity)? beforeInsert;
 
   InsertionAdapter(
     final DatabaseExecutor database,
@@ -19,7 +19,7 @@ class InsertionAdapter<T> {
       {
         final Future<void> Function(int id, T entity)? inserted,
         final StreamController<String>? changeListener,
-        this.afterInsert,
+        this.beforeInsert,
       })  : assert(entityName.isNotEmpty),
         _database = database,
         _entityName = entityName,
@@ -39,9 +39,9 @@ class InsertionAdapter<T> {
     final OnConflictStrategy onConflictStrategy,
   ) async {
     if (items.isEmpty) return;
-    if (afterInsert != null) {
+    if (beforeInsert != null) {
       for(var item in items){
-        await afterInsert!(item);
+        await beforeInsert!(item);
       }
     }
     final batch = _database.batch();
@@ -73,9 +73,9 @@ class InsertionAdapter<T> {
     final OnConflictStrategy onConflictStrategy,
   ) async {
     if (items.isEmpty) return [];
-    if (afterInsert != null) {
+    if (beforeInsert != null) {
       for(var item in items){
-        await afterInsert!(item);
+        await beforeInsert!(item);
       }
     }
     final batch = _database.batch();
@@ -102,8 +102,8 @@ class InsertionAdapter<T> {
     final T item,
     final OnConflictStrategy onConflictStrategy,
   ) async {
-    if (afterInsert != null) {
-      await afterInsert!(item);
+    if (beforeInsert != null) {
+      await beforeInsert!(item);
     }
     final result = await _database.insert(
       _entityName,

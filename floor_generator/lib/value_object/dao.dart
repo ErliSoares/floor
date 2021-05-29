@@ -1,7 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:collection/collection.dart';
 import 'package:floor_generator/misc/extension/set_equality_extension.dart';
-import 'package:floor_generator/value_object/after_operation_method.dart';
+import 'package:floor_generator/value_object/before_operation_method.dart';
 import 'package:floor_generator/value_object/deletion_method.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/insertion_method.dart';
@@ -22,7 +22,7 @@ class Dao {
   final Set<Entity> streamEntities;
   final Set<View> streamViews;
   final Set<TypeConverter> typeConverters;
-  final List<AfterOperationMethod> afterOperations;
+  final List<BeforeOperationMethod> beforeOperations;
 
   Dao(
     this.classElement,
@@ -35,7 +35,7 @@ class Dao {
     this.streamEntities,
     this.streamViews,
     this.typeConverters,
-    this.afterOperations,
+    this.beforeOperations,
   );
 
   @override
@@ -53,7 +53,7 @@ class Dao {
           streamEntities.equals(streamEntities) &&
           streamViews.equals(other.streamViews) &&
           typeConverters.equals(other.typeConverters) &&
-          afterOperations.equals(other.afterOperations);
+          beforeOperations.equals(other.beforeOperations);
 
   @override
   int get hashCode =>
@@ -67,10 +67,10 @@ class Dao {
       streamEntities.hashCode ^
       streamViews.hashCode ^
       typeConverters.hashCode ^
-      afterOperations.hashCode;
+      beforeOperations.hashCode;
 
   @override
   String toString() {
-    return 'Dao{classElement: $classElement, name: $name, queryMethods: $queryMethods, insertionMethods: $insertionMethods, updateMethods: $updateMethods, deletionMethods: $deletionMethods, transactionMethods: $transactionMethods, streamEntities: $streamEntities, streamViews: $streamViews, typeConverters: $typeConverters, afterOperations: $afterOperations}';
+    return 'Dao{classElement: $classElement, name: $name, queryMethods: $queryMethods, insertionMethods: $insertionMethods, updateMethods: $updateMethods, deletionMethods: $deletionMethods, transactionMethods: $transactionMethods, streamEntities: $streamEntities, streamViews: $streamViews, typeConverters: $typeConverters, beforeOperations: $beforeOperations}';
   }
 }

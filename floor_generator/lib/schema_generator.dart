@@ -352,7 +352,7 @@ extension on FieldElement {
 
     DartType? databaseType;
     String typeStr;
-    if (isRelation() || isJunction()) {
+    if (isRelation() || isJunction() || isForeignKeyRelation()) {
       databaseType = type;
       typeStr = 'expand';
     } else {

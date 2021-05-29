@@ -1,7 +1,7 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:floor_generator/value_object/entity.dart';
 
-class AfterOperationMethod {
+class BeforeOperationMethod {
   final MethodElement methodElement;
   final String name;
   final Entity entity;
@@ -9,7 +9,7 @@ class AfterOperationMethod {
   final bool forInsert;
   final bool forDelete;
 
-  AfterOperationMethod({
+  BeforeOperationMethod({
     required this.methodElement,
     required this.name,
     required this.entity,

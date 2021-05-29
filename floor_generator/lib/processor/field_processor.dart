@@ -7,6 +7,7 @@ import 'package:floor_generator/misc/extension/dart_type_extension.dart';
 import 'package:floor_generator/misc/extension/type_converter_element_extension.dart';
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
+import 'package:floor_generator/processor/foreign_key_relation_processor.dart';
 import 'package:floor_generator/processor/junction_processor.dart';
 import 'package:floor_generator/processor/processor.dart';
 import 'package:floor_generator/processor/relation_processor.dart';
@@ -40,16 +41,18 @@ class FieldProcessor extends Processor<Field> {
 
     final junction = JunctionProcessor(_fieldElement).process();
     final relation = RelationProcessor(_fieldElement).process();
+    final foreignKeyRelation = ForeignKeyRelationProcessor(_fieldElement).process();
 
     return Field(
       _fieldElement,
       name,
       columnName,
       isNullable,
-      junction != null || relation != null ? '' : _getSqlType(typeConverter),
+      junction != null || relation != null  || foreignKeyRelation != null ? '' : _getSqlType(typeConverter),
       typeConverter,
       junction: junction,
       relation: relation,
+      foreignKeyRelation: foreignKeyRelation,
     );
   }
 

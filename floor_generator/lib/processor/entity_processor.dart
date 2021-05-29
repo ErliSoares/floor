@@ -17,6 +17,7 @@ import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/field.dart';
 import 'package:floor_generator/value_object/fieldable.dart';
 import 'package:floor_generator/value_object/foreign_key.dart';
+import 'package:floor_generator/value_object/foreign_key_relation.dart';
 import 'package:floor_generator/value_object/fts.dart';
 import 'package:floor_generator/value_object/index.dart';
 import 'package:floor_generator/value_object/junction.dart';
@@ -63,6 +64,16 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     actionsSave = actionsSave + embeddeds
         .where((e) => e.saveToSeparateEntity)
         .map((e) => _getSaveEmbeddedEntity(e.fieldElement, name)).join('\n');
+
+
+    final beforeSave = fieldsAll
+        .where((e) => e.foreignKeyRelation != null && e.foreignKeyRelation!.save)
+        .map((e) => _getSaveForeignKeyRelation(e.foreignKeyRelation!, name)).join('\n');
+    if (beforeSave.isNotEmpty) {
+      // O geração do código pelo _getSaveForeignKeyRelation está correta, porem ela precisa ser salva antes da outra entidade
+      throw UnimplementedError('Não foi implementado para salvar com o recurso foreignKeyRelation.');
+    }
+
 
     return Entity(
       classElement,
@@ -409,6 +420,36 @@ class EntityProcessor extends QueryableProcessor<Entity> {
             ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
           }''';
     } else if(field.type.isNullable) {
+      code = '''          if (entity.${field.name} != null) {
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});
+          }''';
+    } else{
+      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
+    }
+
+    return code;
+  }
+
+  String _getSaveForeignKeyRelation(final ForeignKeyRelation relation, String tableName) {
+    final String code;
+
+    final field = relation.fieldElement;
+    final fieldType = field.type.isDartCoreList ? field.type.flatten() : field.type;
+
+    final fieldOfDaoWithAllMethods = _findMethodsDaoSaveToEntity(fieldType.element!);
+
+    if (fieldOfDaoWithAllMethods == null) {
+      throw _processorError.noMethodWithSaveAnnotation(field);
+    }
+
+    final setFields = StringBuffer();
+    final foreignKey = relation.foreignKey;
+
+    for(var i = 0; i < foreignKey.parentColumns.length; i++){
+      setFields.writeln('entity.${foreignKey.childColumns[i]} = entity.${field.name}.${foreignKey.parentColumns[i]};');
+    }
+
+    if(field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
             ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});
           }''';

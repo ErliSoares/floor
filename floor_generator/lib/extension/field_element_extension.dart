@@ -28,7 +28,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isRelation() || isJunction()) {
+    if (isRelation() || isJunction() || isForeignKeyRelation()) {
       return false;
     }
 
@@ -44,7 +44,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isRelation() || isJunction()) {
+    if (isRelation() || isJunction() || isForeignKeyRelation()) {
       return false;
     }
 
@@ -60,7 +60,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isRelation() || isJunction()) {
+    if (isRelation() || isJunction() || isForeignKeyRelation()) {
       return false;
     }
 
@@ -76,7 +76,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isRelation() || isJunction()) {
+    if (isRelation() || isJunction() || isForeignKeyRelation()) {
       return false;
     }
 
@@ -92,7 +92,7 @@ extension FieldElementExtension on FieldElement {
     if (isStatic || isSynthetic || isEmbedded) {
       return false;
     }
-    if (isRelation() || isJunction()) {
+    if (isRelation() || isJunction() || isForeignKeyRelation()) {
       return false;
     }
 
@@ -109,6 +109,10 @@ extension FieldElementExtension on FieldElement {
 
   bool isRelation(){
     return hasAnnotation(annotations.relation.runtimeType);
+  }
+
+  bool isForeignKeyRelation(){
+    return hasAnnotation(annotations.ForeignKeyRelation);
   }
 
   String nameColumnInSql(){

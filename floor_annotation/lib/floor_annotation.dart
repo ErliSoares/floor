@@ -1,8 +1,8 @@
 library floor_annotation;
 
-export 'src/after_delete.dart';
-export 'src/after_insert.dart';
-export 'src/after_update.dart';
+export 'src/before_delete.dart';
+export 'src/before_insert.dart';
+export 'src/before_update.dart';
 export 'src/column_info.dart';
 export 'src/dao.dart';
 export 'src/database.dart';
@@ -13,6 +13,7 @@ export 'src/embedded.dart';
 export 'src/entity.dart';
 export 'src/enum_value.dart';
 export 'src/foreign_key.dart';
+export 'src/foreign_key_relation.dart';
 export 'src/fts.dart';
 export 'src/ignore.dart';
 export 'src/index.dart';

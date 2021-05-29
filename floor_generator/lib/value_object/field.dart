@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:floor_generator/value_object/fieldable.dart';
+import 'package:floor_generator/value_object/foreign_key_relation.dart';
 import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/relation.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
@@ -13,6 +14,7 @@ class Field extends Fieldable {
   final TypeConverter? typeConverter;
   final Junction? junction;
   final Relation? relation;
+  final ForeignKeyRelation? foreignKeyRelation;
 
   Field(
     FieldElement fieldElement,
@@ -24,6 +26,7 @@ class Field extends Fieldable {
     {
       this.junction,
       this.relation,
+      this.foreignKeyRelation,
     }
   ) : super(fieldElement);
 
