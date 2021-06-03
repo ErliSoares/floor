@@ -11,6 +11,8 @@ import 'package:floor_generator/misc/extension/type_converter_element_extension.
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/embedded_processor.dart';
+import 'package:floor_generator/processor/junction_processor.dart';
+import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:collection/collection.dart';
@@ -350,11 +352,13 @@ extension on FieldElement {
     }
     final typeConverter = allTypeConverters.getClosestOrNull(type);
 
+    Junction? junction;
     DartType? databaseType;
     String typeStr;
     if (isRelation() || isJunction() || isForeignKeyRelation()) {
       databaseType = type;
       typeStr = 'expand';
+      junction = JunctionProcessor(this).process();
     } else {
       if (type.isDefaultSqlType) {
         databaseType = type;
@@ -404,8 +408,7 @@ extension on FieldElement {
       useInInsert: !ignoreForInsert,
       useInIUpdate: !ignoreForUpdate,
       useInQuery: !ignoreForQuery,
-      converter: typeConverter,
-      // TODO Set converter
+      junction: junction,
     );
   }
 }
@@ -419,15 +422,14 @@ class ColumnData {
     required this.useInInsert,
     required this.useInIUpdate,
     required this.useInIDelete,
-    required this.converter,
+    required this.junction,
   });
 
   final bool useInQuery;
   final bool useInInsert;
   final bool useInIUpdate;
   final bool useInIDelete;
-
-  TypeConverter? converter;
+  final Junction? junction;
 
   final String type;
 
@@ -441,7 +443,9 @@ class ColumnData {
     var setAllUse = false;
     str.write('  static final col${name.firstCharToUpper()} = Column');
 
-    if (useInQuery && useInInsert && useInIUpdate && useInIDelete) {
+    if (junction != null) {
+      str.write('.junction');
+    } else if (useInQuery && useInInsert && useInIUpdate && useInIDelete) {
       str.write('.useAll');
     } else if (useInQuery && !useInInsert && !useInIUpdate && !useInIDelete) {
       str.write('.onlyQuery');
@@ -455,18 +459,25 @@ class ColumnData {
       setAllUse = true;
     }
 
-    str.write('(\'$name\', DbType.$type, nullable: $nullable');
+    String secondParameter;
+    if (junction != null) {
+      secondParameter = '''JunctionData(
+        table: '${junction!.entityJunction.name}',
+        tableChildField: '${junction!.foreignKeyJunctionChild.childColumns[0]}',
+        tableParentField: '${junction!.foreignKeyJunctionParent.childColumns[0]}',
+        parentTableField: '${junction!.foreignKeyJunctionChild.parentColumns[0]}',
+        parentTable: '${junction!.parentElement.tableName()}',
+      )''';
+    } else {
+      secondParameter = 'DbType.$type';
+    }
+
+    str.write('(\'$name\', $secondParameter, nullable: $nullable');
 
     if (setAllUse) {
       str.write(
           ', useInQuery: $useInQuery, useInInsert: $useInInsert, useInIUpdate: $useInIUpdate, useInIDelete: $useInIDelete');
     }
-
-    if (converter != null) {
-      //throw Exception('NotImplemented');
-      // TODO Implementar
-    }
-
     str.write(');');
 
     return str.toString();

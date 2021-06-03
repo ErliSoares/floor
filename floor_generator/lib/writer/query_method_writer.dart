@@ -283,6 +283,10 @@ class QueryMethodWriter implements Writer {
       for(var field in mapColumns.entries) {
         sqlColumns.writeln('ColumnSql(${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}Schema.col${field.key.firstCharToUpper()}, sqlField: \'${field.value}\'),');
       }
+      final additionalFieldForFilter = _queryMethod.queryable?.fieldsAll.where((element) => element.junction != null) ?? [];
+      for(var field in additionalFieldForFilter) {
+        sqlColumns.writeln('ColumnSql(${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}Schema.col${field.name.firstCharToUpper()}, sqlField: \'\'),');
+      }
       queryInfoParameters.writeln('columns: [$sqlColumns],');
 
       var whereClauseStartIndex = 0;

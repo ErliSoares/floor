@@ -3,7 +3,7 @@ import 'package:floor_annotation/floor_annotation.dart';
 /// Representa uma definição da expansão de uma propriedade ou relação entre as entidades.
 class ExpandInfo {
   ExpandInfo({
-    this.selector,
+    required this.selector,
     this.expand,
     this.filter,
     this.select,
@@ -12,7 +12,7 @@ class ExpandInfo {
   });
 
   /// O campo de dados a ser usado para expandir.
-  String? selector;
+  String selector;
 
   /// Uma expressão de expansão para mais um nível levando em consideração os dados desse nível.
   List<ExpandInfo>? expand;

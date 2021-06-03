@@ -1,5 +1,6 @@
 import 'package:floor/src/schema/table.dart';
 import 'package:floor_annotation/floor_annotation.dart';
+import 'package:floor/src/junction/junction.dart';
 
 /// A column that is part of a table.
 class Column {
@@ -12,6 +13,7 @@ class Column {
     required this.useInIUpdate,
     required this.useInIDelete,
     this.converter,
+    this.junction,
   });
 
   factory Column.useAll(
@@ -99,6 +101,24 @@ class Column {
         converter: converter,
       );
 
+  factory Column.junction(
+    String name,
+    JunctionData junction, {
+    required bool nullable,
+    TypeConverterBase? converter,
+  }) =>
+      Column(
+        name,
+        DbType.expand,
+        nullable: nullable,
+        useInQuery: true,
+        useInIDelete: true,
+        useInInsert: true,
+        useInIUpdate: true,
+        converter: converter,
+        junction: junction,
+      );
+
   final bool useInQuery;
   final bool useInInsert;
   final bool useInIUpdate;
@@ -115,6 +135,8 @@ class Column {
 
   /// The raw name of this column
   final String name;
+
+  final JunctionData? junction;
 }
 
 /// A type that sql expressions can have at runtime.

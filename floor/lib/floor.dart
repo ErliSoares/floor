@@ -5,6 +5,7 @@ export 'package:floor/src/adapter/insertion_adapter.dart';
 export 'package:floor/src/adapter/migration_adapter.dart';
 export 'package:floor/src/adapter/query_adapter.dart';
 export 'package:floor/src/field_data.dart';
+export 'package:floor/src/junction/junction.dart';
 export 'package:floor/src/adapter/query_info.dart';
 export 'package:floor/src/adapter/update_adapter.dart';
 export 'package:floor/src/callback.dart';

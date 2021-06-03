@@ -12,6 +12,7 @@ class ColumnSql extends Column {
           useInIUpdate: column.useInIUpdate,
           useInQuery: column.useInQuery,
           converter: column.converter,
+          junction: column.junction,
         );
 
   final String sqlField;

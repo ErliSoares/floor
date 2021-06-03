@@ -41,12 +41,44 @@ class FilterCompiler extends ExpressionCompiler {
 
     final sqlColumn = getSqlColumn(clientAccessor);
 
-    String valueReturn;
+    final junction = sqlColumn.junction;
+    if (junction != null) {
+      if (!isInOperation) {
+        throw Exception('Hoje não é suportado fazer outra operação com um campo junção sem se com o operador IN');
+      }
+      if (clientValue == null) {
+        return '0';
+      }
+      if (!(clientValue is List)) {
+        throw Exception('Não foi definido a lista de valores validos para o filtro com IN().');
+      }
+      if (clientValue.isEmpty) {
+        return '0';
+      }
+
+      final inExpression = _compileIn(clientValue);
+
+      return '''(
+	SELECT 1
+	FROM ${junction.table}
+	WHERE ${junction.table}.${junction.tableParentField} = ${junction.parentTable}.${junction.parentTableField}
+	AND ${junction.table}.${junction.tableChildField} $inExpression
+)''';
+    }
 
     if (isStringOperation) {
-      valueReturn = _compileStringFunction(sqlColumn.sqlField, clientOperation, clientValue.toString(), filter);
+      return _compileStringFunction(sqlColumn.sqlField, clientOperation, clientValue.toString(), filter);
     } else if (isInOperation) {
-      valueReturn = _compileInFunction(sqlColumn.sqlField, clientValue);
+      if (clientValue == null) {
+        return '0';
+      }
+      if (!(clientValue is List)) {
+        throw Exception('Não foi definido a lista de valores validos para o filtro com IN().');
+      }
+      if (clientValue.isEmpty) {
+        return '0';
+      }
+      return sqlColumn.sqlField + ' ' + _compileIn(clientValue);
     } else {
       final expressionType = _translateBinaryOperation(clientOperation);
       if (clientValue == null) {
@@ -61,10 +93,8 @@ class FilterCompiler extends ExpressionCompiler {
 
       final valueExpr = addParameterAndGetKey(clientValue);
 
-      valueReturn = sqlColumn.sqlField + ' ' + expressionType + ' ' + valueExpr;
+      return sqlColumn.sqlField + ' ' + expressionType + ' ' + valueExpr;
     }
-
-    return valueReturn;
   }
 
   String _compileStringFunction(String accessorExpr, String clientOperation, String? value, List<Object?> filter) {
@@ -105,19 +135,9 @@ class FilterCompiler extends ExpressionCompiler {
     }
   }
 
-  String _compileInFunction(String accessorExpr, Object? value) {
-    if (value == null) {
-      return '0';
-    }
-    if (!(value is List)) {
-      throw Exception('Não foi definido a lista de valores validos para o filtro com IN().');
-    }
-    if (value.isEmpty) {
-      return '0';
-    }
+  String _compileIn(List value) {
     final strBuffer = StringBuffer();
-    strBuffer.write(accessorExpr);
-    strBuffer.write(' IN(');
+    strBuffer.write('IN(');
     var firstItem = true;
     for (var item in value) {
       final keyParameter = addParameterAndGetKey(item);
