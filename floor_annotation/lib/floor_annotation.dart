@@ -19,6 +19,7 @@ export 'src/ignore.dart';
 export 'src/index.dart';
 export 'src/insert.dart';
 export 'src/junction.dart';
+export 'src/load_options/aggregator_field.dart';
 export 'src/load_options/expand_info.dart';
 export 'src/load_options/expand_info.dart';
 export 'src/load_options/grouping_info.dart';

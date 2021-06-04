@@ -5,12 +5,16 @@ class GroupingInfo extends SortingInfo {
   GroupingInfo({
     required String selector,
     this.groupInterval,
+    this.numberInterval,
     this.isExpanded,
     bool desc = true,
   }) : super(selector: selector, desc: desc);
 
   /// Um valor que agrupa dados em intervalos de um determinado comprimento ou período de data/hora.
   GroupInterval? groupInterval;
+
+  /// Define o número de intervalo que será agrupado, utilizado quando [groupInterval] for [GroupInterval.numberInterval
+  num? numberInterval;
 
   /// Um sinalizador indicando se os objetos de dados do grupo devem ser retornados.
   bool? isExpanded;
@@ -19,12 +23,14 @@ class GroupingInfo extends SortingInfo {
   GroupingInfo copyWith({
     String? selector,
     GroupInterval? groupInterval,
+    num? numberInterval,
     bool? isExpanded,
     bool? desc,
   }) {
     return GroupingInfo(
       selector: selector ?? this.selector,
       groupInterval: groupInterval ?? this.groupInterval,
+      numberInterval: numberInterval ?? this.numberInterval,
       isExpanded: isExpanded ?? this.isExpanded,
       desc: desc ?? this.desc,
     );
@@ -34,6 +40,8 @@ class GroupingInfo extends SortingInfo {
 }
 
 enum GroupInterval {
+  @EnumValue('numberInterval')
+  numberInterval,
   @EnumValue('year')
   year,
   @EnumValue('quarter')

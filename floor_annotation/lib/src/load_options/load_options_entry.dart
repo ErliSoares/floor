@@ -1,4 +1,5 @@
 import 'package:floor_annotation/floor_annotation.dart';
+import 'package:floor_annotation/src/load_options/aggregator_field.dart';
 
 class LoadOptionsEntry {
   LoadOptionsEntry({
@@ -7,6 +8,8 @@ class LoadOptionsEntry {
     this.sort,
     this.filter,
     this.expand,
+    this.group,
+    this.aggregators,
   });
 
   LoadOptionsEntry copyWith({
@@ -15,6 +18,8 @@ class LoadOptionsEntry {
     List<SortingInfo>? sort,
     List<Object?>? filter,
     List<ExpandInfo>? expand,
+    List<GroupingInfo>? group,
+    List<AggregatorField>? aggregators,
   }) {
     return LoadOptionsEntry(
       skip: skip ?? this.skip,
@@ -22,6 +27,8 @@ class LoadOptionsEntry {
       sort: sort ?? this.sort,
       filter: filter ?? this.filter,
       expand: expand ?? this.expand,
+      group: group ?? this.group,
+      aggregators: aggregators ?? this.aggregators,
     );
   }
 
@@ -80,4 +87,10 @@ class LoadOptionsEntry {
 
   /// Uma expressão de expansão.
   List<ExpandInfo>? expand;
+
+  /// Uma expressão de grupo.
+  List<GroupingInfo>? group;
+
+  /// Agregadores para os campos da select
+  List<AggregatorField>? aggregators;
 }

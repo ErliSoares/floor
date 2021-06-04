@@ -1,4 +1,5 @@
 import 'package:floor_annotation/floor_annotation.dart';
+import 'package:floor_annotation/src/load_options/aggregator_field.dart';
 
 class LoadOptions extends LoadOptionsEntry {
   LoadOptions({
@@ -7,7 +8,8 @@ class LoadOptions extends LoadOptionsEntry {
     List<SortingInfo>? sort,
     List<Object?>? filter,
     List<ExpandInfo>? expand,
-    this.group,
+    List<GroupingInfo>? group,
+    List<AggregatorField>? aggregators,
     this.requireTotalCount,
     this.requireGroupCount,
     this.isCountQuery,
@@ -21,6 +23,8 @@ class LoadOptions extends LoadOptionsEntry {
           skip: skip,
           sort: sort,
           take: take,
+          group: group,
+          aggregators: aggregators,
         );
 
   @override
@@ -38,6 +42,7 @@ class LoadOptions extends LoadOptionsEntry {
     List<String>? select,
     List<String>? notSelect,
     List<ExpandInfo>? expand,
+    List<AggregatorField>? aggregators,
   }) {
     return LoadOptions(
       requireTotalCount: requireTotalCount ?? this.requireTotalCount,
@@ -53,6 +58,7 @@ class LoadOptions extends LoadOptionsEntry {
       select: select ?? this.select,
       notSelect: notSelect ?? this.notSelect,
       expand: expand ?? this.expand,
+      aggregators: aggregators ?? this.aggregators,
     );
   }
 
@@ -64,9 +70,6 @@ class LoadOptions extends LoadOptionsEntry {
 
   /// Um sinalizador indicando se a consulta atual é feita para obter o número total de objetos de dados.
   bool? isCountQuery;
-
-  /// Uma expressão de grupo.
-  List<GroupingInfo>? group;
 
   /// Uma expressão sumária total.
   List<SummaryInfo>? totalSummary;

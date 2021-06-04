@@ -22,7 +22,11 @@ abstract class ExpressionCompiler {
       } else {
         arguments.add(0);
       }
-    } else {
+    } else if (value is DateTime) {
+      // TODO Não ficou legal a conversão tinha de vir do TypeConverter
+      arguments.add(value.toIso8601String());
+    }
+    else {
       arguments.add(value);
     }
     return '?${arguments.length}';

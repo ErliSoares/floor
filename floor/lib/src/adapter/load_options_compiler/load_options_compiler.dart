@@ -1,6 +1,7 @@
 import 'package:floor/floor.dart';
 import 'package:floor/src/adapter/load_options_compiler/column_compiler.dart';
 import 'package:floor/src/adapter/load_options_compiler/filter_compiler.dart';
+import 'package:floor/src/adapter/load_options_compiler/group_compiler.dart';
 import 'package:floor/src/adapter/load_options_compiler/sort_compiler.dart';
 
 class LoadOptionsCompiler {
@@ -20,6 +21,7 @@ class LoadOptionsCompiler {
     String? filter;
     String? sort;
     String? columns;
+    String? group;
     String? limit;
 
     if (loadOptions.filter?.isNotEmpty ?? false) {
@@ -30,14 +32,12 @@ class LoadOptionsCompiler {
         queryInfo: queryInfo,
       ).compile(loadOptions.filter!);
     }
-    if (loadOptions.select != null || loadOptions.notSelect != null) {
-      columns = ColumnCompiler(
-        sql: sql,
-        arguments: arguments,
-        loadOptions: loadOptions,
-        queryInfo: queryInfo,
-      ).compile(loadOptions.select, loadOptions.notSelect);
-    }
+    columns = ColumnCompiler(
+      sql: sql,
+      arguments: arguments,
+      loadOptions: loadOptions,
+      queryInfo: queryInfo,
+    ).compile(loadOptions.select, loadOptions.notSelect);
     if (loadOptions.sort != null) {
       sort = SortCompiler(
         sql: sql,
@@ -45,6 +45,14 @@ class LoadOptionsCompiler {
         loadOptions: loadOptions,
         queryInfo: queryInfo,
       ).compile(loadOptions.sort!);
+    }
+    if (loadOptions.group != null) {
+      group = GroupCompiler(
+        sql: sql,
+        arguments: arguments,
+        loadOptions: loadOptions,
+        queryInfo: queryInfo,
+      ).compile(loadOptions.group!);
     }
     if (loadOptions.take != null && loadOptions.skip != null) {
       limit = ' LIMIT ${loadOptions.take} OFFSET ${loadOptions.skip}';
@@ -54,10 +62,10 @@ class LoadOptionsCompiler {
       limit = ' LIMIT 99999999999999999 OFFSET ${loadOptions.skip}';
     }
 
-    return changeSql(filter: filter, sort: sort, columns: columns, limit: limit);
+    return changeSql(filter: filter, sort: sort, columns: columns, group: group, limit: limit);
   }
 
-  String changeSql({String? filter, String? sort, String? columns, String? limit}) {
+  String changeSql({String? filter, String? sort, String? columns, String? limit, String? group}) {
     if ((filter?.isEmpty ?? true) &&
         (sort?.isEmpty ?? true) &&
         (columns?.isEmpty ?? true) &&
@@ -91,6 +99,22 @@ class LoadOptionsCompiler {
         lastIndex = lastIndexClause;
         partsSql.add(' WHERE $filter');
       }
+    }
+
+    if (group?.isNotEmpty ?? false) {
+      if (queryInfo.groupByClauseIndex != null) {
+        // TODO Criar uma opção o '@floor.Query' para definir se ao agrupar vai tirar o group by ou não, hoje está tirando o grupo by pela linha lastIndex = queryInfo.groupByClauseIndex!.end
+        partsSql.add(sql.substring(lastIndex, queryInfo.groupByClauseIndex!.start));
+        lastIndex = queryInfo.groupByClauseIndex!.end;
+      } else {
+        final nextClause = queryInfo.orderByClauseIndex ?? queryInfo.limitClauseIndex;
+        final lastIndexClause = nextClause?.start ?? sql.length;
+        if (lastIndexClause > lastIndex) {
+          partsSql.add(sql.substring(lastIndex, lastIndexClause));
+        }
+        lastIndex = lastIndexClause;
+      }
+      partsSql.add(' GROUP BY $group');
     }
 
     if (sort?.isNotEmpty ?? false) {
