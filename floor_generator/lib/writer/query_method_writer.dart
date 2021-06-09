@@ -289,6 +289,51 @@ class QueryMethodWriter implements Writer {
       }
       queryInfoParameters.writeln('columns: [$sqlColumns],');
 
+      final fieldsQuery = _queryMethod.queryable?.fieldsQuery;
+      if (fieldsQuery == null) {
+        throw ProcessorError(
+          message: 'Não foi encontrado os fields para query desse tipo',
+          todo: 'Abra uma issue para o concerto do prooblema.',
+          element: _queryMethod.methodElement,
+        );
+      }
+      final fieldsEmbeddeds = _queryMethod.queryable!.embeddeds.expand((e) => e.fields);
+
+      for(var field in fieldsQuery) {
+        if (mapColumns.containsKey(field.columnName)) {
+          continue;
+        }
+        throw ProcessorError(
+          message: 'O query não contêm o campo para o preenchimento do propriedade ${field.name} da entidade ${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}.',
+          todo: 'Considere colocar a coluna no query ou ignorar a coluna na entidade.',
+          element: _queryMethod.methodElement,
+        );
+      }
+      for(var field in fieldsEmbeddeds) {
+        if (mapColumns.containsKey(field.columnName)) {
+          continue;
+        }
+        throw ProcessorError(
+          message: 'O query não contêm o campo para o preenchimento do propriedade embedded ${field.name} da entidade ${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}.',
+          todo: 'Considere colocar a coluna no query ou ignorar a coluna na entidade.',
+          element: _queryMethod.methodElement,
+        );
+      }
+
+      for(var columnName in mapColumns.keys) {
+        if (
+        fieldsQuery.any((e) => e.columnName == columnName)
+        || fieldsEmbeddeds.any((e) => e.columnName == columnName)
+        ) {
+          continue;
+        }
+        throw ProcessorError(
+          message: 'O query tem como retorno o campo $columnName, mas não está sendo utilizado.',
+          todo: 'Retire o campo do query ou adicione na entidade.',
+          element: _queryMethod.methodElement,
+        );
+      }
+
       var whereClauseStartIndex = 0;
       final columns = select.columns;
       if (columns.isNotEmpty && columns.first.span != null) {
