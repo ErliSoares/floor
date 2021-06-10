@@ -98,7 +98,7 @@ class QueryAdapter {
     if (result.isEmpty) {
       return null;
     }
-    result[0].values.first;
+    return result[0].values.first as T?;
   }
 
   Future<List<Map<String, Object?>>> queryMap(
