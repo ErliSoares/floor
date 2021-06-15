@@ -1,5 +1,6 @@
 library floor_annotation;
 
+export 'src/after_query.dart';
 export 'src/before_delete.dart';
 export 'src/before_insert.dart';
 export 'src/before_update.dart';

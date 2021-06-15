@@ -10,6 +10,7 @@ import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/database_processor.dart';
 import 'package:floor_generator/processor/error/processor_error.dart';
 import 'package:floor_generator/processor/sql_column_processor.dart';
+import 'package:floor_generator/value_object/after_query_method.dart';
 import 'package:floor_generator/value_object/foreign_key_relation.dart';
 import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/query.dart';
@@ -27,9 +28,9 @@ class QueryMethodWriter implements Writer {
   final QueryMethod _queryMethod;
   final SqlColumnProcessor? _sqlColumnProcessor;
   final List<FieldOfDaoWithAllMethods> _allFieldOfDaoWithAllMethods;
+  final List<AfterQueryMethod> afterQueryMethods;
 
-
-  QueryMethodWriter(final QueryMethod queryMethod, {final SqlColumnProcessor? sqlColumnProcessor, final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods = const []})
+  QueryMethodWriter(final QueryMethod queryMethod, {final SqlColumnProcessor? sqlColumnProcessor, final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods = const [], this.afterQueryMethods = const []})
       : _queryMethod = queryMethod, _sqlColumnProcessor = sqlColumnProcessor, _allFieldOfDaoWithAllMethods = allFieldOfDaoWithAllMethods;
 
   @override
@@ -257,6 +258,17 @@ class QueryMethodWriter implements Writer {
     final mapper = _generateMapper(queryable);
     final parameters = StringBuffer(query)..write(', mapper: $mapper');
     if (arguments != null) parameters.write(', arguments: $arguments');
+
+    if (afterQueryMethods.isNotEmpty) {
+      if (afterQueryMethods.length == 1) {
+        parameters.write(', afterQuery: super.${afterQueryMethods[0].name}');
+      } else {
+        parameters.write(''', afterQuery: (entities, loadOptions) async {
+        ${afterQueryMethods.map((e) => 'entities = await super.${e.name}(entities, loadOptions);').join('\n')}
+        return entities;
+      }''');
+      }
+    }
 
     if (_queryMethod.returnsStream) {
       // for streamed queries, we need to provide the queryable to know which

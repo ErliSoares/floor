@@ -275,7 +275,7 @@ class DaoWriter extends Writer {
 
   List<Method> _generateQueryMethods(final List<QueryMethod> queryMethods) {
     return queryMethods
-        .map((method) => QueryMethodWriter(method, sqlColumnProcessor: sqlColumnProcessor, allFieldOfDaoWithAllMethods: allFieldOfDaoWithAllMethods).write())
+        .map((method) => QueryMethodWriter(method, sqlColumnProcessor: sqlColumnProcessor, allFieldOfDaoWithAllMethods: allFieldOfDaoWithAllMethods, afterQueryMethods: dao.afterQueryMethods).write())
         .toList();
   }
 

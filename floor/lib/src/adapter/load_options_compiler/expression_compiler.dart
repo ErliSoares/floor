@@ -24,7 +24,7 @@ abstract class ExpressionCompiler {
       }
     } else if (value is DateTime) {
       // TODO Não ficou legal a conversão tinha de vir do TypeConverter
-      arguments.add(value.toIso8601String());
+      arguments.add(value.millisecondsSinceEpoch);
     }
     else {
       arguments.add(value);

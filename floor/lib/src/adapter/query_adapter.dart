@@ -22,7 +22,8 @@ class QueryAdapter {
     final String sql, {
     final List<Object>? arguments,
     required final T Function(Map<String, Object?>) mapper,
-  }) async {
+    FutureOr<List<T>> Function(List<T> entities, LoadOptionsEntry? loadOptions)? afterQuery,
+      }) async {
     log('RAW query execute: $sql');
     final rows = await _database.rawQuery(sql, arguments);
 
@@ -30,6 +31,14 @@ class QueryAdapter {
       return null;
     } else if (rows.length > 1) {
       throw StateError("Query returned more than one row for '$sql'");
+    }
+
+    if(afterQuery != null){
+      final items = await afterQuery([mapper(rows.first)], null);
+      if (items.isEmpty) {
+        return null;
+      }
+      return items[0];
     }
 
     return mapper(rows.first);
@@ -42,6 +51,7 @@ class QueryAdapter {
     required final T Function(Map<String, Object?>) mapper,
     LoadOptionsEntry? loadOptions,
     QueryInfo<T>? queryInfo,
+    FutureOr<List<T>> Function(List<T> entities, LoadOptionsEntry? loadOptions)? afterQuery,
   }) async {
     if (loadOptions == null) {
       log('RAW query execute: $sql');
@@ -74,6 +84,9 @@ class QueryAdapter {
         }
         await expandInfo.process(entities, expand, expand.expand ?? []);
       }
+    }
+    if (afterQuery != null) {
+      return afterQuery(entities, loadOptions);
     }
     return entities;
   }
@@ -117,6 +130,7 @@ class QueryAdapter {
     required final String queryableName,
     required final bool isView,
     required final T Function(Map<String, Object?>) mapper,
+    FutureOr<List<T>> Function(List<T> entities, LoadOptionsEntry? loadOptions)? afterQuery,
   }) {
     // ignore: close_sinks
     final changeListener = ArgumentError.checkNotNull(_changeListener);
@@ -124,7 +138,11 @@ class QueryAdapter {
 
     Future<void> executeQueryAndNotifyController() async {
       final result = await query(sql, arguments: arguments, mapper: mapper);
-      controller.add(result);
+      if (afterQuery != null && result != null) {
+        controller.add((await afterQuery([result], null)).firstOrNull);
+      } else {
+        controller.add(result);
+      }
     }
 
     controller.onListen = () async => executeQueryAndNotifyController();
@@ -148,6 +166,7 @@ class QueryAdapter {
     required final String queryableName,
     required final bool isView,
     required final T Function(Map<String, Object?>) mapper,
+    FutureOr<List<T>> Function(List<T> entities, LoadOptionsEntry? loadOptions)? afterQuery,
   }) {
     // ignore: close_sinks
     final changeListener = ArgumentError.checkNotNull(_changeListener);
@@ -155,7 +174,11 @@ class QueryAdapter {
 
     Future<void> executeQueryAndNotifyController() async {
       final result = await queryList(sql, arguments: arguments, mapper: mapper);
-      controller.add(result);
+      if (afterQuery != null) {
+        controller.add(await afterQuery(result, null));
+      } else {
+        controller.add(result);
+      }
     }
 
     controller.onListen = () async => executeQueryAndNotifyController();

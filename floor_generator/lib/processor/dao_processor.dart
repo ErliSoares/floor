@@ -3,6 +3,7 @@ import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/extension/set_extension.dart';
 import 'package:floor_generator/misc/extension/type_converter_element_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
+import 'package:floor_generator/processor/after_query_method_processor.dart';
 import 'package:floor_generator/processor/before_method_processor.dart';
 import 'package:floor_generator/processor/deletion_method_processor.dart';
 import 'package:floor_generator/processor/insertion_method_processor.dart';
@@ -11,6 +12,7 @@ import 'package:floor_generator/processor/query_method_processor.dart';
 import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/processor/transaction_method_processor.dart';
 import 'package:floor_generator/processor/update_method_processor.dart';
+import 'package:floor_generator/value_object/after_query_method.dart';
 import 'package:floor_generator/value_object/before_operation_method.dart';
 import 'package:floor_generator/value_object/dao.dart';
 import 'package:floor_generator/value_object/deletion_method.dart';
@@ -60,6 +62,7 @@ class DaoProcessor extends Processor<Dao> {
     final deletionMethods = _getDeletionMethods(methods);
     final transactionMethods = _getTransactionMethods(methods);
     final beforeOperations = _getBeforeOperations(methods);
+    final afterQueryMethods = _getAfterQueryMethod(methods);
 
     final streamQueryables = queryMethods.where((method) => method.returnsStream).map((method) => method.queryable);
     final streamEntities = streamQueryables.whereType<Entity>().toSet();
@@ -77,6 +80,7 @@ class DaoProcessor extends Processor<Dao> {
       streamViews,
       typeConverters,
       beforeOperations,
+      afterQueryMethods: afterQueryMethods,
     );
   }
 
@@ -140,6 +144,15 @@ class DaoProcessor extends Processor<Dao> {
               _daoGetterName,
               _databaseName,
             ).process())
+        .toList();
+  }
+
+  List<AfterQueryMethod> _getAfterQueryMethod(
+      final List<MethodElement> methodElements,
+      ) {
+    return methodElements
+        .where((methodElement) => methodElement.hasAnnotation(annotations.afterQuery.runtimeType))
+        .map((methodElement) => AfterQueryMethodProcessor(methodElement, _entities).process())
         .toList();
   }
 }
