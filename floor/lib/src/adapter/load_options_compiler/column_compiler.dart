@@ -10,20 +10,21 @@ class ColumnCompiler extends ExpressionCompiler {
     required List<Object?> arguments,
   }) : super(sql: sql, loadOptions: loadOptions, queryInfo: queryInfo, arguments: arguments);
 
-  String? compile(List<String>? columns, List<String>? columnsExclude) {
+  String? compile(List<Object>? columns, List<Object>? columnsExclude) {
     final fields = <String>[];
     final fieldsNames = <String>[];
     if (columns != null && columns.isNotEmpty) {
-      for (var nameColumn in columns) {
-        if (columnsExclude == null || !columnsExclude.any((c) => c == nameColumn)) {
-          fields.add(getSqlColumn(nameColumn).sqlField + ' ' + nameColumn);
+      for (var column in columns) {
+        final nameColumn = nameOfColumn(column);
+        if (columnsExclude == null || !columnsExclude.any((c) => nameOfColumn(c) == nameColumn)) {
+          fields.add(getSqlColumn(column).sqlField + ' ' + nameColumn);
           fieldsNames.add(nameColumn);
         }
       }
     } else if (columnsExclude != null && columnsExclude.isNotEmpty) {
       for (var column in queryInfo.columns) {
         final nameColumn = column.name;
-        if (!columnsExclude.any((c) => c == nameColumn)) {
+        if (!columnsExclude.any((c) => nameOfColumn(c) == nameColumn)) {
           fields.add(getSqlColumn(nameColumn).sqlField + ' ' + nameColumn);
           fieldsNames.add(nameColumn);
         }

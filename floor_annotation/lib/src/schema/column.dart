@@ -1,6 +1,4 @@
-import 'package:floor/src/schema/table.dart';
 import 'package:floor_annotation/floor_annotation.dart';
-import 'package:floor/src/junction/junction.dart';
 
 /// A column that is part of a table.
 class Column {

@@ -4,8 +4,8 @@ import 'package:floor_annotation/floor_annotation.dart';
 class SummaryInfo {
   SummaryInfo({required this.selector, required this.summaryType});
 
-  /// O campo de dados a ser usado para calcular o resumo.
-  String selector;
+  /// O campo de dados a ser usado para calcular o resumo, pode ser um [Column] ou o nome do campo.
+  Object selector;
 
   /// Uma função agregada.
   SummaryType summaryType;

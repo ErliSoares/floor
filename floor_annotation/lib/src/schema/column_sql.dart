@@ -1,4 +1,4 @@
-import 'package:floor/src/schema/column.dart';
+import 'package:floor_annotation/floor_annotation.dart';
 
 /// A column that is part of a table.
 class ColumnSql extends Column {

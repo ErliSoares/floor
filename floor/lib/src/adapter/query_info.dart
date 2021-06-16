@@ -1,5 +1,4 @@
 import 'package:floor/floor.dart';
-import 'package:floor/src/schema/column_sql.dart';
 import 'package:flutter/foundation.dart';
 
 /// Data to process loadOptions

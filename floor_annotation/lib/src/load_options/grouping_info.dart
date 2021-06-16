@@ -3,7 +3,7 @@ import 'package:floor_annotation/floor_annotation.dart';
 /// Representa um nível de agrupamento a ser aplicado aos dados.
 class GroupingInfo extends SortingInfo {
   GroupingInfo({
-    required String selector,
+    required Object selector,
     this.groupInterval,
     this.numberInterval,
     this.isExpanded,
@@ -21,7 +21,7 @@ class GroupingInfo extends SortingInfo {
 
   @override
   GroupingInfo copyWith({
-    String? selector,
+    Object? selector,
     GroupInterval? groupInterval,
     num? numberInterval,
     bool? isExpanded,

@@ -32,11 +32,26 @@ abstract class ExpressionCompiler {
     return '?${arguments.length}';
   }
 
-  ColumnSql getSqlColumn(String name) {
-    final column = queryInfo.columns.firstWhereOrNull((e) => e.name == name);
-    if (column == null) {
-      throw Exception('Name of column `$name` is not valid column result in query `$sql`');
+  ColumnSql getSqlColumn(Object column) {
+    ColumnSql? columnSql;
+    if (column is Column) {
+      final columnName = column.name;
+      columnSql = queryInfo.columns.firstWhereOrNull((e) => e.name == columnName);
+    } else {
+      columnSql = queryInfo.columns.firstWhereOrNull((e) => e.name == column.toString());
     }
-    return column;
+    if (columnSql == null) {
+      throw Exception('Name of column `$column` is not valid column result in query `$sql`');
+    }
+    return columnSql;
+  }
+
+
+  String nameOfColumn(Object column) {
+    if (column is Column) {
+      return column.name;
+    } else {
+      return column.toString();
+    }
   }
 }

@@ -2,7 +2,7 @@ import 'package:floor_annotation/floor_annotation.dart';
 
 class AggregatorField {
   final AggregatorType type;
-  final String selector;
+  final Object selector;
   final String groupSeparator;
 
   AggregatorField({

@@ -1,5 +1,4 @@
-import 'package:collection/collection.dart';
-import 'package:floor/src/schema/column.dart';
+import 'package:floor_annotation/floor_annotation.dart';
 
 /// A database table. The information stored here will be used to resolve mount operations on runtime
 class Table {
@@ -18,6 +17,11 @@ class Table {
 
   /// find column by name
   Column? findColumn(String name) {
-    return columns.firstWhereOrNull((c) => c.name == name);
+    for(final item in columns){
+      if (item.name == name) {
+        return item;
+      }
+    }
+    return null;
   }
 }

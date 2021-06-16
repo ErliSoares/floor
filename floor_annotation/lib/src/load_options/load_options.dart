@@ -39,8 +39,8 @@ class LoadOptions extends LoadOptionsEntry {
     List<Object?>? filter,
     List<SummaryInfo>? totalSummary,
     List<SummaryInfo>? groupSummary,
-    List<String>? select,
-    List<String>? notSelect,
+    List<Object>? select,
+    List<Object>? notSelect,
     List<ExpandInfo>? expand,
     List<AggregatorField>? aggregators,
   }) {
@@ -77,10 +77,10 @@ class LoadOptions extends LoadOptionsEntry {
   /// Uma expressão de resumo de grupo.
   List<SummaryInfo>? groupSummary;
 
-  /// Colunas que vão ser retornadas, se não estiver preenchidas retornar todas.
-  List<String>? select;
+  /// Colunas que vão ser retornadas, se não estiver preenchidas retornar todas, pode ser um [Column] ou o nome do campo.
+  List<Object>? select;
 
   /// Propriedades que não devem ser retornadas, retornam todas menos as que forem definidas aqui,
-  /// essa tem prioridade sobre o select.
-  List<String>? notSelect;
+  /// essa tem prioridade sobre o select, pode ser um [Column] ou o nome do campo.
+  List<Object>? notSelect;
 }

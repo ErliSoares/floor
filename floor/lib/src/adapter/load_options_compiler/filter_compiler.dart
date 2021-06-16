@@ -29,34 +29,33 @@ class FilterCompiler extends ExpressionCompiler {
   String _compileBinary(List<Object?> filter) {
     final hasExplicitOperation = filter.length > 2;
 
-    final clientAccessor = filter[0].toString();
-    final clientOperation = hasExplicitOperation ? filter[1].toString().toLowerCase() : '=';
-    final clientValue = filter[hasExplicitOperation ? 2 : 1];
-    final isStringOperation = clientOperation == _contains ||
-        clientOperation == _notContains ||
-        clientOperation == _startsWith ||
-        clientOperation == _endsWith ||
-        clientOperation == _subString;
-    final isInOperation = clientOperation == _in;
+    final operation = hasExplicitOperation ? filter[1].toString().toLowerCase() : '=';
+    final value = filter[hasExplicitOperation ? 2 : 1];
+    final isStringOperation = operation == _contains ||
+        operation == _notContains ||
+        operation == _startsWith ||
+        operation == _endsWith ||
+        operation == _subString;
+    final isInOperation = operation == _in;
 
-    final sqlColumn = getSqlColumn(clientAccessor);
+    final sqlColumn = getSqlColumn(filter[0]!);
 
     final junction = sqlColumn.junction;
     if (junction != null) {
       if (!isInOperation) {
         throw Exception('Hoje não é suportado fazer outra operação com um campo junção sem se com o operador IN');
       }
-      if (clientValue == null) {
+      if (value == null) {
         return '0';
       }
-      if (!(clientValue is List)) {
+      if (!(value is List)) {
         throw Exception('Não foi definido a lista de valores validos para o filtro com IN().');
       }
-      if (clientValue.isEmpty) {
+      if (value.isEmpty) {
         return '0';
       }
 
-      final inExpression = _compileIn(clientValue);
+      final inExpression = _compileIn(value);
 
       return '''(
 	SELECT 1
@@ -67,21 +66,21 @@ class FilterCompiler extends ExpressionCompiler {
     }
 
     if (isStringOperation) {
-      return _compileStringFunction(sqlColumn.sqlField, clientOperation, clientValue.toString(), filter);
+      return _compileStringFunction(sqlColumn.sqlField, operation, value.toString(), filter);
     } else if (isInOperation) {
-      if (clientValue == null) {
+      if (value == null) {
         return '0';
       }
-      if (!(clientValue is List)) {
+      if (!(value is List)) {
         throw Exception('Não foi definido a lista de valores validos para o filtro com IN().');
       }
-      if (clientValue.isEmpty) {
+      if (value.isEmpty) {
         return '0';
       }
-      return sqlColumn.sqlField + ' ' + _compileIn(clientValue);
+      return sqlColumn.sqlField + ' ' + _compileIn(value);
     } else {
-      final expressionType = _translateBinaryOperation(clientOperation);
-      if (clientValue == null) {
+      final expressionType = _translateBinaryOperation(operation);
+      if (value == null) {
         if (expressionType == '=') {
           return '${sqlColumn.sqlField} IS NULL';
         }
@@ -91,7 +90,7 @@ class FilterCompiler extends ExpressionCompiler {
         return '0';
       }
 
-      final valueExpr = addParameterAndGetKey(clientValue);
+      final valueExpr = addParameterAndGetKey(value);
 
       return sqlColumn.sqlField + ' ' + expressionType + ' ' + valueExpr;
     }
