@@ -1,44 +1,45 @@
 import 'package:analyzer/dart/element/element.dart';
-import 'package:code_builder/code_builder.dart';
-import 'package:floor_generator/misc/constants.dart';
-import 'package:floor_generator/value_object/entity.dart';
-import 'package:floor_generator/writer/writer.dart';
-import 'package:source_gen/source_gen.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
+import 'package:floor_generator/misc/constants.dart';
+import 'package:floor_generator/misc/extension/string_extension.dart';
+import 'package:source_gen/source_gen.dart';
+import 'package:collection/collection.dart';
 
-class EnumValuesWriter extends Writer {
+class EnumValuesWriter {
   final TypeChecker hasEnumValueAnnotation = const TypeChecker.fromRuntime(annotations.EnumValue);
   final TypeChecker hasDescriptionAnnotation = const TypeChecker.fromRuntime(annotations.Description);
 
-  final List<Entity> _entities;
+  final ClassElement _classElement;
 
-  EnumValuesWriter(final List<Entity> entities) : _entities = entities;
+  EnumValuesWriter(final ClassElement classElement) : _classElement = classElement;
 
-  @override
-  Field write() {
-    final enums = _removeDuplicate(_entities
-        .expand((e) => e.fieldsAll.map((f) => f.fieldElement.type.element).whereType<ClassElement>())
-        .toList());
+  String write() {
+    final fields = [
+      ..._classElement.fields,
+      ..._classElement.allSupertypes.expand((type) => type.element.fields),
+    ];
+    final enums = _removeDuplicate(fields.map((f) => f.type.element).whereType<ClassElement>().toList());
 
-    final code = enums.expand((e) {
+    return enums.map((e) {
       final enumValueAnnotations = e.annotatedWith(hasEnumValueAnnotation);
       if (enumValueAnnotations.isEmpty) {
-        return <String>[];
+        return null;
       }
 
       final typeReturnIsString = !enumValueAnnotations.every((e) => !e.annotation.read(EnumValueField.value).isString);
 
-      return enumValueAnnotations.map((item) {
+      final valuesEnums = enumValueAnnotations.map((item) {
         final enumValue = item.annotation.read('value').literalValue;
         return '${e.name}.${item.element.name}: ${typeReturnIsString ? '\'$enumValue\'' : enumValue},\n';
       });
-    }).join();
+      if (valuesEnums.isEmpty) {
+        return null;
+      }
 
-    return Field((builder) => builder
-      ..name = 'enumValues'
-      ..modifier = FieldModifier.final$
-      ..type = const Reference('Map<Object, Object>')
-      ..assignment = Code('{$code}'));
+      return '''const Map<Object, int> _${e.name.decapitalize()} = {
+  ${valuesEnums.join()}
+};''';
+    }).whereNotNull().join('\n');
   }
 
   List<ClassElement> _removeDuplicate(List<ClassElement> list) {

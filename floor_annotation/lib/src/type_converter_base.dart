@@ -1,5 +1,3 @@
-import 'package:meta/meta.dart';
-
 /// Base class for type converters which can be applied to:
 ///
 /// 1. databases
@@ -54,11 +52,12 @@ import 'package:meta/meta.dart';
 ///   Order(this.id, this.date);
 /// }
 /// ```
-@experimental
 abstract class TypeConverterBase {
+  const TypeConverterBase();
+
   /// Converts the [databaseValue] of type [S] into [T]
-  dynamic decodeDynamic(dynamic databaseValue);
+  Object? decodeObject(Object? databaseValue);
 
   /// Converts the [value] of type [T] into the database-compatible type [S]
-  dynamic encodeDynamic(dynamic value);
+  Object? encodeObject(Object? value);
 }

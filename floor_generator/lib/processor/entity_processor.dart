@@ -352,7 +352,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
         field.typeConverter,
       ].whereNotNull().getClosest(fieldType);
       attributeValue =
-          '_${typeConverter.name.decapitalize()}.encode(${ignoreAddItem ? '' : 'item.'}$prefix$parameterName)';
+          '${typeConverter.name.decapitalize()}.encode(${ignoreAddItem ? '' : 'item.'}$prefix$parameterName)';
     }
 
     if (fieldType.isDartCoreBool) {

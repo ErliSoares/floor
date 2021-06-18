@@ -4,9 +4,13 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
+import 'package:collection/collection.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
+import 'package:floor_generator/extension/class_extension.dart';
+import 'package:floor_generator/extension/field_element_extension.dart';
 import 'package:floor_generator/misc/constants.dart';
 import 'package:floor_generator/misc/extension/dart_type_extension.dart';
+import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/misc/extension/type_converter_element_extension.dart';
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
@@ -14,14 +18,11 @@ import 'package:floor_generator/processor/embedded_processor.dart';
 import 'package:floor_generator/processor/junction_processor.dart';
 import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
+import 'package:floor_generator/writer/enum_values_writer.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:collection/collection.dart';
-import 'package:floor_generator/extension/class_extension.dart';
 
 // ignore: implementation_imports
 import 'package:source_gen/src/output_helpers.dart';
-import 'package:floor_generator/misc/extension/string_extension.dart';
-import 'package:floor_generator/extension/field_element_extension.dart';
 
 class SchemaGenerator extends Generator {
   TypeChecker get typeCheckerEntity => const TypeChecker.fromRuntime(annotations.Entity);
@@ -35,11 +36,17 @@ class SchemaGenerator extends Generator {
     final values = <String>{};
 
     for (var annotatedElement in library.annotatedWith(typeCheckerEntity)) {
-      final generatedValue = generateForAnnotatedElement(
+      var generatedValue = generateForAnnotatedElement(
         annotatedElement.element,
         annotatedElement.annotation,
         buildStep,
       );
+      await for (var value in normalizeGeneratorOutput(generatedValue)) {
+        assert(value.length == value.trim().length);
+        values.add(value);
+      }
+
+      generatedValue = writeEnumMapValues(annotatedElement.element);
       await for (var value in normalizeGeneratorOutput(generatedValue)) {
         assert(value.length == value.trim().length);
         values.add(value);
@@ -80,6 +87,13 @@ class SchemaGenerator extends Generator {
     });
 
     return library.accept(DartEmitter()).toString();
+  }
+
+  String writeEnumMapValues(Element element) {
+    if (element is! ClassElement) {
+      throw InvalidGenerationSourceError('The element is not a class.', element: element);
+    }
+    return EnumValuesWriter(element).write();
   }
 
   String codeForEntity(ClassElement element) {
@@ -403,12 +417,16 @@ extension on FieldElement {
     }
 
     return ColumnData(
-      name, typeStr, nullable: databaseType.isNullable,
+      name,
+      typeStr,
+      nullable: databaseType.isNullable,
       useInIDelete: !ignoreForDelete,
       useInInsert: !ignoreForInsert,
       useInIUpdate: !ignoreForUpdate,
       useInQuery: !ignoreForQuery,
       junction: junction,
+      converter: typeConverter,
+      element: type.element,
     );
   }
 }
@@ -423,6 +441,8 @@ class ColumnData {
     required this.useInIUpdate,
     required this.useInIDelete,
     required this.junction,
+    required this.converter,
+    required this.element,
   });
 
   final bool useInQuery;
@@ -430,6 +450,8 @@ class ColumnData {
   final bool useInIUpdate;
   final bool useInIDelete;
   final Junction? junction;
+  final TypeConverter? converter;
+  final Element? element;
 
   final String type;
 
@@ -477,6 +499,16 @@ class ColumnData {
     if (setAllUse) {
       str.write(
           ', useInQuery: $useInQuery, useInInsert: $useInInsert, useInIUpdate: $useInIUpdate, useInIDelete: $useInIDelete');
+    }
+
+    final element = this.element;
+    if (converter != null) {
+      str.write(', converter: ');
+      str.write(converter!.name.decapitalize());
+    } else if (element is ClassElement && element.isEnum) {
+      str.write(', converter: const EnumConverter(_');
+      str.write(element.name.decapitalize());
+      str.write(')');
     }
     str.write(');');
 

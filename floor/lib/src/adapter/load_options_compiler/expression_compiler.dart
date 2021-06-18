@@ -17,16 +17,8 @@ abstract class ExpressionCompiler {
 
   String addParameterAndGetKey(Object? value) {
     if (value is bool) {
-      if (value) {
-        arguments.add(1);
-      } else {
-        arguments.add(0);
-      }
-    } else if (value is DateTime) {
-      // TODO Não ficou legal a conversão tinha de vir do TypeConverter
-      arguments.add(value.millisecondsSinceEpoch);
-    }
-    else {
+      arguments.add(value ? 1 : 0);
+    } else {
       arguments.add(value);
     }
     return '?${arguments.length}';
@@ -45,7 +37,6 @@ abstract class ExpressionCompiler {
     }
     return columnSql;
   }
-
 
   String nameOfColumn(Object column) {
     if (column is Column) {

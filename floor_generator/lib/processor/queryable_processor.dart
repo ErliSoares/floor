@@ -109,7 +109,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
         );
 
         parameterValue =
-        '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+        '${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
       }
       return parameterValue; // also covers positional parameter
   }
@@ -175,7 +175,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
         );
 
           parameterValue =
-          '_${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+          '${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
         }
 
         if (parameterElement.isNamed) {

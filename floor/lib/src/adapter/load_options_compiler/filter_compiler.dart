@@ -30,7 +30,7 @@ class FilterCompiler extends ExpressionCompiler {
     final hasExplicitOperation = filter.length > 2;
 
     final operation = hasExplicitOperation ? filter[1].toString().toLowerCase() : '=';
-    final value = filter[hasExplicitOperation ? 2 : 1];
+    var value = filter[hasExplicitOperation ? 2 : 1];
     final isStringOperation = operation == _contains ||
         operation == _notContains ||
         operation == _startsWith ||
@@ -39,6 +39,10 @@ class FilterCompiler extends ExpressionCompiler {
     final isInOperation = operation == _in;
 
     final sqlColumn = getSqlColumn(filter[0]!);
+
+    if (sqlColumn.converter != null) {
+      value = sqlColumn.converter!.encodeObject(value);
+    }
 
     final junction = sqlColumn.junction;
     if (junction != null) {
@@ -66,7 +70,7 @@ class FilterCompiler extends ExpressionCompiler {
     }
 
     if (isStringOperation) {
-      return _compileStringFunction(sqlColumn.sqlField, operation, value.toString(), filter);
+      return _compileStringFunction(sqlColumn, operation, value.toString(), filter);
     } else if (isInOperation) {
       if (value == null) {
         return '0';
@@ -96,26 +100,28 @@ class FilterCompiler extends ExpressionCompiler {
     }
   }
 
-  String _compileStringFunction(String accessorExpr, String clientOperation, String? value, List<Object?> filter) {
+  String _compileStringFunction(ColumnSql columnSql, String clientOperation, String? value, List<Object?> filter) {
     if (value != null) value = value.toLowerCase();
 
     final keyParameter = addParameterAndGetKey(value);
 
+    final nameField = columnSql.sqlField;
+
     switch (clientOperation) {
       case _contains:
-        return 'INSTR($accessorExpr, $keyParameter) > 0';
+        return 'INSTR($nameField, $keyParameter) > 0';
       case _notContains:
-        return 'INSTR($accessorExpr, $keyParameter) = 0';
+        return 'INSTR($nameField, $keyParameter) = 0';
       case _startsWith:
         if (value == null) {
           throw Exception('Condição $clientOperation não suporta valor null.');
         }
-        return 'LEFT($accessorExpr,${value.length}) = $keyParameter';
+        return 'LEFT($nameField,${value.length}) = $keyParameter';
       case _endsWith:
         if (value == null) {
           throw Exception('Condição $clientOperation não suporta valor null.');
         }
-        return 'RIGHT($accessorExpr,${value.length}) = $keyParameter';
+        return 'RIGHT($nameField,${value.length}) = $keyParameter';
       case _subString:
         if (filter.length < 5) {
           throw Exception('A operação $clientOperation tem de ter 5 parâmetros.');
@@ -128,7 +134,7 @@ class FilterCompiler extends ExpressionCompiler {
         if (length == null) {
           throw Exception('Para a operação $clientOperation o terceiro item do array tem de ser um inteiro.');
         }
-        return 'SUBSTRING($accessorExpr, $position, $length) = ${filter[4]}';
+        return 'SUBSTRING($nameField, $position, $length) = ${filter[4]}';
       default:
         throw Exception('Operação $clientOperation não é suportada.');
     }
@@ -199,23 +205,17 @@ class FilterCompiler extends ExpressionCompiler {
     switch (clientOperation) {
       case '=':
         return clientOperation;
-
       case '<>':
         return clientOperation;
-
       case '>':
         return clientOperation;
-
       case '>=':
         return clientOperation;
-
       case '<':
         return clientOperation;
-
       case '<=':
         return clientOperation;
     }
-
     throw Exception('Operador $clientOperation não suportado.');
   }
 

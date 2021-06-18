@@ -11,7 +11,7 @@ class TypeConverterFieldWriter extends Writer {
   @override
   Spec write() {
     return Field((builder) => builder
-      ..name = '_${_typeConverterName.decapitalize()}'
+      ..name = _typeConverterName.decapitalize()
       ..modifier = FieldModifier.final$
       ..assignment = Code('$_typeConverterName()'));
   }

@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:collection/collection.dart';
 import 'package:floor/floor.dart';
 import 'package:floor/src/adapter/load_options_compiler/load_options_compiler.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:collection/collection.dart';
 
 /// This class knows how to execute database queries.
 class QueryAdapter {
@@ -23,7 +23,7 @@ class QueryAdapter {
     final List<Object>? arguments,
     required final T Function(Map<String, Object?>) mapper,
     FutureOr<List<T>> Function(List<T> entities, LoadOptionsEntry? loadOptions)? afterQuery,
-      }) async {
+  }) async {
     log('RAW query execute: $sql');
     final rows = await _database.rawQuery(sql, arguments);
 
@@ -33,7 +33,7 @@ class QueryAdapter {
       throw StateError("Query returned more than one row for '$sql'");
     }
 
-    if(afterQuery != null){
+    if (afterQuery != null) {
       final items = await afterQuery([mapper(rows.first)], null);
       if (items.isEmpty) {
         return null;
@@ -77,10 +77,18 @@ class QueryAdapter {
     final entities = rows.map((row) => mapper(row)).toList();
     final expands = loadOptions.expand;
     if (expands != null) {
-      for(var expand in expands) {
-        final expandInfo = queryInfo.expand.firstWhereOrNull((e) => e.nameProperty == expand.selector);
+      for (var expand in expands) {
+        final String? columnName;
+        final column = expand.selector;
+        if (column is Column) {
+          columnName = column.name;
+        } else {
+          columnName = column.toString();
+        }
+        final expandInfo = queryInfo.expand.firstWhereOrNull((e) => e.nameProperty == columnName);
         if (expandInfo == null) {
-          throw Exception('O selector `${expand.selector}` não é uma Junction ou uma Relation da entidade `${T.toString()}` para expanção');
+          throw Exception(
+              'O selector `$columnName` não é uma Junction ou uma Relation da entidade `${T.toString()}` para expanção');
         }
         await expandInfo.process(entities, expand, expand.expand ?? []);
       }

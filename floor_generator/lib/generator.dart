@@ -11,7 +11,6 @@ import 'package:floor_generator/value_object/database.dart';
 import 'package:floor_generator/writer/dao_writer.dart';
 import 'package:floor_generator/writer/database_builder_writer.dart';
 import 'package:floor_generator/writer/database_writer.dart';
-import 'package:floor_generator/writer/enum_values_writer.dart';
 import 'package:floor_generator/writer/floor_writer.dart';
 import 'package:floor_generator/writer/type_converter_field_writer.dart';
 import 'package:source_gen/source_gen.dart';
@@ -59,12 +58,8 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
         ..body.addAll(daoClasses);
 
       if (distinctTypeConverterFields.isNotEmpty) {
-        builder
-          ..body.add(const Code('// ignore_for_file: unused_element\n'))
-          ..body.addAll(distinctTypeConverterFields);
+        builder.body.addAll(distinctTypeConverterFields);
       }
-      builder
-        ..body.add(EnumValuesWriter(database.entities).write());
     });
 
     return library.accept(DartEmitter()).toString();

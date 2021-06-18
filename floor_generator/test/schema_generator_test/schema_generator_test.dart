@@ -7,6 +7,15 @@ import '../test_utils.dart';
 void main() {
   test('Process entity', () async {
     final classElement = await createClassElement('''
+      enum PessoaTipo {
+        @Description('Física')
+        @EnumValue(1)
+        fisica,
+        @Description('Jurídica')
+        @EnumValue(2)
+        juridica,
+      }
+      
       @entity
       class Person extends PersonBase {
         @primaryKey

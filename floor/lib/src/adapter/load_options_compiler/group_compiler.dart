@@ -13,7 +13,9 @@ class GroupCompiler extends ExpressionCompiler {
     final groupByBuffer = StringBuffer();
     var first = true;
     for (var item in groupingInfo) {
-      if (item.selector == '') continue;
+      if (item.selector is String && item.selector == '') {
+        continue;
+      }
 
       if (!first) {
         groupByBuffer.write(',');

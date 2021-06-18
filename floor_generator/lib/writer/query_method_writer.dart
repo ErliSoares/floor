@@ -114,7 +114,7 @@ class QueryMethodWriter implements Writer {
           final typeConverter =
           _queryMethod.typeConverters.getClosestOrNull(_queryMethod.flattenedReturnType);
           if (typeConverter != null) {
-            _methodBody.writeln('return _${typeConverter.name.decapitalize()}.decode(_queryAdapter.querySingleValue($query$parameters));');
+            _methodBody.writeln('return ${typeConverter.name.decapitalize()}.decode(_queryAdapter.querySingleValue($query$parameters));');
             return _methodBody.toString();
           }
         }
@@ -186,7 +186,7 @@ class QueryMethodWriter implements Writer {
         } else {
           final typeConverter =
               _queryMethod.typeConverters.getClosest(parameter.type);
-          return '_${typeConverter.name.decapitalize()}.encode(${parameter.displayName})';
+          return '${typeConverter.name.decapitalize()}.encode(${parameter.displayName})';
         }
       }),
       ..._queryMethod.parameters
@@ -199,7 +199,7 @@ class QueryMethodWriter implements Writer {
         } else {
           final typeConverter =
               _queryMethod.typeConverters.getClosest(flatType);
-          return '...${parameter.displayName}.map((element) => _${typeConverter.name.decapitalize()}.encode(element))';
+          return '...${parameter.displayName}.map((element) => ${typeConverter.name.decapitalize()}.encode(element))';
         }
       })
     ];

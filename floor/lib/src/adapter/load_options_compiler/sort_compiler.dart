@@ -13,7 +13,9 @@ class SortCompiler extends ExpressionCompiler {
     final orderByBuffer = StringBuffer();
     var first = true;
     for (var item in orderBy) {
-      if (item.selector == '') continue;
+      if (item.selector is String && item.selector == '') {
+        continue;
+      }
 
       if (!first) {
         orderByBuffer.write(',');
