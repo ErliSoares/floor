@@ -37,10 +37,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
   ) : _queryableProcessorError = QueryableProcessorError(classElement),
         queryableTypeConverters = typeConverters +
             classElement.getTypeConverters(TypeConverterScope.queryable),
-        _fields = [
-          ...classElement.fields,
-          ...classElement.allSupertypes.expand((type) => type.element.fields),
-        ];
+        _fields = classElement.getAllFields();
 
   @protected
   List<Field> getFieldsWithOutCheckIgnore() {

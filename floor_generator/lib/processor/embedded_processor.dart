@@ -1,4 +1,3 @@
-
 import 'package:analyzer/dart/element/element.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/extension/field_element_extension.dart';
@@ -20,10 +19,7 @@ class EmbeddedProcessor extends Processor<Embedded> {
   EmbeddedProcessor(final FieldElement fieldElement, this.converters, [final String prefix = ''])
       : _fieldElement = fieldElement,
         _prefix = prefix,
-        _fields = [
-          ...(fieldElement.type.element as ClassElement).fields,
-          ...(fieldElement.type.element as ClassElement).allSupertypes.expand((type) => type.element.fields),
-        ];
+        _fields = (fieldElement.type.element as ClassElement).getAllFields();
 
   @override
   Embedded process() {

@@ -411,7 +411,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     }
     if (field.type.isNullable && field.type.isDartCoreList) {
       code = '''          if (entity.${field.name} != null) {
-            for(final sub in entity.${field.name}) {
+            for(final sub in entity.${field.name}!) {
               ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
             }
           }''';
@@ -421,7 +421,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
           }''';
     } else if(field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
-            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
           }''';
     } else{
       code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
@@ -451,7 +451,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
 
     if(field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
-            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
           }''';
     } else{
       code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
@@ -483,7 +483,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
         saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
       }
       code = '''          if (entity.${field.name} != null) {
-            for(final sub in entity.${field.name}) {
+            for(final sub in entity.${field.name}!) {
               $saveChildCode
               await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
                 ${junction.foreignKeyJunctionChild.childColumns[0]}: sub.${junction.foreignKeyJunctionChild.parentColumns[0]},
@@ -512,12 +512,12 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       if (junction.ignoreSaveChild) {
         saveChildCode = '';
       } else {
-        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name});';
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name}!);';
       }
       code = '''          if (entity.${field.name} != null) {
               $saveChildCode
               await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
-                ${junction.foreignKeyJunctionChild.childColumns[0]}: entity.${field.name}.${junction.foreignKeyJunctionChild.parentColumns[0]},
+                ${junction.foreignKeyJunctionChild.childColumns[0]}: entity.${field.name}!.${junction.foreignKeyJunctionChild.parentColumns[0]},
                 ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
                 deleted: entity.${field.name}!.deleted,
               ));
@@ -614,7 +614,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     }
     if (field.type.isNullable && field.type.isDartCoreList) {
       code = '''          if (entity.${field.name} != null) {
-            for(final sub in entity.${field.name}) {
+            for(final sub in entity.${field.name}!) {
               ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
             }
           }''';
@@ -624,7 +624,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
           }''';
     } else if(field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
-            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
           }''';
     } else{
       code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';

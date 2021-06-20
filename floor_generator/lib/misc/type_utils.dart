@@ -3,9 +3,9 @@ import 'dart:typed_data';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/constants.dart';
 import 'package:source_gen/source_gen.dart';
-import 'package:floor_annotation/floor_annotation.dart' as annotations;
 
 extension SupportedTypeChecker on DartType {
   /// Whether this [DartType] is either
@@ -26,8 +26,7 @@ extension SupportedTypeChecker on DartType {
 }
 
 extension Uint8ListTypeChecker on DartType {
-  bool get isUint8List =>
-      getDisplayString(withNullability: false) == 'Uint8List';
+  bool get isUint8List => getDisplayString(withNullability: false) == 'Uint8List';
 }
 
 extension StreamTypeChecker on DartType {
@@ -59,30 +58,42 @@ extension AnnotationChecker on Element {
 }
 
 extension ClassElementExtension on ClassElement {
-  List<MethodElement> _removeDuplicate(List<MethodElement> list) {
-    for (int i = 0; i < list.length; i++) {
-      final method = list[i];
-      int index = i + 2;
-      do {
-        index = list.indexWhere((m) => m.name == method.name, index - 1);
-        if (index != -1) {
-          list.removeAt(index);
+  List<MethodElement> getAllMethods() {
+    final methods = [...this.methods];
+    for (var superType in allSupertypes) {
+      if (superType.element.isSynthetic) {
+        continue;
+      }  
+      for (var methodSuper in superType.methods) {
+        if (methodSuper.isSynthetic || methodSuper.isStatic || methodSuper.isPrivate) {
+          continue;
         }
-      } while (index != -1 && index < list.length);
+        if (methods.any((e) => e.name == methodSuper.name)) {
+          continue;
+        }
+        methods.add(methodSuper);
+      }
     }
-    return list;
+    return methods;
   }
 
-  List<MethodElement> getAllMethods(){
-    final classElementMethods = this.methods;
-    final methodsNotOverlaid = _removeDuplicate(allSupertypes
-        .expand((type) => type.methods).toList())
-        .where((e) => classElementMethods.every((eb) => e.name != eb.name));
-    final methods = [
-      ...classElementMethods,
-      ...methodsNotOverlaid,
-    ];
-    return methods.toList();
+  List<FieldElement> getAllFields() {
+    final allFields = [...fields];
+    for (var superType in allSupertypes) {
+      if (superType.element.isSynthetic) {
+        continue;
+      }
+      for (var fieldSuper in superType.element.fields) {
+        if (fieldSuper.isSynthetic || fieldSuper.isStatic || fieldSuper.isPrivate) {
+          continue;
+        }
+        if (allFields.any((e) => e.name == fieldSuper.name)) {
+          continue;
+        }
+        allFields.add(fieldSuper);
+      }
+    }
+    return allFields;
   }
 
   String tableName() {
@@ -90,13 +101,10 @@ extension ClassElementExtension on ClassElement {
     if (annotation == null) {
       return '';
     }
-    return
-      annotation.getField(AnnotationField.entityTableName)
-        ?.toStringValue() ??
-        displayName;
+    return annotation.getField(AnnotationField.entityTableName)?.toStringValue() ?? displayName;
   }
 
-  DartType? typeOfEnum(){
+  DartType? typeOfEnum() {
     final types = fields.where((e) => e.isEnumConstant).map((e) {
       if (!e.hasAnnotation(annotations.EnumValue)) {
         return null;

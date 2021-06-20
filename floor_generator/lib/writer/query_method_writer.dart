@@ -448,6 +448,19 @@ class QueryMethodWriter implements Writer {
       );
     }
 
+    final String methodFilter;
+    final String methodFilterResultCast;
+    if (junction.fieldElement.type.isDartCoreList) {
+      methodFilter = 'where';
+      methodFilterResultCast = '.toList()';
+    }  else if(junction.fieldElement.type.isNullable) {
+      methodFilter = 'firstWhereOrNull';
+      methodFilterResultCast = '';
+    } else {
+      methodFilter = 'firstWhere';
+      methodFilterResultCast = '';
+    }
+
     return '''ExpandInfoSql<$parentClassName>('$name', (entities, expand, expandChild) async {
           final filterRelation = ['$junctionFieldForeignKeyParent', 'in', entities.map((e) => e.$primaryKeyParent).toList()];
           final relations = await floorDatabase.${fieldQueryDaoJunction.field.name}.${fieldQueryDaoChild.method.name}(LoadOptionsEntry(filter: filterRelation));
@@ -463,7 +476,7 @@ class QueryMethodWriter implements Writer {
           if (children.isNotEmpty) {
             for (final entry in entities) {
               entry.$name =
-                  children.where((e) => relations.any((r) => r.$junctionFieldForeignKeyChild == e.$primaryKeyChild && r.$junctionFieldForeignKeyParent == entry.$primaryKeyParent)).toList();
+                  children.$methodFilter((e) => relations.any((r) => r.$junctionFieldForeignKeyChild == e.$primaryKeyChild && r.$junctionFieldForeignKeyParent == entry.$primaryKeyParent))$methodFilterResultCast;
             }
           }
         }),''';

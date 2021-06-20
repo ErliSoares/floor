@@ -104,10 +104,10 @@ class SchemaGenerator extends Generator {
     final tableName = element.tableName();
     final className = element.name;
 
-    final fields = [
-      ...element.fields,
-      ...element.allSupertypes.expand((type) => type.element.fields),
-    ].expand((e) => e.isEmbedded ? e.toColumnDataEmbedded() : [e.toColumnData()]).whereNotNull();
+    final fields = element
+        .getAllFields()
+        .expand((e) => e.isEmbedded ? e.toColumnDataEmbedded() : [e.toColumnData()])
+        .whereNotNull();
 
     final cloneCode = _generateClone(element);
 
@@ -144,10 +144,7 @@ ${fields.map((e) => e.writeCol()).join('\n')}
   }
 
   String _generateFields(ClassElement classElement) {
-    final fields = [
-      ...classElement.fields,
-      ...classElement.allSupertypes.expand((type) => type.element.fields),
-    ].where((e) => !e.isSynthetic && !e.isStatic);
+    final fields = classElement.getAllFields();
 
     final fieldsCode = fields.map((e) {
       final isIgnored = e.hasAnnotation(annotations.Ignore);
@@ -215,10 +212,7 @@ ${fields.map((e) => e.writeCol()).join('\n')}
   }
 
   String _generateClone(ClassElement classElement) {
-    final fields = [
-      ...classElement.fields,
-      ...classElement.allSupertypes.expand((type) => type.element.fields),
-    ];
+    final fields = classElement.getAllFields();
 
     final constructorParameters =
         classElement.constructors.first.parameters.where((e) => fields.any((f) => e.name == f.name));
