@@ -105,8 +105,9 @@ class _$TaskDao extends TaskDao {
       : _queryAdapter = QueryAdapter(floorDatabase.database,
             changeListener: changeListener),
         _taskInsertionAdapter = InsertionAdapter(
-            floorDatabase.database,
+            floorDatabase,
             'Task',
+            [],
             (Task item) => <String, Object?>{
                   'id': item.id,
                   'message': item.message,
@@ -115,9 +116,10 @@ class _$TaskDao extends TaskDao {
                 },
             changeListener: changeListener),
         _taskUpdateAdapter = UpdateAdapter(
-            floorDatabase.database,
+            floorDatabase,
             'Task',
             ['id'],
+            [],
             (Task item) => <String, Object?>{
                   'id': item.id,
                   'message': item.message,
@@ -126,9 +128,10 @@ class _$TaskDao extends TaskDao {
                 },
             changeListener: changeListener),
         _taskDeletionAdapter = DeletionAdapter(
-            floorDatabase.database,
+            floorDatabase,
             'Task',
             ['id'],
+            [],
             (Task item) => <String, Object?>{
                   'id': item.id,
                   'message': item.message,
@@ -215,5 +218,3 @@ class _$TaskDao extends TaskDao {
     await _taskDeletionAdapter.deleteList(tasks);
   }
 }
-
-final Map<Object, Object> enumValues = {};

@@ -9,12 +9,14 @@ import 'package:floor_generator/processor/dao_processor.dart';
 import 'package:floor_generator/processor/entity_processor.dart';
 import 'package:floor_generator/processor/error/database_processor_error.dart';
 import 'package:floor_generator/processor/processor.dart';
+import 'package:floor_generator/processor/routine_entry_trigger_processor.dart';
 import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/processor/view_processor.dart';
 import 'package:floor_generator/value_object/dao_getter.dart';
 import 'package:floor_generator/value_object/database.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/queryable.dart';
+import 'package:floor_generator/value_object/routine_entry_trigger.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:floor_generator/value_object/view.dart';
 import 'package:floor_generator/extension/class_extension.dart';
@@ -68,6 +70,7 @@ class DatabaseProcessor extends Processor<Database> {
       [...entities, ...views],
     );
 
+    final routines = _getRoutinesEntryTrigger(_classElement, entities);
     return Database(
       _classElement,
       databaseName,
@@ -78,6 +81,7 @@ class DatabaseProcessor extends Processor<Database> {
       databaseTypeConverters,
       allTypeConverters,
       allFieldOfDaoWithAllMethods.toList(),
+      routines,
     );
   }
 
@@ -151,6 +155,20 @@ class DatabaseProcessor extends Processor<Database> {
     }
 
     return entities;
+  }
+
+  List<RoutineEntryTrigger> _getRoutinesEntryTrigger(
+      final ClassElement databaseClassElement,
+      List<Entity> entities,
+      ) {
+    return _classElement
+        .getAnnotation(annotations.Database)
+        ?.getField(AnnotationField.databaseRoutines)
+        ?.toListValue()
+        ?.mapNotNull((object) => object.toTypeValue()?.element)
+        .whereType<ClassElement>()
+        .map((classElement) => RoutineEntryTriggerMethodProcessor(classElement, entities).process())
+        .toList() ?? [];
   }
 
   List<View> _getViews(

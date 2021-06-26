@@ -7,16 +7,18 @@ import '../test_util/person.dart';
 
 void main() {
   final mockDatabaseExecutor = MockDatabaseExecutor();
+  final mockDatabase = MockDatabaseFloor();
   final mockDatabaseBatch = MockBatch();
 
   const entityName = 'person';
   const primaryKeyColumnName = 'id';
   final valueMapper = (Person person) => {'id': person.id, 'name': person.name};
 
-  final underTest = DeletionAdapter(
-    mockDatabaseExecutor,
+  final underTest = DeletionAdapter<Person>(
+    mockDatabase,
     entityName,
     [primaryKeyColumnName],
+    [],
     valueMapper,
   );
 

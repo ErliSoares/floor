@@ -12,6 +12,7 @@ import 'package:floor_generator/writer/dao_writer.dart';
 import 'package:floor_generator/writer/database_builder_writer.dart';
 import 'package:floor_generator/writer/database_writer.dart';
 import 'package:floor_generator/writer/floor_writer.dart';
+import 'package:floor_generator/writer/routine_entry_trigger_field_writer.dart';
 import 'package:floor_generator/writer/type_converter_field_writer.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -37,11 +38,17 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
               database.name,
               sqlColumnProcessor: _sqlColumnProcessor,
               allFieldOfDaoWithAllMethods: database.allFieldOfDaoWithAllMethods,
+              routines: database.routines,
             ).write());
     final distinctTypeConverterFields = database.allTypeConverters
         .distinctBy((element) => element.name)
         .map((typeConverter) =>
             TypeConverterFieldWriter(typeConverter.name).write());
+
+    final routineFields = database.routines
+        .distinctBy((element) => element.name)
+        .map((typeConverter) =>
+        RoutineEntryTriggerFieldWriter(typeConverter.name, typeConverter.nameFieldInDataBase).write());
 
 
     const ignore = '// ignore_for_file: cast_nullable_to_non_nullable\n'
@@ -58,7 +65,7 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
         ..body.addAll(daoClasses);
 
       if (distinctTypeConverterFields.isNotEmpty) {
-        builder.body.addAll(distinctTypeConverterFields);
+        builder.body..addAll(distinctTypeConverterFields)..addAll(routineFields);
       }
     });
 

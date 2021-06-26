@@ -3,6 +3,7 @@ import 'dart:async' as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:sqflite_common/sqlite_api.dart' as _i2;
 import 'package:sqflite_common/src/sql_builder.dart' as _i4;
+import 'package:floor/floor.dart' as _i5;
 
 // ignore_for_file: comment_references
 // ignore_for_file: unnecessary_parenthesis
@@ -432,4 +433,14 @@ class MockDatabase extends _i1.Mock implements _i2.Database {
   @override
   _i2.Batch batch() => (super.noSuchMethod(Invocation.method(#batch, []),
       returnValue: _FakeBatch()) as _i2.Batch);
+}
+
+/// A class which mocks [DatabaseExecutor].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockDatabaseFloor extends _i1.Mock implements _i5.FloorDatabase {
+  MockDatabaseFloor() {
+    _i1.throwOnMissingStub(this);
+  }
+
 }

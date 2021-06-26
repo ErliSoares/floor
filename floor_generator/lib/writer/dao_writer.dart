@@ -7,6 +7,7 @@ import 'package:floor_generator/value_object/deletion_method.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/insertion_method.dart';
 import 'package:floor_generator/value_object/query_method.dart';
+import 'package:floor_generator/value_object/routine_entry_trigger.dart';
 import 'package:floor_generator/value_object/transaction_method.dart';
 import 'package:floor_generator/value_object/update_method.dart';
 import 'package:floor_generator/writer/deletion_method_writer.dart';
@@ -24,8 +25,14 @@ class DaoWriter extends Writer {
   final String databaseNameType;
   final SqlColumnProcessor? sqlColumnProcessor;
   final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods;
+  final List<RoutineEntryTrigger> routines;
 
-  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams, this.databaseNameType, {this.sqlColumnProcessor, this.allFieldOfDaoWithAllMethods = const []});
+  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams, this.databaseNameType,
+      {
+        this.sqlColumnProcessor,
+        this.allFieldOfDaoWithAllMethods = const [],
+        this.routines = const [],
+      });
 
   @override
   Class write() {
@@ -82,6 +89,9 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
+        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesParam = '[$routinesSeparatedByComma], ';
+
         classBuilder.fields.add(field);
 
         final valueMapper =
@@ -105,7 +115,7 @@ class DaoWriter extends Writer {
         final insertedCode = insertedBody.isEmpty ? '' : ', inserted: (id, entity) async { $insertedBody }';
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = InsertionAdapter($databaseFieldName.database, '${entity.name}', $valueMapper$insertedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+              "$fieldName = InsertionAdapter($databaseFieldName, '${entity.name}', $routinesParam$valueMapper$insertedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
 
         final beforeOperations = dao.beforeOperations.where((e) => e.forInsert).toList();
         if (beforeOperations.isNotEmpty) {
@@ -134,6 +144,9 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
+        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesParam = '[$routinesSeparatedByComma], ';
+
         classBuilder.fields.add(field);
 
         final valueMapper =
@@ -151,7 +164,7 @@ class DaoWriter extends Writer {
 
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = UpdateAdapter($databaseFieldName.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$updatedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+              "$fieldName = UpdateAdapter($databaseFieldName, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $routinesParam$valueMapper$updatedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
 
         final beforeOperations = dao.beforeOperations.where((e) => e.forUpdate).toList();
         if (beforeOperations.isNotEmpty) {
@@ -180,6 +193,9 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
+        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesParam = '[$routinesSeparatedByComma], ';
+
         classBuilder.fields.add(field);
 
         final valueMapper =
@@ -197,7 +213,7 @@ class DaoWriter extends Writer {
 
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = DeletionAdapter($databaseFieldName.database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper$deletedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+              "$fieldName = DeletionAdapter($databaseFieldName, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $routinesParam$valueMapper$deletedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
 
         final beforeOperations = dao.beforeOperations.where((e) => e.forDelete).toList();
         if (beforeOperations.isNotEmpty) {

@@ -111,11 +111,16 @@ class SchemaGenerator extends Generator {
 
     final cloneCode = _generateClone(element);
 
+    final entryNotChangedOverrideCode = _generateEntryNotChangedOverride(element);
+
     final fieldsCode = _generateFields(element);
 
     final str = StringBuffer();
 
     final code = """mixin ${className}Mixin {
+    
+  $entryNotChangedOverrideCode
+    
   @ignore
   ${className}Schema get schema => ${className}Schema.instance;
   
@@ -229,6 +234,23 @@ ${fields.map((e) => e.writeCol()).join('\n')}
     return ${classElement.name}(
       $parametersConstructor
     )$parametersOutsideConstructor;
+  }''';
+  }
+
+  String _generateEntryNotChangedOverride(ClassElement classElement) {
+    return '''  ${classElement.name}? _entryNotChanged;
+  @Ignore()
+  ${classElement.name}? get entryNotChanged => _entryNotChanged;
+  @Ignore()
+  set entryNotChanged(EntryBase? entryNotChanged) {
+    if (entryNotChanged == null) {
+      _entryNotChanged = null;
+      return;
+    }  
+    if (entryNotChanged is! ${classElement.name}) {
+      throw Exception('Objeto setado em entryNotChanged para a entidade ${classElement.name} é inválida.');
+    }
+    _entryNotChanged = entryNotChanged;
   }''';
   }
 
