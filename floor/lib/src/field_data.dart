@@ -8,6 +8,8 @@ class FieldData {
   final Object? value;
   final Object? valueSave;
 
+  final bool ignoredAll;
+
   FieldData(
     this.name,
     this.value,
@@ -17,7 +19,7 @@ class FieldData {
     this.ignoreForInsert = false,
     this.ignoreForUpdate = false,
     this.ignoreForDelete = false,
-  });
+  }) : ignoredAll = ignoreForQuery && ignoreForInsert && ignoreForUpdate && ignoreForDelete;
 
   FieldData.ignoreAll(
     this.name,
@@ -28,5 +30,5 @@ class FieldData {
     this.ignoreForInsert = true,
     this.ignoreForUpdate = true,
     this.ignoreForDelete = true,
-  });
+  }) : ignoredAll = ignoreForQuery && ignoreForInsert && ignoreForUpdate && ignoreForDelete;
 }
