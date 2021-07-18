@@ -35,8 +35,6 @@ class GroupingInfo extends SortingInfo {
       desc: desc ?? this.desc,
     );
   }
-
-
 }
 
 enum GroupInterval {
@@ -52,6 +50,8 @@ enum GroupInterval {
   day,
   @EnumValue('dayOfWeek')
   dayOfWeek,
+  @EnumValue('weekOfYear')
+  weekOfYear,
   @EnumValue('hour')
   hour,
   @EnumValue('minute')

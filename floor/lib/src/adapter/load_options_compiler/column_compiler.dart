@@ -47,7 +47,7 @@ class ColumnCompiler extends ExpressionCompiler {
 
   String _compileColumnAggregator(ColumnSql columnSql) {
     final nameColumn = columnSql.name;
-    final aggregator = loadOptions.aggregators!.firstWhereOrNull((e) => e.selector == nameColumn);
+    final aggregator = loadOptions.aggregators!.firstWhereOrNull((e) => getSqlColumn(e.selector).name == nameColumn);
     if (aggregator == null) {
       return '${columnSql.sqlField} AS $nameColumn';
     }

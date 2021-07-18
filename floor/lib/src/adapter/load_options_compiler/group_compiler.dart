@@ -35,23 +35,27 @@ class GroupCompiler extends ExpressionCompiler {
       return sqlField;
     }
 
+    final dateStr = 'datetime($sqlField / 1000,\'unixepoch\')';
     switch (groupingInfo.groupInterval!) {
+      // TODO  essa divisão por 100 não ficou legal, tinha de vim do converter
       case GroupInterval.year:
-        return 'YEAR($sqlField)';
+        return 'strftime(\'%Y\', $dateStr)';
       case GroupInterval.quarter:
-        return 'QUARTER($sqlField)';
+        return 'floor( (strftime(\'%m\', $dateStr) + 2) / 3 )';
       case GroupInterval.month:
-        return 'MONTH($sqlField)';
+        return 'strftime(\'%Y-%m\', $dateStr)';
       case GroupInterval.day:
-        return 'DAY($sqlField)';
+        return 'strftime(\'%Y-%m-%d\', $dateStr)';
       case GroupInterval.dayOfWeek:
-        return 'DAYOFWEEK($sqlField)';
+        return 'strftime(\'%w\', $dateStr)';
+      case GroupInterval.weekOfYear:
+        return 'strftime(\'%W\', $dateStr)';
       case GroupInterval.hour:
-        return 'HOUR($sqlField)';
+        return 'strftime(\'%H\', $dateStr)';
       case GroupInterval.minute:
-        return 'MINUTE($sqlField)';
+        return 'strftime(\'%M\', $dateStr)';
       case GroupInterval.second:
-        return 'SECOND($sqlField)';
+        return 'strftime(\'%S\', $dateStr)';
       case GroupInterval.numberInterval:
         if (groupingInfo.numberInterval == null) {
           throw Exception('Ao agrupar numberInterval não pode ser null se groupInterval for igual a numberInterval.');
