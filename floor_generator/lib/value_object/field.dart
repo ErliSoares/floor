@@ -15,6 +15,8 @@ class Field extends Fieldable {
   final Junction? junction;
   final Relation? relation;
   final ForeignKeyRelation? foreignKeyRelation;
+  final int? length;
+  final int? decimals;
 
   Field(
     FieldElement fieldElement,
@@ -22,13 +24,13 @@ class Field extends Fieldable {
     this.columnName,
     this.isNullable,
     this.sqlType,
-    this.typeConverter,
-    {
-      this.junction,
-      this.relation,
-      this.foreignKeyRelation,
-    }
-  ) : super(fieldElement);
+    this.typeConverter, {
+    this.junction,
+    this.relation,
+    this.foreignKeyRelation,
+    this.length,
+    this.decimals,
+  }) : super(fieldElement);
 
   /// The database column definition.
   String getDatabaseDefinition(final bool autoGenerate) {
@@ -41,7 +43,12 @@ class Field extends Fieldable {
       columnSpecification.write(' NOT NULL');
     }
 
-    return '`$columnName` $sqlType$columnSpecification';
+    var constrainsLength = '';
+    if (length != null) {
+      constrainsLength = '($length${decimals == null ? '' : ',$decimals'})';
+    }
+
+    return '`$columnName` $sqlType$constrainsLength$columnSpecification';
   }
 
   @override
@@ -54,6 +61,8 @@ class Field extends Fieldable {
           columnName == other.columnName &&
           isNullable == other.isNullable &&
           sqlType == other.sqlType &&
+          length == other.length &&
+          decimals == other.decimals &&
           typeConverter == other.typeConverter;
 
   @override
@@ -63,10 +72,12 @@ class Field extends Fieldable {
       columnName.hashCode ^
       isNullable.hashCode ^
       sqlType.hashCode ^
+      length.hashCode ^
+      decimals.hashCode ^
       typeConverter.hashCode;
 
   @override
   String toString() {
-    return 'Field{fieldElement: $fieldElement, name: $name, columnName: $columnName, isNullable: $isNullable, sqlType: $sqlType, typeConverter: $typeConverter}';
+    return 'Field{fieldElement: $fieldElement, name: $name, columnName: $columnName, isNullable: $isNullable, sqlType: $sqlType, typeConverter: $typeConverter}, length: $length}, decimals: $decimals}';
   }
 }

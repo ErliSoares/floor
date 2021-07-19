@@ -9,6 +9,8 @@ abstract class AnnotationField {
   static const databaseRoutines = 'routines';
 
   static const columnInfoName = 'name';
+  static const columnInfoLength = 'length';
+  static const columnInfoDecimals = 'decimals';
 
   static const embeddedPrefix = 'prefix';
 

@@ -53,6 +53,8 @@ class FieldProcessor extends Processor<Field> {
       junction: junction,
       relation: relation,
       foreignKeyRelation: foreignKeyRelation,
+      decimals: _fieldElement.columnDecimals(),
+      length: _fieldElement.columnLength(),
     );
   }
 

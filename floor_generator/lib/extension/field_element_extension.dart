@@ -124,6 +124,22 @@ extension FieldElementExtension on FieldElement {
         : name;
   }
 
+  int? columnLength(){
+    return hasAnnotation(annotations.ColumnInfo)
+        ? getAnnotation(annotations.ColumnInfo)
+        ?.getField(AnnotationField.columnInfoLength)
+        ?.toIntValue()
+        : null;
+  }
+
+  int? columnDecimals(){
+    return hasAnnotation(annotations.ColumnInfo)
+        ? getAnnotation(annotations.ColumnInfo)
+        ?.getField(AnnotationField.columnInfoDecimals)
+        ?.toIntValue()
+        : null;
+  }
+
   bool isJunction(){
     return hasAnnotation(annotations.Junction);
   }

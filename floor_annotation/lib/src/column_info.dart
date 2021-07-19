@@ -3,5 +3,9 @@ class ColumnInfo {
   /// The custom name of the column.
   final String? name;
 
-  const ColumnInfo({this.name});
+  final int? length;
+
+  final int? decimals;
+
+  const ColumnInfo({this.name,this.length,this.decimals});
 }
