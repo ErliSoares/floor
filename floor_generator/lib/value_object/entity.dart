@@ -40,6 +40,35 @@ class Entity extends Queryable {
   ) : super(name: name, classElement: classElement, constructor: constructor, fieldsAll: fieldsAll, fieldsDataBaseSchema: fieldsDataBaseSchema, fieldsQuery: fieldsQuery, embeddeds: embeddeds);
 
   String getCreateTableStatement() {
+    final clone = [...fieldsDataBaseSchema];
+    fieldsDataBaseSchema.sort((a, b) {
+      final int aIndex = clone.indexOf(a);
+      final int bIndex = clone.indexOf(b);
+
+      final aIsPrimaryKey = primaryKey.fields.contains(a);
+      final bIsPrimaryKey = primaryKey.fields.contains(b);
+
+      if (aIsPrimaryKey && !bIsPrimaryKey) {
+        return -1;
+      }
+      if (!aIsPrimaryKey && bIsPrimaryKey) {
+        return 1;
+      }
+      if (aIsPrimaryKey && bIsPrimaryKey) {
+        return aIndex.compareTo(bIndex);
+      }
+
+      final aIsForeignKey = foreignKeys.any((e) => e.childColumns.contains(a.columnName));
+      final bIsForeignKey =  foreignKeys.any((e) => e.childColumns.contains(b.columnName));
+
+      if (aIsForeignKey && !bIsForeignKey) {
+        return -1;
+      }
+      if (!aIsForeignKey && bIsForeignKey) {
+        return 1;
+      }
+      return 0;
+    });
     final databaseDefinition = fieldsDataBaseSchema.map((field) {
       final autoIncrement =
           primaryKey.fields.contains(field) && primaryKey.autoGenerateId;
