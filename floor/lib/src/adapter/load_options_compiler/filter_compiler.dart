@@ -162,14 +162,12 @@ class FilterCompiler extends ExpressionCompiler {
     var nextIsAnd = true;
 
     for (var item in filter) {
-      final operandJson = item as List;
-
-      if (_isCriteria(operandJson)) {
+      if (item is List && _isCriteria(item)) {
         if (operands.length > 1 && isAnd != nextIsAnd)
           throw Exception('Mixing of and/or is not allowed inside a single group');
 
         isAnd = nextIsAnd;
-        operands.add(compile(operandJson));
+        operands.add(compile(item));
         nextIsAnd = true;
       } else {
         nextIsAnd = RegExp('and|&', caseSensitive: false).hasMatch(item.toString());
