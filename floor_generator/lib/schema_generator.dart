@@ -248,7 +248,7 @@ ${fields.map((e) => e.writeCol()).join('\n')}
       return;
     }  
     if (entryNotChanged is! ${classElement.name}) {
-      throw Exception('Objeto setado em entryNotChanged para a entidade ${classElement.name} é inválida.');
+      throw Exception('Objeto entryNotChanged para a entidade ${classElement.name} é inválida.');
     }
     _entryNotChanged = entryNotChanged;
   }''';
