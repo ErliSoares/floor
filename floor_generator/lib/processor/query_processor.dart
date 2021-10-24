@@ -3,6 +3,7 @@ import 'package:floor_generator/misc/extension/dart_type_extension.dart';
 import 'package:floor_generator/processor/error/query_processor_error.dart';
 import 'package:floor_generator/processor/processor.dart';
 import 'package:floor_generator/value_object/query.dart';
+import 'package:floor_generator/misc/type_utils.dart';
 
 class QueryProcessor extends Processor<Query> {
   final QueryProcessorError _processorError;
@@ -35,6 +36,8 @@ class QueryProcessor extends Processor<Query> {
     //get List of query variables
     final variables = findVariables(_query);
     _assertAllParametersAreUsed(variables);
+    _assertOneLoadOptions(variables);
+    // TODO Validar para nõo deixar colocar o loadoptions para querys que não seja select
 
     final newQuery = StringBuffer();
     final listParameters = <ListParameter>[];
@@ -87,9 +90,16 @@ class QueryProcessor extends Processor<Query> {
   void _assertAllParametersAreUsed(List<VariableToken> variables) {
     final queryVariables = variables.map((e) => e.name.substring(1)).toSet();
     for (final param in _parameters) {
-      if (!queryVariables.contains(param.displayName)) {
+      if (!queryVariables.contains(param.displayName) && !param.type.isLoadOptions && !param.type.isLoadOptionsEntry) {
         throw _processorError.unusedQueryMethodParameter(param);
       }
+    }
+  }
+
+  void _assertOneLoadOptions(List<VariableToken> variables) {
+    final parameters = _parameters.where((e) => e.type.isLoadOptions || e.type.isLoadOptionsEntry).toList();
+    if (parameters.length > 1) {
+      throw _processorError.moreOneLoadOptionsQueryMethodParameter(parameters[1]);
     }
   }
 }

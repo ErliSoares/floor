@@ -31,9 +31,13 @@ void main() {
     final view = View(
       fakeClassElement,
       'entityName',
+      [],
+      allFields,
+      allFields,
       allFields,
       'SELECT * FROM x',
       '',
+      true,
     );
 
     final actual = view.getCreateViewStatement();

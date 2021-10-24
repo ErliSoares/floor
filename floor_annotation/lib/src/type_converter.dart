@@ -1,3 +1,4 @@
+import 'package:floor_annotation/src/type_converter_base.dart';
 import 'package:meta/meta.dart';
 
 /// Base class for type converters which can be applied to:
@@ -55,10 +56,30 @@ import 'package:meta/meta.dart';
 /// }
 /// ```
 @experimental
-abstract class TypeConverter<T, S> {
+abstract class TypeConverter<T, S> extends TypeConverterBase {
+  const TypeConverter();
+
   /// Converts the [databaseValue] of type [S] into [T]
   T decode(S databaseValue);
 
   /// Converts the [value] of type [T] into the database-compatible type [S]
   S encode(T value);
+
+  /// Converts the [databaseValue] of type [S] into [T]
+  @override
+  Object? decodeObject(Object? databaseValue) {
+    if (databaseValue == null) {
+      return null;
+    }
+    return decode(databaseValue as S);
+  }
+
+  /// Converts the [value] of type [T] into the database-compatible type [S]
+  @override
+  Object? encodeObject(Object? value) {
+    if (value == null) {
+      return null;
+    }
+    return encode(value as T);
+  }
 }

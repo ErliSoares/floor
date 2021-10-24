@@ -11,6 +11,7 @@ extension TypeConverterElementExtension on Element {
   /// Returns a set of [TypeConverter]s found in the @TypeConverters
   /// annotation on this element
   Set<TypeConverter> getTypeConverters(final TypeConverterScope scope) {
+    var converters = <TypeConverter>{};
     if (hasAnnotation(annotations.TypeConverters)) {
       final typeConverterElements = getAnnotation(annotations.TypeConverters)
           ?.getField(AnnotationField.typeConverterValue)
@@ -19,32 +20,31 @@ extension TypeConverterElementExtension on Element {
 
       if (typeConverterElements == null || typeConverterElements.isEmpty) {
         throw ProcessorError(
-          message:
-              'There are no type converts defined even though the @TypeConverters annotation is used.',
+          message: 'There are no type converts defined even though the @TypeConverters annotation is used.',
           todo: 'Supply a type converter class to the annotation.',
           element: this,
         );
       }
 
-      final typeConverterClassElements =
-          typeConverterElements.cast<ClassElement>();
+      final typeConverterClassElements = typeConverterElements.cast<ClassElement>();
 
-      if (typeConverterClassElements
-          .any((element) => !element.isTypeConverter)) {
+      if (typeConverterClassElements.any((element) => !element.isTypeConverter)) {
         throw ProcessorError(
-          message:
-              'Only classes that inherit from TypeConverter can be used as type converters.',
+          message: 'Only classes that inherit from TypeConverter can be used as type converters.',
           todo: 'Make sure use a class that inherits from TypeConverter.',
           element: this,
         );
       }
 
-      return typeConverterClassElements
-          .map((element) => TypeConverterProcessor(element, scope).process())
-          .toSet();
-    } else {
-      return {};
+      converters = {
+        ...typeConverterClassElements.map((element) => TypeConverterProcessor(element, scope).process())
+      };
     }
+    final thisClass = this;
+    if (thisClass is ClassElement && thisClass.supertype != null) {
+      converters = {...converters, ...thisClass.supertype!.element.getTypeConverters(scope)};
+    }
+    return converters;
   }
 }
 

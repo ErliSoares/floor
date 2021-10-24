@@ -192,7 +192,7 @@ Future<FieldElement> _generateFieldElement(final String field) async {
       
       import 'package:floor_annotation/floor_annotation.dart';
       import 'dart:typed_data';
-      
+
       class Foo {
         $field
       }

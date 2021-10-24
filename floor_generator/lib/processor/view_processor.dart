@@ -18,13 +18,24 @@ class ViewProcessor extends QueryableProcessor<View> {
 
   @override
   View process() {
-    final fields = getFields();
+    final fieldsAll = getFieldsWithOutCheckIgnore();
+    final fieldsQuery = fieldsAll.where((e) => shouldBeIncludedForQuery(e.fieldElement)).toList();
+    final fieldsDataBaseSchema = fieldsAll.where((e) => shouldBeIncludedForDataBaseSchema(e.fieldElement)).toList();
+    final embeddeds = getEmbeddeds();
+
+    final isQueryView = classElement
+        .getAnnotation(annotations.queryView.runtimeType) != null;
+
     return View(
       classElement,
       _getName(),
-      fields,
-      _getQuery(),
-      getConstructor(fields),
+      embeddeds,
+      fieldsQuery,
+      fieldsDataBaseSchema,
+      fieldsAll,
+      isQueryView ? '' : _getQuery(),
+      getConstructor([...fieldsQuery, ...embeddeds]),
+      isQueryView,
     );
   }
 

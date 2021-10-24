@@ -1,10 +1,13 @@
 import 'package:code_builder/code_builder.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
+import 'package:floor_generator/processor/database_processor.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/dao.dart';
 import 'package:floor_generator/value_object/deletion_method.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/insertion_method.dart';
 import 'package:floor_generator/value_object/query_method.dart';
+import 'package:floor_generator/value_object/routine_entry_trigger.dart';
 import 'package:floor_generator/value_object/transaction_method.dart';
 import 'package:floor_generator/value_object/update_method.dart';
 import 'package:floor_generator/writer/deletion_method_writer.dart';
@@ -19,12 +22,21 @@ class DaoWriter extends Writer {
   final Dao dao;
   final Set<Entity> streamEntities;
   final bool dbHasViewStreams;
+  final String databaseNameType;
+  final SqlColumnProcessor? sqlColumnProcessor;
+  final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods;
+  final List<RoutineEntryTrigger> routines;
 
-  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams);
+  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams, this.databaseNameType,
+      {
+        this.sqlColumnProcessor,
+        this.allFieldOfDaoWithAllMethods = const [],
+        this.routines = const [],
+      });
 
   @override
   Class write() {
-    const databaseFieldName = 'database';
+    const databaseFieldName = 'floorDatabase';
     const changeListenerFieldName = 'changeListener';
 
     final daoName = dao.name;
@@ -45,6 +57,8 @@ class DaoWriter extends Writer {
     final constructorBuilder = ConstructorBuilder()
       ..requiredParameters.addAll([databaseParameter, changeListenerParameter]);
 
+    final constructorBody = StringBuffer();
+
     final queryMethods = dao.queryMethods;
     if (queryMethods.isNotEmpty) {
       classBuilder
@@ -58,7 +72,7 @@ class DaoWriter extends Writer {
 
       constructorBuilder
         ..initializers.add(Code(
-            "_queryAdapter = QueryAdapter(database${queriesRequireChangeListener ? ', changeListener' : ''})"));
+            "_queryAdapter = QueryAdapter($databaseFieldName.database${queriesRequireChangeListener ? ', changeListener: changeListener' : ''})"));
     }
 
     final insertionMethods = dao.insertionMethods;
@@ -75,17 +89,44 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
+        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesParam = '[$routinesSeparatedByComma], ';
+
         classBuilder.fields.add(field);
 
         final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.valueMapping}';
+            '(${entity.classElement.displayName} item) => ${entity.valueMappingForInsert}';
 
         final requiresChangeListener =
             dbHasViewStreams || streamEntities.contains(entity);
 
+        final insertedBody = StringBuffer();
+        if (entity.primaryKey.fields.length == 1) {
+          final primaryKeyField = entity.primaryKey.fields[0];
+          if (entity.primaryKey.autoGenerateId
+              && primaryKeyField.fieldElement.type.isDartCoreInt
+              && !primaryKeyField.fieldElement.isFinal) {
+            insertedBody.writeln('entity.${primaryKeyField.name} = id;');
+          }
+        }
+        if (entity.actionsSave.isNotEmpty) {
+          insertedBody.writeln(entity.actionsSave);
+        }
+        final insertedCode = insertedBody.isEmpty ? '' : ', inserted: (id, entity) async { $insertedBody }';
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = InsertionAdapter(database, '${entity.name}', $valueMapper${requiresChangeListener ? ', changeListener' : ''})"));
+              "$fieldName = InsertionAdapter($databaseFieldName, '${entity.name}', $routinesParam$valueMapper$insertedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+
+        final beforeOperations = dao.beforeOperations.where((e) => e.forInsert).toList();
+        if (beforeOperations.isNotEmpty) {
+          if (beforeOperations.length == 1) {
+            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' $fieldName.beforeInsert = super.${e.name};'), '\n');
+          }  else {
+            constructorBody.writeln('$fieldName.beforeInsert = (entity) async {');
+            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
+            constructorBody.writeln('};');
+          }
+        }
       }
     }
 
@@ -103,17 +144,38 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
+        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesParam = '[$routinesSeparatedByComma], ';
+
         classBuilder.fields.add(field);
 
         final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.valueMapping}';
+            '(${entity.classElement.displayName} item) => ${entity.valueMappingForUpdate}';
 
         final requiresChangeListener =
             dbHasViewStreams || streamEntities.contains(entity);
 
+        final String updatedCode;
+        if (entity.actionsSave.isNotEmpty) {
+          updatedCode = ', updated: (entity) async { ${entity.actionsSave} }';
+        } else{
+          updatedCode = '';
+        }
+
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = UpdateAdapter(database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper${requiresChangeListener ? ', changeListener' : ''})"));
+              "$fieldName = UpdateAdapter($databaseFieldName, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $routinesParam$valueMapper$updatedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+
+        final beforeOperations = dao.beforeOperations.where((e) => e.forUpdate).toList();
+        if (beforeOperations.isNotEmpty) {
+          if (beforeOperations.length == 1) {
+            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' $fieldName.beforeUpdate = super.${e.name};'), '\n');
+          }  else {
+            constructorBody.writeln('$fieldName.beforeUpdate = (entity) async {');
+            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
+            constructorBody.writeln('};');
+          }
+        }
       }
     }
 
@@ -131,18 +193,48 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
+        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesParam = '[$routinesSeparatedByComma], ';
+
         classBuilder.fields.add(field);
 
         final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.valueMapping}';
+            '(${entity.classElement.displayName} item) => ${entity.valueMappingForDelete}';
 
         final requiresChangeListener =
             dbHasViewStreams || streamEntities.contains(entity);
 
+        final String deletedCode;
+        if (entity.actionsSave.isNotEmpty) {
+          deletedCode = '';
+        } else{
+          deletedCode = '';
+        }
+
         constructorBuilder
           ..initializers.add(Code(
-              "$fieldName = DeletionAdapter(database, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $valueMapper${requiresChangeListener ? ', changeListener' : ''})"));
+              "$fieldName = DeletionAdapter($databaseFieldName, '${entity.name}', ${entity.primaryKey.fields.map((field) => '\'${field.columnName}\'').toList()}, $routinesParam$valueMapper$deletedCode${requiresChangeListener ? ', changeListener: changeListener' : ''})"));
+
+        final beforeOperations = dao.beforeOperations.where((e) => e.forDelete).toList();
+        if (beforeOperations.isNotEmpty) {
+          if (beforeOperations.length == 1) {
+            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' $fieldName.beforeDelete = super.${e.name};'), '\n');
+          }  else {
+            constructorBody.writeln('$fieldName.beforeDelete = (entity) async {');
+            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
+            constructorBody.writeln('};');
+          }
+        }
       }
+    }
+
+    final unnamedConstructor = dao.classElement.unnamedConstructor;
+    if (unnamedConstructor != null && unnamedConstructor.parameters.isNotEmpty) {
+      constructorBuilder.initializers.add(const Code('super($databaseFieldName)'));
+    }
+
+    if (constructorBody.isNotEmpty) {
+      constructorBuilder.body = Code(constructorBody.toString());
     }
 
     classBuilder
@@ -162,7 +254,7 @@ class DaoWriter extends Writer {
   ) {
     final databaseField = Field((builder) => builder
       ..name = databaseName
-      ..type = refer('sqflite.DatabaseExecutor')
+      ..type = refer('_\$$databaseNameType')
       ..modifier = FieldModifier.final$);
 
     final changeListenerField = Field((builder) => builder
@@ -199,7 +291,7 @@ class DaoWriter extends Writer {
 
   List<Method> _generateQueryMethods(final List<QueryMethod> queryMethods) {
     return queryMethods
-        .map((method) => QueryMethodWriter(method).write())
+        .map((method) => QueryMethodWriter(method, sqlColumnProcessor: sqlColumnProcessor, allFieldOfDaoWithAllMethods: allFieldOfDaoWithAllMethods, afterQueryMethods: dao.afterQueryMethods).write())
         .toList();
   }
 

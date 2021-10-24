@@ -4,6 +4,7 @@ import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/dao_processor.dart';
 import 'package:floor_generator/processor/entity_processor.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/dao.dart';
 import 'package:floor_generator/value_object/query_method.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
@@ -404,6 +405,48 @@ void main() {
     final actual = () => QueryMethodWriter(queryMethod).write();
 
     expect(actual, throwsA(const TypeMatcher<InvalidGenerationSourceError>()));
+  });
+
+  test('query list with load options', () async {
+    final queryMethod = await _createQueryMethod('''
+      @Query('SELECT pe.*, 1 + 2 AS test, address.name FROM person as pe INNER JOIN address ON (address.personId = pe.id)WHERE pe.id = 2 GROUP BY pe.name ORDER BY pe.name DESC LIMIT 1, 10')
+      Future<List<Person>> findAll(LoadOptionsEntry loadOptions);
+    ''');
+
+    final _sqlColumnProcessor = SqlColumnProcessor();
+
+    var sql = 'CREATE TABLE IF NOT EXISTS `person` (`id` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))';
+    _sqlColumnProcessor.registerSqlCreateTable(sql);
+    sql = 'CREATE TABLE IF NOT EXISTS `address` (`id` INTEGER, `personId` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))';
+    _sqlColumnProcessor.registerSqlCreateTable(sql);
+
+    final actual = QueryMethodWriter(queryMethod, sqlColumnProcessor: _sqlColumnProcessor).write();
+
+    expect(actual, equalsDart('''
+      @override
+      Future<List<Person>> findAll(LoadOptionsEntry loadOptions) async {
+        return _queryAdapter.queryList('SELECT * FROM Person', mapper: (Map<String, Object?> row) => Person(row['id'] as int, row['name'] as String), loadOptions: loadOptions, sqlColumns: { 'id': 'Person.id', 'name': 'Person.name' });
+      }
+    '''));
+  });
+
+  test('query single value', () async {
+    final queryMethod = await _createQueryMethod('''
+      @Query('SELECT name FROM Person WHERE id = :id')
+      Future<String?> findById(int id);
+    ''');
+
+    final sqlColumnProcessor = SqlColumnProcessor();
+    const sql = 'CREATE TABLE IF NOT EXISTS `Person` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `picture` BLOB NOT NULL, PRIMARY KEY (`id`))';
+    sqlColumnProcessor.registerSqlCreateTable(sql);
+    final actual = QueryMethodWriter(queryMethod, sqlColumnProcessor: sqlColumnProcessor).write();
+
+    expect(actual, equalsDart(r'''
+      @override
+      Future<String?> findById(int id) async {
+        return _queryAdapter.querySingleValue('SELECT name FROM Person WHERE id = ?1', arguments: [id]);
+      }
+    '''));
   });
 }
 

@@ -3,6 +3,7 @@ import 'package:collection/collection.dart';
 import 'package:floor_generator/processor/error/queryable_processor_error.dart';
 import 'package:floor_generator/processor/field_processor.dart';
 import 'package:floor_generator/processor/queryable_processor.dart';
+import 'package:floor_generator/value_object/embedded.dart';
 import 'package:floor_generator/value_object/field.dart';
 import 'package:floor_generator/value_object/queryable.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
@@ -28,10 +29,12 @@ void main() {
     final fields = classElement.fields
         .map((fieldElement) => FieldProcessor(fieldElement, null).process())
         .toList();
+    final embeddeds = <Embedded>[];
     const constructor = "Person(row['id'] as int, row['name'] as String)";
     final expected = TestQueryable(
       classElement,
       fields,
+      embeddeds,
       constructor,
     );
     expect(actual, equals(expected));
@@ -66,6 +69,7 @@ void main() {
       final expected = TestQueryable(
         classElement,
         fields,
+        [],
         constructor,
       );
       expect(actual, equals(expected));
@@ -112,6 +116,7 @@ void main() {
       final expected = TestQueryable(
         classElement,
         fields,
+        [],
         constructor,
       );
       expect(actual, equals(expected));
@@ -166,6 +171,7 @@ void main() {
       final expected = TestQueryable(
         classElement,
         fields,
+        [],
         constructor,
       );
       expect(actual, equals(expected));
@@ -190,7 +196,7 @@ void main() {
     ''');
 
       final actual = TestProcessor(classElement).process();
-      final fieldNames = actual.fields.map((field) => field.name).toList();
+      final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
@@ -222,7 +228,7 @@ void main() {
     ''');
 
       final actual = TestProcessor(classElement).process();
-      final fieldNames = actual.fields.map((field) => field.name).toList();
+      final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'foo', 'name'];
       const expectedConstructor =
@@ -248,7 +254,7 @@ void main() {
     ''');
 
       final actual = TestProcessor(classElement).process();
-      final fieldNames = actual.fields.map((field) => field.name).toList();
+      final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
@@ -276,7 +282,7 @@ void main() {
     ''');
 
       final actual = TestProcessor(classElement).process();
-      final fieldNames = actual.fields.map((field) => field.name).toList();
+      final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
       const expectedConstructor =
@@ -321,7 +327,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process();
 
-      expect(actual.fields.length, equals(2));
+      expect(actual.fieldsAll.length, equals(2));
     });
 
     test('Ignore hashCode field', () async {
@@ -340,7 +346,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process();
 
-      expect(actual.fields.length, equals(2));
+      expect(actual.fieldsAll.length, equals(2));
     });
 
     test('Ignore getter', () async {
@@ -358,7 +364,7 @@ void main() {
 
       final actual = TestProcessor(classElement)
           .process()
-          .fields
+          .fieldsAll
           .map((field) => field.name)
           .toList();
 
@@ -383,7 +389,7 @@ void main() {
 
       final actual = TestProcessor(classElement)
           .process()
-          .fields
+          .fieldsAll
           .map((field) => field.name)
           .toList();
 
@@ -579,7 +585,7 @@ void main() {
 
       final actual = TestProcessor(classElement)
           .process()
-          .fields
+          .fieldsAll
           .map((field) => field.name);
 
       const expected = 'foo';
@@ -602,7 +608,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process().constructor;
 
-      const expected = "Person(row['id'] as int, row['name'] as String)";
+      const expected = "Person(row['id'] as int, row['name'] as String, null)";
       expect(actual, equals(expected));
     });
   });
@@ -612,25 +618,31 @@ class TestQueryable extends Queryable {
   TestQueryable(
     ClassElement classElement,
     List<Field> fields,
+    List<Embedded> embeddeds,
     String constructor,
-  ) : super(classElement, '', fields, constructor);
-
+  ) : super(constructor: constructor, name: '', classElement: classElement, fieldsAll: fields, fieldsDataBaseSchema: fields, fieldsQuery: fields, embeddeds: embeddeds,);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is TestQueryable &&
           runtimeType == other.runtimeType &&
           classElement == other.classElement &&
-          const ListEquality<Field>().equals(fields, other.fields) &&
+          const ListEquality<Field>().equals(fieldsAll, other.fieldsAll) &&
+          const ListEquality<Field>().equals(fieldsDataBaseSchema, other.fieldsDataBaseSchema) &&
+          const ListEquality<Field>().equals(fieldsQuery, other.fieldsQuery) &&
           constructor == other.constructor;
 
   @override
   int get hashCode =>
-      classElement.hashCode ^ fields.hashCode ^ constructor.hashCode;
+      classElement.hashCode ^
+      fieldsAll.hashCode ^
+      fieldsDataBaseSchema.hashCode ^
+      fieldsDataBaseSchema.hashCode ^
+      constructor.hashCode;
 
   @override
   String toString() {
-    return 'TestQueryable{classElement: $classElement, name: $name, fields: $fields, constructor: $constructor}';
+    return 'TestQueryable{classElement: $classElement, name: $name, fieldsAll: $fieldsAll, fieldsDataBaseSchema: $fieldsDataBaseSchema, fieldsQuery: $fieldsQuery, constructor: $constructor}';
   }
 }
 
@@ -642,11 +654,14 @@ class TestProcessor extends QueryableProcessor<TestQueryable> {
 
   @override
   TestQueryable process() {
-    final fields = getFields();
+    final fields = getFieldsWithOutCheckIgnore().where((e) => shouldBeIncludedForQuery(e.fieldElement)).toList();
+    final embeddeds = getEmbeddeds();
+
     return TestQueryable(
       classElement,
       fields,
-      getConstructor(fields),
+      embeddeds,
+      getConstructor([...fields, ...embeddeds]),
     );
   }
 }

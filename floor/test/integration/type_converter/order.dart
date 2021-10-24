@@ -1,5 +1,12 @@
 import 'package:floor/floor.dart';
 
+import 'type_converter.dart';
+
+part 'order.g.dart';
+
+var dateTimeConverter = DateTimeConverter();
+
+@TypeConverters([DateTimeConverter])
 @entity
 class Order {
   @primaryKey

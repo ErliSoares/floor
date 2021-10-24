@@ -11,6 +11,7 @@ import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/error/query_method_processor_error.dart';
 import 'package:floor_generator/processor/processor.dart';
 import 'package:floor_generator/processor/query_processor.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/value_object/query_method.dart';
 import 'package:floor_generator/value_object/queryable.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
@@ -21,11 +22,13 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
   final MethodElement _methodElement;
   final List<Queryable> _queryables;
   final Set<TypeConverter> _typeConverters;
+  final SqlColumnProcessor? sqlColumnProcessor;
 
   QueryMethodProcessor(
     final MethodElement methodElement,
     final List<Queryable> queryables,
     final Set<TypeConverter> typeConverters,
+    {this.sqlColumnProcessor}
   )   : _methodElement = methodElement,
         _queryables = queryables,
         _typeConverters = typeConverters,
@@ -71,8 +74,9 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
         parameterTypeConverters;
 
     if (queryable != null) {
+      _assertLoadOptionsToProcessEntry();
       final fieldTypeConverters =
-          queryable.fields.mapNotNull((field) => field.typeConverter);
+          queryable.fieldsAll.mapNotNull((field) => field.typeConverter);
       allTypeConverters.addAll(fieldTypeConverters);
     }
 
@@ -140,6 +144,13 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
       } else {
         throw _processorError.doesNotReturnNullableFuture;
       }
+    }
+  }
+
+  void _assertLoadOptionsToProcessEntry() {
+    final parameter = _methodElement.parameters.firstWhereOrNull((e) => e.type.isLoadOptions);
+    if (parameter != null) {
+      throw _processorError.invalidLoadOptionsQueryMethodParameterToProcessEntry(parameter);
     }
   }
 }

@@ -156,6 +156,7 @@ Future<Dao> createDao(final String methodSignature) async {
       library test;
       
       import 'package:floor_annotation/floor_annotation.dart';
+      import 'package:floor/floor.dart';
       
       @dao
       abstract class PersonDao {

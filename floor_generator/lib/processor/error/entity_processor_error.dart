@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:floor_generator/processor/error/processor_error.dart';
 import 'package:source_gen/source_gen.dart';
 
 class EntityProcessorError {
@@ -34,10 +35,10 @@ class EntityProcessorError {
     );
   }
 
-  InvalidGenerationSourceError get foreignKeyDoesNotReferenceEntity {
+  InvalidGenerationSourceError foreignKeyDoesNotReferenceEntity(ClassElement _classElement) {
     return InvalidGenerationSourceError(
       "The foreign key doesn't reference an entity class.",
-      todo: 'Make sure to add an entity to the foreign key. ',
+      todo: 'Make sure to add an entity to the foreign key.',
       element: _classElement,
     );
   }
@@ -45,7 +46,7 @@ class EntityProcessorError {
   InvalidGenerationSourceError get foreignKeyNoEntity {
     return InvalidGenerationSourceError(
       'No entity defined for foreign key',
-      todo: 'Make sure to add an entity to the foreign key. ',
+      todo: 'Make sure to add an entity to the foreign key.',
       element: _classElement,
     );
   }
@@ -85,6 +86,44 @@ class EntityProcessorError {
       'autoGenerate is not allowed in WITHOUT ROWID tables',
       todo:
           'Remove autoGenerate in @PrimaryKey() or withoutRowid in @Entity().',
+      element: _classElement,
+    );
+  }
+
+  ProcessorError saveMethodParameterIsNullable(
+      final ParameterElement parameterElement,
+      ) {
+    return ProcessorError(
+      message: 'Save method accepts only one parameter.',
+      todo: 'Define the ${parameterElement.displayName} method with just one parameter.',
+      element: parameterElement,
+    );
+  }
+
+  ProcessorError saveMethodParameterHaveMoreOne(
+      final MethodElement methodElement,
+      ) {
+    return ProcessorError(
+      message: 'Insert method parameter have to be non-nullable.',
+      todo: 'Define ${methodElement.displayName} as non-nullable.',
+      element: methodElement,
+    );
+  }
+
+  ProcessorError noMethodWithSaveAnnotation(
+      final Element entity,
+      ) {
+    return ProcessorError(
+      message: 'The type ${entity.getDisplayString(withNullability: false)} not have DAO with method @save.',
+      todo: 'Create DAO with method @save for type ${entity.getDisplayString(withNullability: false)}.',
+      element: entity,
+    );
+  }
+
+  InvalidGenerationSourceError twoForeignKeysForTheSameParentTable(ClassElement _classElement){
+    return InvalidGenerationSourceError(
+      'More than one link from the child table to the same parent table, it was not implemented for two or more fields to link to the child table.',
+      todo: 'Open a issue to implement the feature.',
       element: _classElement,
     );
   }

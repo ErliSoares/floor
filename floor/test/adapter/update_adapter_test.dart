@@ -9,6 +9,7 @@ import '../test_util/person.dart';
 
 void main() {
   final mockDatabaseExecutor = MockDatabaseExecutor();
+  final mockDatabase = MockDatabaseFloor();
   final mockDatabaseBatch = MockBatch();
 
   const entityName = 'person';
@@ -17,10 +18,11 @@ void main() {
   const onConflictStrategy = OnConflictStrategy.ignore;
   const conflictAlgorithm = ConflictAlgorithm.ignore;
 
-  final underTest = UpdateAdapter(
-    mockDatabaseExecutor,
+  final underTest = UpdateAdapter<Person>(
+    mockDatabase,
     entityName,
     [primaryKeyColumnName],
+    [],
     valueMapper,
   );
 

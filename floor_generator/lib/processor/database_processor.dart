@@ -9,20 +9,26 @@ import 'package:floor_generator/processor/dao_processor.dart';
 import 'package:floor_generator/processor/entity_processor.dart';
 import 'package:floor_generator/processor/error/database_processor_error.dart';
 import 'package:floor_generator/processor/processor.dart';
+import 'package:floor_generator/processor/routine_entry_trigger_processor.dart';
+import 'package:floor_generator/processor/sql_column_processor.dart';
 import 'package:floor_generator/processor/view_processor.dart';
 import 'package:floor_generator/value_object/dao_getter.dart';
 import 'package:floor_generator/value_object/database.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/queryable.dart';
+import 'package:floor_generator/value_object/routine_entry_trigger.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:floor_generator/value_object/view.dart';
+import 'package:floor_generator/extension/class_extension.dart';
 
 class DatabaseProcessor extends Processor<Database> {
   final DatabaseProcessorError _processorError;
 
+  final SqlColumnProcessor? sqlColumnProcessor;
+
   final ClassElement _classElement;
 
-  DatabaseProcessor(final ClassElement classElement)
+  DatabaseProcessor(final ClassElement classElement, {this.sqlColumnProcessor})
       : _classElement = classElement,
         _processorError = DatabaseProcessorError(classElement);
 
@@ -31,13 +37,32 @@ class DatabaseProcessor extends Processor<Database> {
     final databaseName = _classElement.displayName;
     final databaseTypeConverters =
         _classElement.getTypeConverters(TypeConverterScope.database);
-    final entities = _getEntities(_classElement, databaseTypeConverters);
+
+    final fieldsDataBaseDao = _classElement.fields.where(_isDao).toList();
+
+    final allFieldOfDaoWithAllMethods = fieldsDataBaseDao.expand((e) {
+      final classElement = e.type.element;
+      if (classElement is ClassElement) {
+        return classElement.getAllMethods().map((method) => FieldOfDaoWithAllMethods(e, method));
+      }
+      return <FieldOfDaoWithAllMethods>[];
+    });
+
+    final entities = _getEntities(_classElement, databaseTypeConverters, allFieldOfDaoWithAllMethods.toList());
+    if (sqlColumnProcessor != null) {
+      for(var item in entities){
+        final sqlCreate = item.getCreateTableStatement();
+        sqlColumnProcessor!.registerSqlCreateTable(sqlCreate);
+      }
+    }
+
     final views = _getViews(_classElement, databaseTypeConverters);
     final daoGetters = _getDaoGetters(
       databaseName,
       entities,
       views,
       databaseTypeConverters,
+      fieldsDataBaseDao
     );
     final version = _getDatabaseVersion();
     final allTypeConverters = _getAllTypeConverters(
@@ -45,6 +70,7 @@ class DatabaseProcessor extends Processor<Database> {
       [...entities, ...views],
     );
 
+    final routines = _getRoutinesEntryTrigger(_classElement, entities);
     return Database(
       _classElement,
       databaseName,
@@ -54,6 +80,8 @@ class DatabaseProcessor extends Processor<Database> {
       version,
       databaseTypeConverters,
       allTypeConverters,
+      allFieldOfDaoWithAllMethods.toList(),
+      routines,
     );
   }
 
@@ -74,8 +102,9 @@ class DatabaseProcessor extends Processor<Database> {
     final List<Entity> entities,
     final List<View> views,
     final Set<TypeConverter> typeConverters,
+    final List<FieldElement> fieldsDataBaseDao,
   ) {
-    return _classElement.fields.where(_isDao).map((field) {
+    return fieldsDataBaseDao.map((field) {
       final classElement = field.type.element as ClassElement;
       final name = field.displayName;
 
@@ -105,6 +134,7 @@ class DatabaseProcessor extends Processor<Database> {
   List<Entity> _getEntities(
     final ClassElement databaseClassElement,
     final Set<TypeConverter> typeConverters,
+    List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods,
   ) {
     final entities = _classElement
         .getAnnotation(annotations.Database)
@@ -116,6 +146,7 @@ class DatabaseProcessor extends Processor<Database> {
         .map((classElement) => EntityProcessor(
               classElement,
               typeConverters,
+              allFieldOfDaoWithAllMethods,
             ).process())
         .toList();
 
@@ -124,6 +155,20 @@ class DatabaseProcessor extends Processor<Database> {
     }
 
     return entities;
+  }
+
+  List<RoutineEntryTrigger> _getRoutinesEntryTrigger(
+      final ClassElement databaseClassElement,
+      List<Entity> entities,
+      ) {
+    return _classElement
+        .getAnnotation(annotations.Database)
+        ?.getField(AnnotationField.databaseRoutines)
+        ?.toListValue()
+        ?.mapNotNull((object) => object.toTypeValue()?.element)
+        .whereType<ClassElement>()
+        .map((classElement) => RoutineEntryTriggerMethodProcessor(classElement, entities).process())
+        .toList() ?? [];
   }
 
   List<View> _getViews(
@@ -160,7 +205,7 @@ class DatabaseProcessor extends Processor<Database> {
         daoGetters.expand((daoGetter) => daoGetter.dao.typeConverters).toSet();
 
     final fieldTypeConverters = queryables
-        .expand((queryable) => queryable.fields)
+        .expand((queryable) => queryable.fieldsAll)
         .mapNotNull((field) => field.typeConverter)
         .toSet();
 
@@ -170,12 +215,19 @@ class DatabaseProcessor extends Processor<Database> {
   }
 
   bool _isEntity(final ClassElement classElement) {
-    return classElement.hasAnnotation(annotations.Entity) &&
-        !classElement.isAbstract;
+    return classElement.isEntity;
   }
 
   bool _isView(final ClassElement classElement) {
-    return classElement.hasAnnotation(annotations.DatabaseView) &&
+    return (classElement.hasAnnotation(annotations.DatabaseView) ||
+        classElement.hasAnnotation(annotations.queryView.runtimeType)) &&
         !classElement.isAbstract;
   }
+}
+
+class FieldOfDaoWithAllMethods {
+  final FieldElement field;
+  final MethodElement method;
+
+  FieldOfDaoWithAllMethods(this.field, this.method);
 }

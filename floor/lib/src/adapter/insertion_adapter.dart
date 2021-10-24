@@ -1,25 +1,36 @@
 import 'dart:async';
 
+import 'package:floor/src/database.dart';
 import 'package:floor/src/extension/on_conflict_strategy_extensions.dart';
+import 'package:floor/src/routine/routine_entry_trigger_base.dart';
 import 'package:floor_annotation/floor_annotation.dart';
-import 'package:sqflite/sqlite_api.dart';
 
 class InsertionAdapter<T> {
-  final DatabaseExecutor _database;
+  final FloorDatabase _database;
   final String _entityName;
   final Map<String, Object?> Function(T) _valueMapper;
   final StreamController<String>? _changeListener;
+  final Future<void> Function(int id, T entity)? _inserted;
+  final List<RoutineEntryTriggerBase<T>> _routines;
+
+  FutureOr<void> Function(T entity)? beforeInsert;
 
   InsertionAdapter(
-    final DatabaseExecutor database,
+    final FloorDatabase database,
     final String entityName,
-    final Map<String, Object?> Function(T) valueMapper, [
-    final StreamController<String>? changeListener,
-  ])  : assert(entityName.isNotEmpty),
+    final List<RoutineEntryTriggerBase<T>> routines,
+    final Map<String, Object?> Function(T) valueMapper,
+      {
+        final Future<void> Function(int id, T entity)? inserted,
+        final StreamController<String>? changeListener,
+        this.beforeInsert,
+      })  : assert(entityName.isNotEmpty),
         _database = database,
         _entityName = entityName,
         _valueMapper = valueMapper,
-        _changeListener = changeListener;
+        _changeListener = changeListener,
+        _inserted = inserted,
+        _routines = routines;
 
   Future<void> insert(
     final T item,
@@ -33,7 +44,12 @@ class InsertionAdapter<T> {
     final OnConflictStrategy onConflictStrategy,
   ) async {
     if (items.isEmpty) return;
-    final batch = _database.batch();
+    if (beforeInsert != null) {
+      for(var item in items){
+        await beforeInsert!(item);
+      }
+    }
+    final batch = _database.database.batch();
     for (final item in items) {
       batch.insert(
         _entityName,
@@ -41,7 +57,15 @@ class InsertionAdapter<T> {
         conflictAlgorithm: onConflictStrategy.asSqfliteConflictAlgorithm(),
       );
     }
-    await batch.commit(noResult: true);
+    final result = (await batch.commit(noResult: false)).cast<int>();
+    if (_inserted != null) {
+      for (var i = 0; i < result.length; i++) {
+        await _inserted!(result[i], items[i]);
+      }
+    }
+    for(final routine in _routines){
+      await routine.run(items, _database);
+    }
     _changeListener?.add(_entityName);
   }
 
@@ -57,7 +81,12 @@ class InsertionAdapter<T> {
     final OnConflictStrategy onConflictStrategy,
   ) async {
     if (items.isEmpty) return [];
-    final batch = _database.batch();
+    if (beforeInsert != null) {
+      for(var item in items){
+        await beforeInsert!(item);
+      }
+    }
+    final batch = _database.database.batch();
     for (final item in items) {
       batch.insert(
         _entityName,
@@ -66,7 +95,17 @@ class InsertionAdapter<T> {
       );
     }
     final result = (await batch.commit(noResult: false)).cast<int>();
-    if (result.isNotEmpty) _changeListener?.add(_entityName);
+    if (_inserted != null) {
+      for (var i = 0; i < result.length; i++) {
+        await _inserted!(result[i], items[i]);
+      }
+    }
+    for(final routine in _routines){
+      await routine.run(items, _database);
+    }
+    if (result.isNotEmpty) {
+      _changeListener?.add(_entityName);
+    }
     return result;
   }
 
@@ -74,12 +113,23 @@ class InsertionAdapter<T> {
     final T item,
     final OnConflictStrategy onConflictStrategy,
   ) async {
-    final result = await _database.insert(
+    if (beforeInsert != null) {
+      await beforeInsert!(item);
+    }
+    final result = await _database.database.insert(
       _entityName,
       _valueMapper(item),
       conflictAlgorithm: onConflictStrategy.asSqfliteConflictAlgorithm(),
     );
-    if (result != 0) _changeListener?.add(_entityName);
+    if (_inserted != null) {
+      await _inserted!(result, item);
+    }
+    for(final routine in _routines){
+      await routine.run([item], _database);
+    }
+    if (result != 0) {
+      _changeListener?.add(_entityName);
+    }
     return result;
   }
 }

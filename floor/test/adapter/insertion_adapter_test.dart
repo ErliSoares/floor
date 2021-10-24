@@ -10,6 +10,7 @@ import '../test_util/mocks.dart';
 import '../test_util/person.dart';
 
 void main() {
+  final mockDatabase = MockDatabaseFloor();
   final mockDatabaseExecutor = MockDatabaseExecutor();
   final mockDatabaseBatch = MockBatch();
 
@@ -19,16 +20,17 @@ void main() {
   const conflictAlgorithm = ConflictAlgorithm.ignore;
 
   tearDown(() {
-    clearInteractions(mockDatabaseExecutor);
+    clearInteractions(mockDatabase);
     clearInteractions(mockDatabaseBatch);
-    reset(mockDatabaseExecutor);
+    reset(mockDatabase);
     reset(mockDatabaseBatch);
   });
 
   group('insertion without stream listening', () {
-    final underTest = InsertionAdapter(
-      mockDatabaseExecutor,
+    final underTest = InsertionAdapter<Person>(
+      mockDatabase,
       entityName,
+      [],
       valueMapper,
     );
 
@@ -182,11 +184,12 @@ void main() {
     // ignore: close_sinks
     final mockStreamController = MockStreamController<String>();
 
-    final underTest = InsertionAdapter(
-      mockDatabaseExecutor,
+    final underTest = InsertionAdapter<Person>(
+      mockDatabase,
       entityName,
+      [],
       valueMapper,
-      mockStreamController,
+      changeListener: mockStreamController,
     );
 
     tearDown(() {

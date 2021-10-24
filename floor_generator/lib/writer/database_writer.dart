@@ -4,6 +4,7 @@ import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/value_object/database.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/writer/writer.dart';
+import 'package:floor_generator/misc/type_utils.dart';
 
 /// Takes care of generating the database implementation.
 class DatabaseWriter implements Writer {
@@ -53,7 +54,7 @@ class DatabaseWriter implements Writer {
         ..returns = refer(daoTypeName)
         ..name = daoGetterName
         ..body = Code(
-            'return _${daoGetterName}Instance ??= _\$$daoTypeName(database, changeListener);'));
+            'return _${daoGetterName}Instance ??= _\$$daoTypeName(this, changeListener);'));
     }).toList();
   }
 
@@ -69,8 +70,12 @@ class DatabaseWriter implements Writer {
   }
 
   Method _generateOpenMethod(final Database database) {
-    final createTableStatements = _generateCreateTableSqlStatements(
-            database.entities)
+    final createTableStatements =
+    _generateCreateTableSqlStatements(database.entities)
+        .map((statement) => 'await database.execute(${statement.toLiteral()});')
+        .join('\n');
+    final createJunctionTriggerDeleteStatements =
+    _generateJunctionTriggerDeleteStatements(database.entities)
         .map((statement) => 'await database.execute(${statement.toLiteral()});')
         .join('\n');
     final createIndexStatements = database.entities
@@ -78,9 +83,9 @@ class DatabaseWriter implements Writer {
         .expand((statements) => statements)
         .map((statement) => 'await database.execute(${statement.toLiteral()});')
         .join('\n');
-    final createViewStatements = database.views
+    final createViewStatements = database.views.where((e) => !e.isQueryView)
         .map((view) => view.getCreateViewStatement().toLiteral())
-        .map((statement) => 'await database.execute($statement);')
+        .map((statement) => 'await database.execute(${statement.toLiteral()});')
         .join('\n');
 
     final pathParameter = Parameter((builder) => builder
@@ -116,6 +121,7 @@ class DatabaseWriter implements Writer {
             },
             onCreate: (database, version) async {
               $createTableStatements
+              $createJunctionTriggerDeleteStatements
               $createIndexStatements
               $createViewStatements
 
@@ -128,5 +134,15 @@ class DatabaseWriter implements Writer {
 
   List<String> _generateCreateTableSqlStatements(final List<Entity> entities) {
     return entities.map((entity) => entity.getCreateTableStatement()).toList();
+  }
+//tableName
+  List<String> _generateJunctionTriggerDeleteStatements(final List<Entity> entities) {
+    final junctions = entities.expand((e) => e.fieldsAll.where((e) => e.junction != null).map((e) => e.junction!)).where((e) => !e.ignoreSaveChild);
+    return junctions.map((e) => '''CREATE TRIGGER IF NOT EXISTS `${e.entityJunction.name}_delete_${e.childElement.tableName()}` 
+	AFTER DELETE ON `${e.entityJunction.name}`
+	FOR EACH ROW
+BEGIN
+	DELETE FROM ${e.childElement.tableName()} WHERE ${e.foreignKeyJunctionChild.parentColumns.first} = OLD.${e.foreignKeyJunctionChild.childColumns.first};
+END;''').toList();
   }
 }

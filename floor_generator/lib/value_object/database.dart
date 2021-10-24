@@ -1,8 +1,10 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:collection/collection.dart';
 import 'package:floor_generator/misc/extension/set_equality_extension.dart';
+import 'package:floor_generator/processor/database_processor.dart';
 import 'package:floor_generator/value_object/dao_getter.dart';
 import 'package:floor_generator/value_object/entity.dart';
+import 'package:floor_generator/value_object/routine_entry_trigger.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 import 'package:floor_generator/value_object/view.dart';
 
@@ -18,6 +20,8 @@ class Database {
   final Set<TypeConverter> allTypeConverters;
   final bool hasViewStreams;
   final Set<Entity> streamEntities;
+  final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods;
+  final List<RoutineEntryTrigger> routines;
 
   Database(
     this.classElement,
@@ -28,6 +32,8 @@ class Database {
     this.version,
     this.databaseTypeConverters,
     this.allTypeConverters,
+    this.allFieldOfDaoWithAllMethods,
+    this.routines,
   )   : streamEntities =
             daoGetters.expand((dg) => dg.dao.streamEntities).toSet(),
         hasViewStreams = daoGetters.any((dg) => dg.dao.streamViews.isNotEmpty);
@@ -46,7 +52,8 @@ class Database {
           databaseTypeConverters.equals(other.databaseTypeConverters) &&
           allTypeConverters.equals(other.allTypeConverters) &&
           streamEntities.equals(other.streamEntities) &&
-          hasViewStreams == hasViewStreams;
+          hasViewStreams == hasViewStreams &&
+          routines == routines;
 
   @override
   int get hashCode =>
@@ -59,10 +66,11 @@ class Database {
       databaseTypeConverters.hashCode ^
       allTypeConverters.hashCode ^
       streamEntities.hashCode ^
-      hasViewStreams.hashCode;
+      hasViewStreams.hashCode ^
+      routines.hashCode;
 
   @override
   String toString() {
-    return 'Database{classElement: $classElement, name: $name, entities: $entities, views: $views, daoGetters: $daoGetters, version: $version, databaseTypeConverters: $databaseTypeConverters, allTypeConverters: $allTypeConverters, streamEntities: $streamEntities, hasViewStreams: $hasViewStreams}';
+    return 'Database{classElement: $classElement, name: $name, entities: $entities, views: $views, daoGetters: $daoGetters, version: $version, databaseTypeConverters: $databaseTypeConverters, allTypeConverters: $allTypeConverters, streamEntities: $streamEntities, hasViewStreams: $hasViewStreams, routines: $routines}';
   }
 }

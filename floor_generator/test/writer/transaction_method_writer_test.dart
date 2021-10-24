@@ -20,10 +20,10 @@ void main() {
     expect(actual, equalsDart(r'''
       @override
       Future<void> replacePersons(List<Person> persons) async {
-        if (database is sqflite.Transaction) {
+        if (floorDatabase.database is sqflite.Transaction) {
           await super.replacePersons(persons);
         } else {
-          await (database as sqflite.Database)
+          await (floorDatabase.database as sqflite.Database)
               .transaction<void>((transaction) async {
             final transactionDatabase = _$TestDatabase(changeListener)
               ..database = transaction;
@@ -47,10 +47,10 @@ void main() {
     expect(actual, equalsDart(r'''
       @override
       Future<int> replacePersons(List<Person> persons) async {
-        if (database is sqflite.Transaction) {
+        if (floorDatabase.database is sqflite.Transaction) {
           return super.replacePersons(persons);
         } else {
-          return (database as sqflite.Database)
+          return (floorDatabase.database as sqflite.Database)
               .transaction<int>((transaction) async {
             final transactionDatabase = _$TestDatabase(changeListener)
               ..database = transaction;
@@ -74,10 +74,10 @@ void main() {
     expect(actual, equalsDart(r'''
       @override
       Future<Person> replacePersons(List<Person> persons) async {
-        if (database is sqflite.Transaction) {
+        if (floorDatabase.database is sqflite.Transaction) {
           return super.replacePersons(persons);
         } else {
-          return (database as sqflite.Database)
+          return (floorDatabase.database as sqflite.Database)
               .transaction<Person>((transaction) async {
             final transactionDatabase = _$TestDatabase(changeListener)
               ..database = transaction;

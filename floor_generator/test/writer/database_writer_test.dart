@@ -11,6 +11,40 @@ import '../test_utils.dart';
 void main() {
   useDartfmt();
 
+  test('simple routine', () async {
+    final database = await _createDatabase('''
+      @Database(version: 1, entities: [Person], routines: [RoutinePerson])
+      abstract class TestDatabase extends FloorDatabase {}
+      
+      abstract class RoutineEntryTriggerBase<T> {
+        FutureOr<void> run(List<T> entries, FloorDatabase persistence);
+      }
+      
+      class RoutinePerson extends RoutineEntryTriggerBase<Person> {
+        @override
+        FutureOr<void> run(List<Person> entries, TestDatabase persistence) {
+          throw UnimplementedError();
+        }
+      }
+      
+      @entity
+      class Person {
+        @primaryKey
+        final int id;
+      
+        final String name;
+      
+        Person(this.id, this.name);
+      }
+      
+      
+    ''');
+
+    final actual = DatabaseWriter(database).write();
+
+    expect(actual, equalsDart(r'''????'''));
+  });
+
   test('open database for simple entity', () async {
     final database = await _createDatabase('''
       @Database(version: 1, entities: [Person])

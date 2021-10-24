@@ -65,4 +65,14 @@ class QueryProcessorError {
       element: parameterElement,
     );
   }
+
+  ProcessorError moreOneLoadOptionsQueryMethodParameter(
+      final ParameterElement parameterElement,
+      ) {
+    return ProcessorError(
+      message: 'More on load options in method parameters.',
+      todo: 'Remove parameter ${parameterElement.displayName}.',
+      element: parameterElement,
+    );
+  }
 }

@@ -6,8 +6,13 @@ abstract class AnnotationField {
   static const databaseVersion = 'version';
   static const databaseEntities = 'entities';
   static const databaseViews = 'views';
+  static const databaseRoutines = 'routines';
 
   static const columnInfoName = 'name';
+  static const columnInfoLength = 'length';
+  static const columnInfoDecimals = 'decimals';
+
+  static const embeddedPrefix = 'prefix';
 
   static const entityTableName = 'tableName';
   static const entityForeignKeys = 'foreignKeys';
@@ -50,4 +55,33 @@ abstract class SqlType {
   static const text = 'TEXT';
   static const real = 'REAL';
   static const blob = 'BLOB';
+}
+
+abstract class IgnoreField {
+  static const forQuery = 'forQuery';
+  static const forInsert = 'forInsert';
+  static const forUpdate = 'forUpdate';
+  static const forDelete = 'forDelete';
+}
+
+abstract class EnumValueField {
+  static const value = 'value';
+}
+
+abstract class DescriptionField {
+  static const description = 'description';
+}
+
+abstract class EmbeddedField {
+  static const saveToSeparateEntity = 'saveToSeparateEntity';
+}
+
+abstract class JunctionField {
+  static const entityJunction = 'entityJunction';
+  static const ignoreSaveChild = 'ignoreSaveChild';
+}
+
+abstract class ForeignKeyRelationField {
+  static const field = 'field';
+  static const save = 'save';
 }

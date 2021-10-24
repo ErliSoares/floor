@@ -4,63 +4,98 @@ import 'package:collection/collection.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
 import 'package:floor_generator/misc/constants.dart';
 import 'package:floor_generator/misc/extension/dart_object_extension.dart';
+import 'package:floor_generator/misc/extension/dart_type_extension.dart';
 import 'package:floor_generator/misc/extension/iterable_extension.dart';
 import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:floor_generator/misc/extension/type_converters_extension.dart';
 import 'package:floor_generator/misc/type_utils.dart';
+import 'package:floor_generator/processor/database_processor.dart';
 import 'package:floor_generator/processor/error/entity_processor_error.dart';
 import 'package:floor_generator/processor/queryable_processor.dart';
+import 'package:floor_generator/value_object/embedded.dart';
 import 'package:floor_generator/value_object/entity.dart';
 import 'package:floor_generator/value_object/field.dart';
+import 'package:floor_generator/value_object/fieldable.dart';
 import 'package:floor_generator/value_object/foreign_key.dart';
+import 'package:floor_generator/value_object/foreign_key_relation.dart';
 import 'package:floor_generator/value_object/fts.dart';
 import 'package:floor_generator/value_object/index.dart';
+import 'package:floor_generator/value_object/junction.dart';
 import 'package:floor_generator/value_object/primary_key.dart';
+import 'package:floor_generator/value_object/relation.dart';
 import 'package:floor_generator/value_object/type_converter.dart';
 
 class EntityProcessor extends QueryableProcessor<Entity> {
   final EntityProcessorError _processorError;
+  final List<FieldOfDaoWithAllMethods> _allFieldOfDaoWithAllMethods;
 
-  EntityProcessor(
-    final ClassElement classElement,
-    final Set<TypeConverter> typeConverters,
-  )   : _processorError = EntityProcessorError(classElement),
+  EntityProcessor(final ClassElement classElement, final Set<TypeConverter> typeConverters,
+      [final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods = const []])
+      : _processorError = EntityProcessorError(classElement),
+        _allFieldOfDaoWithAllMethods = allFieldOfDaoWithAllMethods,
         super(classElement, typeConverters);
 
   @override
   Entity process() {
-    final name = _getName();
-    final fields = getFields();
-    final primaryKey = _getPrimaryKey(fields);
+    final name = classElement.tableName();
+    final embeddeds = getEmbeddeds();
+    final fieldsAll = getFieldsWithOutCheckIgnore();
+    final fieldsDataBaseSchema = fieldsAll.where((e) => shouldBeIncludedForDataBaseSchema(e.fieldElement)).toList();
+    final fieldsQuery = fieldsAll.where((e) => shouldBeIncludedForQuery(e.fieldElement)).toList();
+
+    final fieldsInsert = fieldsAll.where((e) => shouldBeIncludedForInsert(e.fieldElement)).toList();
+    final fieldsUpdate = fieldsAll.where((e) => shouldBeIncludedForUpdate(e.fieldElement)).toList();
+    final fieldsDelete = fieldsAll.where((e) => shouldBeIncludedForDelete(e.fieldElement)).toList();
+
+    final primaryKey = _getPrimaryKey(fieldsDataBaseSchema);
     final withoutRowid = _getWithoutRowid();
 
     if (primaryKey.autoGenerateId && withoutRowid) {
       throw _processorError.autoIncrementInWithoutRowid;
     }
 
+    var actionsSave = fieldsAll
+        .where((e) => e.relation != null).map((e) => _getSaveRelation(e.relation!, name)).join('\n');
+
+    actionsSave = actionsSave + fieldsAll
+        .where((e) => e.junction != null)
+        .map((e) => _getSaveJunction(e.junction!, name)).join('\n');
+
+    actionsSave = actionsSave + embeddeds
+        .where((e) => e.saveToSeparateEntity)
+        .map((e) => _getSaveEmbeddedEntity(e.fieldElement, name)).join('\n');
+
+
+    final beforeSave = fieldsAll
+        .where((e) => e.foreignKeyRelation != null && e.foreignKeyRelation!.save)
+        .map((e) => _getSaveForeignKeyRelation(e.foreignKeyRelation!, name)).join('\n');
+    if (beforeSave.isNotEmpty) {
+      // O geração do código pelo _getSaveForeignKeyRelation está correta, porem ela precisa ser salva antes da outra entidade
+      throw UnimplementedError('Não foi implementado para salvar com o recurso foreignKeyRelation.');
+    }
+
+
     return Entity(
       classElement,
       name,
-      fields,
-      _getPrimaryKey(fields),
-      _getForeignKeys(),
-      _getIndices(fields, name),
+      embeddeds,
+      fieldsAll,
+      fieldsDataBaseSchema,
+      fieldsQuery,
+      _getPrimaryKey(fieldsDataBaseSchema),
+      getForeignKeys(classElement),
+      _getIndices(fieldsDataBaseSchema, name),
       _getWithoutRowid(),
-      getConstructor(fields),
-      _getValueMapping(fields),
+      getConstructor([...fieldsQuery, ...embeddeds.whereNot((e) => e.ignoreForQuery)]),
+      _getValueMapping(fieldsInsert, embeddeds.whereNot((e) => e.ignoreForInsert || e.saveToSeparateEntity).toList()),
+      _getValueMapping(fieldsUpdate, embeddeds.whereNot((e) => e.ignoreForUpdate || e.saveToSeparateEntity).toList()),
+      _getValueMapping(fieldsDelete, embeddeds.whereNot((e) => e.ignoreForDelete || e.saveToSeparateEntity).toList()),
       _getFts(),
+      actionsSave,
     );
   }
 
-  String _getName() {
-    return classElement
-            .getAnnotation(annotations.Entity)
-            ?.getField(AnnotationField.entityTableName)
-            ?.toStringValue() ??
-        classElement.displayName;
-  }
-
-  List<ForeignKey> _getForeignKeys() {
+  List<ForeignKey> getForeignKeys(ClassElement classElement) {
     return classElement
             .getAnnotation(annotations.Entity)
             ?.getField(AnnotationField.entityForeignKeys)
@@ -73,12 +108,8 @@ class EntityProcessor extends QueryableProcessor<Entity> {
 
           final parentElement = parentType.element;
           final parentName = parentElement is ClassElement
-              ? parentElement
-                      .getAnnotation(annotations.Entity)
-                      ?.getField(AnnotationField.entityTableName)
-                      ?.toStringValue() ??
-                  parentType.getDisplayString(withNullability: false)
-              : throw _processorError.foreignKeyDoesNotReferenceEntity;
+              ? parentElement.tableName()
+              : throw _processorError.foreignKeyDoesNotReferenceEntity(classElement);
 
           final childColumns =
               _getColumns(foreignKeyObject, ForeignKeyField.childColumns);
@@ -262,17 +293,49 @@ class EntityProcessor extends QueryableProcessor<Entity> {
         false;
   }
 
-  String _getValueMapping(final List<Field> fields) {
-    final keyValueList = fields.map((field) {
-      final columnName = field.columnName;
-      final attributeValue = _getAttributeValue(field);
-      return "'$columnName': $attributeValue";
+  void _processFields(final Map map, final List<Fieldable> fields, {String prefix = ''}) {
+    for (final field in fields) {
+      if (field is Field) {
+        map[field.columnName] = _getAttributeValue(field, prefix: prefix);
+      } else if (field is Embedded) {
+        _processFields(map, [...field.fields, ...field.children], prefix: '$prefix${field.fieldElement.name}.');
+      }
+    }
+  }
+
+  String _getValueMapping(final List<Fieldable> fields, List<Embedded> embeddeds) {
+    final Map<String, String> map = {};
+    _processFields(map, fields);
+
+    final keyValueList = map.entries
+        .map((entry) => "'${entry.key}': ${entry.value}")
+        .toList();
+
+    final embeddedKeyValue = embeddeds.expand((embedded) {
+      final keyValue = <String>[];
+      final className = <String>[];
+
+      void dig(final Embedded child) {
+        className.add(child.fieldElement.displayName);
+        for (final field in child.fields) {
+          final columnName = field.columnName;
+          final attributeValue = [...className, _getAttributeValue(field, ignoreAddItem: true)].join('?.');
+          keyValue.add("'$columnName': item.$attributeValue");
+        }
+
+        child.children.forEach(dig);
+      }
+
+      dig(embedded);
+
+      return keyValue;
     }).toList();
+    keyValueList.addAll(embeddedKeyValue);
 
     return '<String, Object?>{${keyValueList.join(', ')}}';
   }
 
-  String _getAttributeValue(final Field field) {
+  String _getAttributeValue(final Field field, {String prefix = '', bool ignoreAddItem = false}) {
     final fieldElement = field.fieldElement;
     final parameterName = fieldElement.displayName;
     final fieldType = fieldElement.type;
@@ -280,14 +343,16 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     String attributeValue;
 
     if (fieldType.isDefaultSqlType) {
-      attributeValue = 'item.$parameterName';
+      attributeValue = '${ignoreAddItem ? '' : 'item.'}$prefix$parameterName';
+    }  else if (fieldType.element is ClassElement && (fieldType.element as ClassElement).isEnum) {
+      return '${ignoreAddItem ? '' : 'item.'}$prefix$parameterName.value';
     } else {
       final typeConverter = [
         ...queryableTypeConverters,
         field.typeConverter,
       ].whereNotNull().getClosest(fieldType);
       attributeValue =
-          '_${typeConverter.name.decapitalize()}.encode(item.$parameterName)';
+          '${typeConverter.name.decapitalize()}.encode(${ignoreAddItem ? '' : 'item.'}$prefix$parameterName)';
     }
 
     if (fieldType.isDartCoreBool) {
@@ -318,5 +383,253 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     } else {
       return foreignKeyAction;
     }
+  }
+
+  String _getSaveRelation(final Relation relation, String tableName) {
+    final String code;
+
+    final field = relation.fieldElement;
+    final fieldType = field.type.isDartCoreList ? field.type.flatten() : field.type;
+
+    final fieldOfDaoWithAllMethods = _findMethodsDaoSaveToEntity(fieldType.element!);
+
+    if (fieldOfDaoWithAllMethods == null) {
+      throw _processorError.noMethodWithSaveAnnotation(field);
+    }
+
+    final setFields = StringBuffer();
+    final foreignKey = relation.foreignKey;
+
+    if (field.type.isDartCoreList) {
+      for(var i = 0; i < foreignKey.parentColumns.length; i++){
+        setFields.writeln('sub.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
+      }
+    } else {
+      for(var i = 0; i < foreignKey.parentColumns.length; i++){
+        setFields.writeln('entity.${field.name}.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
+      }
+    }
+    if (field.type.isNullable && field.type.isDartCoreList) {
+      code = '''          if (entity.${field.name} != null) {
+            for(final sub in entity.${field.name}!) {
+              ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
+            }
+          }''';
+    } else if (field.type.isDartCoreList) {
+      code = '''          for(final sub in entity.${field.name}) {
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
+          }''';
+    } else if(field.type.isNullable) {
+      code = '''          if (entity.${field.name} != null) {
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
+          }''';
+    } else{
+      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
+    }
+
+    return code;
+  }
+
+  String _getSaveForeignKeyRelation(final ForeignKeyRelation relation, String tableName) {
+    final String code;
+
+    final field = relation.fieldElement;
+    final fieldType = field.type.isDartCoreList ? field.type.flatten() : field.type;
+
+    final fieldOfDaoWithAllMethods = _findMethodsDaoSaveToEntity(fieldType.element!);
+
+    if (fieldOfDaoWithAllMethods == null) {
+      throw _processorError.noMethodWithSaveAnnotation(field);
+    }
+
+    final setFields = StringBuffer();
+    final foreignKey = relation.foreignKey;
+
+    for(var i = 0; i < foreignKey.parentColumns.length; i++){
+      setFields.writeln('entity.${foreignKey.childColumns[i]} = entity.${field.name}.${foreignKey.parentColumns[i]};');
+    }
+
+    if(field.type.isNullable) {
+      code = '''          if (entity.${field.name} != null) {
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
+          }''';
+    } else{
+      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
+    }
+
+    return code;
+  }
+
+  String _getSaveJunction(final Junction junction, String tableName) {
+    final String code;
+
+    final fieldOfDaoWithAllMethodsChild = _findMethodsDaoSaveToEntity(junction.childElement);
+    if (fieldOfDaoWithAllMethodsChild == null) {
+      throw _processorError.noMethodWithSaveAnnotation(junction.childElement);
+    }
+    final fieldOfDaoWithAllMethodsJunction = _findMethodsDaoSaveToEntity(junction.entityJunction.classElement);
+    if (fieldOfDaoWithAllMethodsJunction == null) {
+      throw _processorError.noMethodWithSaveAnnotation(junction.entityJunction.classElement);
+    }
+
+    final entityJunctionClass = junction.entityJunction.classElement;
+
+    final field = junction.fieldElement;
+    if (field.type.isNullable && field.type.isDartCoreList) {
+      final String saveChildCode;
+      if (junction.ignoreSaveChild) {
+        saveChildCode = '';
+      } else {
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
+      }
+      code = '''          if (entity.${field.name} != null) {
+            for(final sub in entity.${field.name}!) {
+              $saveChildCode
+              await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
+                ${junction.foreignKeyJunctionChild.childColumns[0]}: sub.${junction.foreignKeyJunctionChild.parentColumns[0]},
+                ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
+                deleted: sub.deleted,
+              ));
+            }
+          }''';
+    } else if (field.type.isDartCoreList) {
+      final String saveChildCode;
+      if (junction.ignoreSaveChild) {
+        saveChildCode = '';
+      } else {
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
+      }
+      code = '''          for(final sub in entity.${field.name}) {
+              $saveChildCode
+              await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
+                ${junction.foreignKeyJunctionChild.childColumns[0]}: sub.${junction.foreignKeyJunctionChild.parentColumns[0]},
+                ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
+                deleted: sub.deleted,
+              ));
+            }''';
+    } else if(field.type.isNullable) {
+      final String saveChildCode;
+      if (junction.ignoreSaveChild) {
+        saveChildCode = '';
+      } else {
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name}!);';
+      }
+      code = '''          if (entity.${field.name} != null) {
+              $saveChildCode
+              await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
+                ${junction.foreignKeyJunctionChild.childColumns[0]}: entity.${field.name}!.${junction.foreignKeyJunctionChild.parentColumns[0]},
+                ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
+                deleted: entity.${field.name}!.deleted,
+              ));
+            }''';
+    } else {
+      final String saveChildCode;
+      if (junction.ignoreSaveChild) {
+        saveChildCode = '';
+      } else {
+        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name});';
+      }
+      code = '''
+              $saveChildCode
+              await floorDatabase.${fieldOfDaoWithAllMethodsJunction.field.name}.${fieldOfDaoWithAllMethodsJunction.method.name}(${entityJunctionClass.name}(
+                ${junction.foreignKeyJunctionChild.childColumns[0]}: entity.${field.name}.${junction.foreignKeyJunctionChild.parentColumns[0]},
+                ${junction.foreignKeyJunctionParent.childColumns[0]}: entity.${junction.foreignKeyJunctionParent.parentColumns[0]},
+                deleted: entity.${field.name}!.deleted, // TODO todos esses lugares de deleted pegar os campos da pai e setar na filha
+              ));''';
+    }
+
+    return code;
+  }
+
+  FieldOfDaoWithAllMethods? _findMethodsDaoSaveToEntity(Element element) {
+    return _allFieldOfDaoWithAllMethods.firstWhereOrNull((e) {
+      if (!e.method.hasAnnotation(annotations.save.runtimeType)) {
+        return false;
+      }
+      if (e.method.parameters.length != 1) {
+        throw _processorError.saveMethodParameterHaveMoreOne(e.method);
+      }
+      final parameter = e.method.parameters[0];
+      if (parameter.type.isNullable) {
+        throw _processorError.saveMethodParameterIsNullable(parameter);
+      }
+      if (parameter.type.element != element) {
+        return false;
+      }
+      return true;
+    });
+  }
+
+  String _getSaveEmbeddedEntity(final FieldElement field, String tableName) {
+    final String code;
+
+    final fieldType = field.type.isDartCoreList ? field.type.flatten() : field.type;
+
+    final fieldTypeElement = fieldType.element;
+    if (!(fieldTypeElement is ClassElement)) {
+      throw _processorError.noMethodWithSaveAnnotation(field);
+    }
+
+    final fieldOfDaoWithAllMethods = _allFieldOfDaoWithAllMethods.firstWhereOrNull((e) {
+      if (!e.method.hasAnnotation(annotations.save.runtimeType)) {
+        return false;
+      }
+      if (e.method.parameters.length != 1) {
+        throw _processorError.saveMethodParameterHaveMoreOne(e.method);
+      }
+      final parameter = e.method.parameters[0];
+      if (parameter.type.isNullable) {
+        throw _processorError.saveMethodParameterIsNullable(parameter);
+      }
+      if (parameter.type != fieldType) {
+        return false;
+      }
+      return true;
+    });
+
+    if (fieldOfDaoWithAllMethods == null) {
+      throw _processorError.noMethodWithSaveAnnotation(field);
+    }
+
+    final foreignKeys = getForeignKeys(fieldTypeElement);
+    final foreignKeysRelation = foreignKeys.where((e) => e.parentName == tableName);
+    if (foreignKeysRelation.isEmpty) {
+      throw _processorError.foreignKeyDoesNotReferenceEntity(fieldTypeElement);
+    }
+    if (foreignKeysRelation.length > 1) {
+      throw _processorError.twoForeignKeysForTheSameParentTable(fieldTypeElement);
+    }
+
+    final setFields = StringBuffer();
+    final foreignKey = foreignKeysRelation.first;
+
+    if (field.type.isDartCoreList) {
+      for(var i = 0; i < foreignKey.parentColumns.length; i++){
+        setFields.writeln('sub.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
+      }
+    } else {
+      for(var i = 0; i < foreignKey.parentColumns.length; i++){
+        setFields.writeln('entity.${field.name}.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
+      }
+    }
+    if (field.type.isNullable && field.type.isDartCoreList) {
+      code = '''          if (entity.${field.name} != null) {
+            for(final sub in entity.${field.name}!) {
+              ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
+            }
+          }''';
+    } else if (field.type.isDartCoreList) {
+      code = '''          for(final sub in entity.${field.name}) {
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
+          }''';
+    } else if(field.type.isNullable) {
+      code = '''          if (entity.${field.name} != null) {
+            ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
+          }''';
+    } else{
+      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
+    }
+
+    return code;
   }
 }
