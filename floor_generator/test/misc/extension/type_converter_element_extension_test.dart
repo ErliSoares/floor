@@ -63,8 +63,7 @@ void main() {
       expect(actual, throwsProcessorError());
     });
 
-    test('throws error when element in annotation is not TypeConverter',
-        () async {
+    test('throws error when element in annotation is not TypeConverter', () async {
       const typeConverterScope = TypeConverterScope.database;
       final element = await '''
         @TypeConverters([String])

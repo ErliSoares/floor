@@ -35,7 +35,8 @@ class SchemaGenerator extends Generator {
   FutureOr<String> generate(LibraryReader library, BuildStep buildStep) async {
     final values = <String>{};
 
-    for (var annotatedElement in library.annotatedWith(typeCheckerEntity)) {
+    var types = [...library.annotatedWith(typeCheckerEntity), ...library.annotatedWith(typeCheckerQueryView)];
+    for (var annotatedElement in types) {
       var generatedValue = generateForAnnotatedElement(
         annotatedElement.element,
         annotatedElement.annotation,
@@ -47,18 +48,6 @@ class SchemaGenerator extends Generator {
       }
 
       generatedValue = writeEnumMapValues(annotatedElement.element);
-      await for (var value in normalizeGeneratorOutput(generatedValue)) {
-        assert(value.length == value.trim().length);
-        values.add(value);
-      }
-    }
-
-    for (var annotatedElement in library.annotatedWith(typeCheckerQueryView)) {
-      final generatedValue = generateForAnnotatedElement(
-        annotatedElement.element,
-        annotatedElement.annotation,
-        buildStep,
-      );
       await for (var value in normalizeGeneratorOutput(generatedValue)) {
         assert(value.length == value.trim().length);
         values.add(value);
@@ -111,7 +100,12 @@ class SchemaGenerator extends Generator {
 
     final cloneCode = _generateClone(element);
 
-    final entryNotChangedOverrideCode = _generateEntryNotChangedOverride(element);
+    final String entryNotChangedOverrideCode;
+    if (element.isEntity) {
+      entryNotChangedOverrideCode = _generateEntryNotChangedOverride(element);
+    } else {
+      entryNotChangedOverrideCode = '';
+    }
 
     final fieldsCode = _generateFields(element);
 

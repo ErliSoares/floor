@@ -30,8 +30,7 @@ void main() {
       }
     ''');
 
-      final actual =
-          DatabaseProcessor(classElement).process().databaseTypeConverters;
+      final actual = DatabaseProcessor(classElement).process().databaseTypeConverters;
 
       final expected = TypeConverter(
         'DateTimeConverter',
@@ -66,8 +65,7 @@ void main() {
       }
     ''');
 
-      final actual =
-          DatabaseProcessor(classElement).process().allTypeConverters;
+      final actual = DatabaseProcessor(classElement).process().allTypeConverters;
 
       final expected = TypeConverter(
         'DateTimeConverter',

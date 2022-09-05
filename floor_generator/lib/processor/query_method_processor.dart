@@ -25,11 +25,9 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
   final SqlColumnProcessor? sqlColumnProcessor;
 
   QueryMethodProcessor(
-    final MethodElement methodElement,
-    final List<Queryable> queryables,
-    final Set<TypeConverter> typeConverters,
-    {this.sqlColumnProcessor}
-  )   : _methodElement = methodElement,
+      final MethodElement methodElement, final List<Queryable> queryables, final Set<TypeConverter> typeConverters,
+      {this.sqlColumnProcessor})
+      : _methodElement = methodElement,
         _queryables = queryables,
         _typeConverters = typeConverters,
         _processorError = QueryMethodProcessorError(methodElement);
@@ -42,7 +40,6 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
 
     final query = QueryProcessor(_methodElement, _getQuery()).process();
 
-    _getQuery();
     final returnsStream = rawReturnType.isStream;
 
     _assertReturnsFutureOrStream(rawReturnType, returnsStream);
@@ -61,22 +58,17 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
     );
 
     final queryable = _queryables.firstWhereOrNull((queryable) =>
-        queryable.classElement.displayName ==
-        flattenedReturnType.getDisplayString(withNullability: false));
+        queryable.classElement.displayName == flattenedReturnType.getDisplayString(withNullability: false));
 
-    final parameterTypeConverters = parameters
-        .expand((parameter) =>
-            parameter.getTypeConverters(TypeConverterScope.daoMethodParameter))
-        .toSet();
+    final parameterTypeConverters =
+        parameters.expand((parameter) => parameter.getTypeConverters(TypeConverterScope.daoMethodParameter)).toSet();
 
-    final allTypeConverters = _typeConverters +
-        _methodElement.getTypeConverters(TypeConverterScope.daoMethod) +
-        parameterTypeConverters;
+    final allTypeConverters =
+        _typeConverters + _methodElement.getTypeConverters(TypeConverterScope.daoMethod) + parameterTypeConverters;
 
     if (queryable != null) {
       _assertLoadOptionsToProcessEntry();
-      final fieldTypeConverters =
-          queryable.fieldsAll.mapNotNull((field) => field.typeConverter);
+      final fieldTypeConverters = queryable.fieldsAll.mapNotNull((field) => field.typeConverter);
       allTypeConverters.addAll(fieldTypeConverters);
     }
 
@@ -93,11 +85,8 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
   }
 
   String _getQuery() {
-    final query = _methodElement
-        .getAnnotation(annotations.Query)
-        ?.getField(AnnotationField.queryValue)
-        ?.toStringValue()
-        ?.trim();
+    final query =
+        _methodElement.getAnnotation(annotations.Query)?.getField(AnnotationField.queryValue)?.toStringValue()?.trim();
 
     if (query == null || query.isEmpty) throw _processorError.noQueryDefined;
     return query;
@@ -108,16 +97,13 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
     final bool returnsStream,
     final bool returnsList,
   ) {
-    final type = returnsStream
-        ? _methodElement.returnType.flatten()
-        : _methodElement.library.typeSystem.flatten(rawReturnType);
+    final type =
+        returnsStream ? _methodElement.returnType.flatten() : _methodElement.library.typeSystem.flatten(rawReturnType);
     return returnsList ? type.flatten() : type;
   }
 
   bool _getReturnsList(final DartType returnType, final bool returnsStream) {
-    final type = returnsStream
-        ? returnType.flatten()
-        : _methodElement.library.typeSystem.flatten(returnType);
+    final type = returnsStream ? returnType.flatten() : _methodElement.library.typeSystem.flatten(returnType);
 
     return type.isDartCoreList;
   }
@@ -136,9 +122,7 @@ class QueryMethodProcessor extends Processor<QueryMethod> {
     final bool returnsList,
     final DartType flattenedReturnType,
   ) {
-    if (!returnsList &&
-        !flattenedReturnType.isVoid &&
-        !flattenedReturnType.isNullable) {
+    if (!returnsList && !flattenedReturnType.isVoid && !flattenedReturnType.isNullable) {
       if (returnsStream) {
         throw _processorError.doesNotReturnNullableStream;
       } else {

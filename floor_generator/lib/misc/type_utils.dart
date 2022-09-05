@@ -63,7 +63,7 @@ extension ClassElementExtension on ClassElement {
     for (var superType in allSupertypes) {
       if (superType.element.isSynthetic) {
         continue;
-      }  
+      }
       for (var methodSuper in superType.methods) {
         if (methodSuper.isSynthetic || methodSuper.isStatic || methodSuper.isPrivate) {
           continue;

@@ -23,8 +23,7 @@ class TransactionMethodWriter implements Writer {
   }
 
   String _generateMethodBody() {
-    final parameters =
-        method.parameterElements.map((parameter) => parameter.name).join(', ');
+    final parameters = method.parameterElements.map((parameter) => parameter.name).join(', ');
     final methodCall = '${method.name}($parameters)';
     final innerType = method.returnType.flatten();
     final innerTypeName = innerType.getDisplayString(withNullability: false);

@@ -37,8 +37,7 @@ void main() {
       expect(actual, equals(expected));
     });
 
-    test("throws error when converter's database type is not supported",
-        () async {
+    test("throws error when converter's database type is not supported", () async {
       final classElement = await '''
       class DateTimeConverter extends TypeConverter<DateTime, DateTime> {
         @override

@@ -19,8 +19,7 @@ class TypeConverterProcessor extends Processor<TypeConverter> {
     final supertype = _classElement.supertype;
     if (supertype == null) {
       throw ProcessorError(
-        message:
-            'Only classes that inherit from TypeConverter can be used as type converters.',
+        message: 'Only classes that inherit from TypeConverter can be used as type converters.',
         todo: 'Make sure use a class that inherits from TypeConverter.',
         element: _classElement,
       );
@@ -31,10 +30,8 @@ class TypeConverterProcessor extends Processor<TypeConverter> {
 
     if (!databaseType.isDefaultSqlType) {
       throw ProcessorError(
-        message:
-            'Type converters have to convert to a database-compatible type.',
-        todo:
-            'Make the class convert to either int, double, String, bool or Uint8List.',
+        message: 'Type converters have to convert to a database-compatible type.',
+        todo: 'Make the class convert to either int, double, String, bool or Uint8List.',
         element: _classElement,
       );
     }

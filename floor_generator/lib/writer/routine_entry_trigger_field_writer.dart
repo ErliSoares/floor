@@ -6,7 +6,8 @@ class RoutineEntryTriggerFieldWriter extends Writer {
   final String _routineFieldName;
 
   RoutineEntryTriggerFieldWriter(final String routineName, final String routineFieldName)
-      : _routineName = routineName, _routineFieldName = routineFieldName;
+      : _routineName = routineName,
+        _routineFieldName = routineFieldName;
 
   @override
   Spec write() {

@@ -35,8 +35,7 @@ class DatabaseProcessor extends Processor<Database> {
   @override
   Database process() {
     final databaseName = _classElement.displayName;
-    final databaseTypeConverters =
-        _classElement.getTypeConverters(TypeConverterScope.database);
+    final databaseTypeConverters = _classElement.getTypeConverters(TypeConverterScope.database);
 
     final fieldsDataBaseDao = _classElement.fields.where(_isDao).toList();
 
@@ -50,7 +49,7 @@ class DatabaseProcessor extends Processor<Database> {
 
     final entities = _getEntities(_classElement, databaseTypeConverters, allFieldOfDaoWithAllMethods.toList());
     if (sqlColumnProcessor != null) {
-      for(var item in entities){
+      for (var item in entities) {
         final sqlCreate = item.getCreateTableStatement();
         sqlColumnProcessor!.registerSqlCreateTable(sqlCreate);
       }
@@ -62,7 +61,7 @@ class DatabaseProcessor extends Processor<Database> {
       entities,
       views,
       databaseTypeConverters,
-      fieldsDataBaseDao
+      fieldsDataBaseDao,
     );
     final version = _getDatabaseVersion();
     final allTypeConverters = _getAllTypeConverters(
@@ -86,10 +85,8 @@ class DatabaseProcessor extends Processor<Database> {
   }
 
   int _getDatabaseVersion() {
-    final version = _classElement
-        .getAnnotation(annotations.Database)
-        ?.getField(AnnotationField.databaseVersion)
-        ?.toIntValue();
+    final version =
+        _classElement.getAnnotation(annotations.Database)?.getField(AnnotationField.databaseVersion)?.toIntValue();
 
     if (version == null) throw _processorError.versionIsMissing;
     if (version < 1) throw _processorError.versionIsBelowOne;
@@ -127,8 +124,7 @@ class DatabaseProcessor extends Processor<Database> {
   }
 
   bool _isDaoClass(final ClassElement classElement) {
-    return classElement.hasAnnotation(annotations.dao.runtimeType) &&
-        classElement.isAbstract;
+    return classElement.hasAnnotation(annotations.dao.runtimeType) && classElement.isAbstract;
   }
 
   List<Entity> _getEntities(
@@ -142,7 +138,7 @@ class DatabaseProcessor extends Processor<Database> {
         ?.toListValue()
         ?.mapNotNull((object) => object.toTypeValue()?.element)
         .whereType<ClassElement>()
-        .where(_isEntity)
+        .where((element) => element.isEntity)
         .map((classElement) => EntityProcessor(
               classElement,
               typeConverters,
@@ -158,17 +154,18 @@ class DatabaseProcessor extends Processor<Database> {
   }
 
   List<RoutineEntryTrigger> _getRoutinesEntryTrigger(
-      final ClassElement databaseClassElement,
-      List<Entity> entities,
-      ) {
+    final ClassElement databaseClassElement,
+    List<Entity> entities,
+  ) {
     return _classElement
-        .getAnnotation(annotations.Database)
-        ?.getField(AnnotationField.databaseRoutines)
-        ?.toListValue()
-        ?.mapNotNull((object) => object.toTypeValue()?.element)
-        .whereType<ClassElement>()
-        .map((classElement) => RoutineEntryTriggerMethodProcessor(classElement, entities).process())
-        .toList() ?? [];
+            .getAnnotation(annotations.Database)
+            ?.getField(AnnotationField.databaseRoutines)
+            ?.toListValue()
+            ?.mapNotNull((object) => object.toTypeValue()?.element)
+            .whereType<ClassElement>()
+            .map((classElement) => RoutineEntryTriggerMethodProcessor(classElement, entities).process())
+            .toList() ??
+        [];
   }
 
   List<View> _getViews(
@@ -181,7 +178,7 @@ class DatabaseProcessor extends Processor<Database> {
             ?.toListValue()
             ?.mapNotNull((object) => object.toTypeValue()?.element)
             .whereType<ClassElement>()
-            .where(_isView)
+            .where((element) => element.isQueryView)
             .map((classElement) => ViewProcessor(
                   classElement,
                   typeConverters,
@@ -201,27 +198,12 @@ class DatabaseProcessor extends Processor<Database> {
         .toSet();
 
     // but when no query methods are defined, we need to collect them differently
-    final daoTypeConverters =
-        daoGetters.expand((daoGetter) => daoGetter.dao.typeConverters).toSet();
+    final daoTypeConverters = daoGetters.expand((daoGetter) => daoGetter.dao.typeConverters).toSet();
 
-    final fieldTypeConverters = queryables
-        .expand((queryable) => queryable.fieldsAll)
-        .mapNotNull((field) => field.typeConverter)
-        .toSet();
+    final fieldTypeConverters =
+        queryables.expand((queryable) => queryable.fieldsAll).mapNotNull((field) => field.typeConverter).toSet();
 
-    return daoQueryMethodTypeConverters +
-        daoTypeConverters +
-        fieldTypeConverters;
-  }
-
-  bool _isEntity(final ClassElement classElement) {
-    return classElement.isEntity;
-  }
-
-  bool _isView(final ClassElement classElement) {
-    return (classElement.hasAnnotation(annotations.DatabaseView) ||
-        classElement.hasAnnotation(annotations.queryView.runtimeType)) &&
-        !classElement.isAbstract;
+    return daoQueryMethodTypeConverters + daoTypeConverters + fieldTypeConverters;
   }
 }
 

@@ -5,8 +5,7 @@ import '../dart_type.dart';
 
 void main() {
   test('database index is smallest', () {
-    final actual =
-        TypeConverterScope.database.index < TypeConverterScope.dao.index;
+    final actual = TypeConverterScope.database.index < TypeConverterScope.dao.index;
 
     expect(actual, isTrue);
   });

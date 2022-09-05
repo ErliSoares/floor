@@ -17,9 +17,7 @@ void main() {
       }
     ''');
 
-    final actual =
-        TransactionMethodProcessor(methodElement, daoGetterName, databaseName)
-            .process();
+    final actual = TransactionMethodProcessor(methodElement, daoGetterName, databaseName).process();
 
     final returnType = methodElement.returnType;
     final parameterElements = methodElement.parameters;
@@ -35,8 +33,7 @@ void main() {
         )));
   });
 
-  test('throw error while processing transaction method with wrong return type',
-      () async {
+  test('throw error while processing transaction method with wrong return type', () async {
     const daoGetterName = 'foo';
     const databaseName = 'bar';
     final methodElement = await _generateMethodElement('''
@@ -44,14 +41,10 @@ void main() {
       }
     ''');
 
-    final actual = () =>
-        TransactionMethodProcessor(methodElement, daoGetterName, databaseName)
-            .process();
+    final actual = () => TransactionMethodProcessor(methodElement, daoGetterName, databaseName).process();
 
     expect(
-        actual,
-        throwsInvalidGenerationSourceError(
-            TransactionMethodProcessorError(methodElement).shouldReturnFuture));
+        actual, throwsInvalidGenerationSourceError(TransactionMethodProcessorError(methodElement).shouldReturnFuture));
   });
 }
 

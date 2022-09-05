@@ -13,9 +13,7 @@ void main() {
         .asDaoMethodElement();
     final entities = await getPersonEntity();
 
-    final actual = InsertionMethodProcessor(insertionMethod, [entities])
-        .process()
-        .onConflict;
+    final actual = InsertionMethodProcessor(insertionMethod, [entities]).process().onConflict;
 
     expect(actual, equals('OnConflictStrategy.replace'));
   });
@@ -29,14 +27,12 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => InsertionMethodProcessor(insertionMethod, [entities]).process();
+      final actual = () => InsertionMethodProcessor(insertionMethod, [entities]).process();
 
       expect(
           actual,
           throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(insertionMethod, 'Insertion')
-                  .wrongOnConflictValue));
+              ChangeMethodProcessorError(insertionMethod, 'Insertion').wrongOnConflictValue));
     });
     test('when not returning Future', () async {
       final insertionMethod = await '''
@@ -46,14 +42,12 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => InsertionMethodProcessor(insertionMethod, [entities]).process();
+      final actual = () => InsertionMethodProcessor(insertionMethod, [entities]).process();
 
       expect(
           actual,
           throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(insertionMethod, 'Insertion')
-                  .doesNotReturnFuture));
+              ChangeMethodProcessorError(insertionMethod, 'Insertion').doesNotReturnFuture));
     });
     test('when not returning int or void or List<int>', () async {
       final insertionMethod = await '''
@@ -63,14 +57,12 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => InsertionMethodProcessor(insertionMethod, [entities]).process();
+      final actual = () => InsertionMethodProcessor(insertionMethod, [entities]).process();
 
       expect(
           actual,
           throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(insertionMethod, 'Insertion')
-                  .doesNotReturnVoidNorIntNorListInt));
+              ChangeMethodProcessorError(insertionMethod, 'Insertion').doesNotReturnVoidNorIntNorListInt));
     });
   });
 }

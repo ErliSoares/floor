@@ -27,12 +27,15 @@ class DaoWriter extends Writer {
   final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods;
   final List<RoutineEntryTrigger> routines;
 
-  DaoWriter(this.dao, this.streamEntities, this.dbHasViewStreams, this.databaseNameType,
-      {
-        this.sqlColumnProcessor,
-        this.allFieldOfDaoWithAllMethods = const [],
-        this.routines = const [],
-      });
+  DaoWriter(
+    this.dao,
+    this.streamEntities,
+    this.dbHasViewStreams,
+    this.databaseNameType, {
+    this.sqlColumnProcessor,
+    this.allFieldOfDaoWithAllMethods = const [],
+    this.routines = const [],
+  });
 
   @override
   Class write() {
@@ -43,8 +46,7 @@ class DaoWriter extends Writer {
     final classBuilder = ClassBuilder()
       ..name = '_\$$daoName'
       ..extend = refer(daoName)
-      ..fields
-          .addAll(_createFields(databaseFieldName, changeListenerFieldName));
+      ..fields.addAll(_createFields(databaseFieldName, changeListenerFieldName));
 
     final databaseParameter = Parameter((builder) => builder
       ..name = databaseFieldName
@@ -67,8 +69,7 @@ class DaoWriter extends Writer {
           ..name = '_queryAdapter'
           ..type = refer('QueryAdapter')));
 
-      final queriesRequireChangeListener =
-          dao.streamEntities.isNotEmpty || dao.streamViews.isNotEmpty;
+      final queriesRequireChangeListener = dao.streamEntities.isNotEmpty || dao.streamViews.isNotEmpty;
 
       constructorBuilder
         ..initializers.add(Code(
@@ -89,23 +90,22 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
-        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesSeparatedByComma =
+            routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
         final routinesParam = '[$routinesSeparatedByComma], ';
 
         classBuilder.fields.add(field);
 
-        final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.valueMappingForInsert}';
+        final valueMapper = '(${entity.classElement.displayName} item) => ${entity.valueMappingForInsert}';
 
-        final requiresChangeListener =
-            dbHasViewStreams || streamEntities.contains(entity);
+        final requiresChangeListener = dbHasViewStreams || streamEntities.contains(entity);
 
         final insertedBody = StringBuffer();
         if (entity.primaryKey.fields.length == 1) {
           final primaryKeyField = entity.primaryKey.fields[0];
-          if (entity.primaryKey.autoGenerateId
-              && primaryKeyField.fieldElement.type.isDartCoreInt
-              && !primaryKeyField.fieldElement.isFinal) {
+          if (entity.primaryKey.autoGenerateId &&
+              primaryKeyField.fieldElement.type.isDartCoreInt &&
+              !primaryKeyField.fieldElement.isFinal) {
             insertedBody.writeln('entity.${primaryKeyField.name} = id;');
           }
         }
@@ -120,8 +120,9 @@ class DaoWriter extends Writer {
         final beforeOperations = dao.beforeOperations.where((e) => e.forInsert).toList();
         if (beforeOperations.isNotEmpty) {
           if (beforeOperations.length == 1) {
-            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' $fieldName.beforeInsert = super.${e.name};'), '\n');
-          }  else {
+            constructorBody.writeAll(
+                beforeOperations.map<dynamic>((e) => ' $fieldName.beforeInsert = super.${e.name};'), '\n');
+          } else {
             constructorBody.writeln('$fieldName.beforeInsert = (entity) async {');
             constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
             constructorBody.writeln('};');
@@ -144,21 +145,20 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
-        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesSeparatedByComma =
+            routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
         final routinesParam = '[$routinesSeparatedByComma], ';
 
         classBuilder.fields.add(field);
 
-        final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.valueMappingForUpdate}';
+        final valueMapper = '(${entity.classElement.displayName} item) => ${entity.valueMappingForUpdate}';
 
-        final requiresChangeListener =
-            dbHasViewStreams || streamEntities.contains(entity);
+        final requiresChangeListener = dbHasViewStreams || streamEntities.contains(entity);
 
         final String updatedCode;
         if (entity.actionsSave.isNotEmpty) {
           updatedCode = ', updated: (entity) async { ${entity.actionsSave} }';
-        } else{
+        } else {
           updatedCode = '';
         }
 
@@ -169,8 +169,9 @@ class DaoWriter extends Writer {
         final beforeOperations = dao.beforeOperations.where((e) => e.forUpdate).toList();
         if (beforeOperations.isNotEmpty) {
           if (beforeOperations.length == 1) {
-            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' $fieldName.beforeUpdate = super.${e.name};'), '\n');
-          }  else {
+            constructorBody.writeAll(
+                beforeOperations.map<dynamic>((e) => ' $fieldName.beforeUpdate = super.${e.name};'), '\n');
+          } else {
             constructorBody.writeln('$fieldName.beforeUpdate = (entity) async {');
             constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
             constructorBody.writeln('};');
@@ -193,21 +194,20 @@ class DaoWriter extends Writer {
           ..type = type
           ..modifier = FieldModifier.final$);
 
-        final routinesSeparatedByComma = routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
+        final routinesSeparatedByComma =
+            routines.where((e) => e.entity == entity).map((e) => e.nameFieldInDataBase).join(',');
         final routinesParam = '[$routinesSeparatedByComma], ';
 
         classBuilder.fields.add(field);
 
-        final valueMapper =
-            '(${entity.classElement.displayName} item) => ${entity.valueMappingForDelete}';
+        final valueMapper = '(${entity.classElement.displayName} item) => ${entity.valueMappingForDelete}';
 
-        final requiresChangeListener =
-            dbHasViewStreams || streamEntities.contains(entity);
+        final requiresChangeListener = dbHasViewStreams || streamEntities.contains(entity);
 
         final String deletedCode;
         if (entity.actionsSave.isNotEmpty) {
           deletedCode = '';
-        } else{
+        } else {
           deletedCode = '';
         }
 
@@ -218,8 +218,9 @@ class DaoWriter extends Writer {
         final beforeOperations = dao.beforeOperations.where((e) => e.forDelete).toList();
         if (beforeOperations.isNotEmpty) {
           if (beforeOperations.length == 1) {
-            constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' $fieldName.beforeDelete = super.${e.name};'), '\n');
-          }  else {
+            constructorBody.writeAll(
+                beforeOperations.map<dynamic>((e) => ' $fieldName.beforeDelete = super.${e.name};'), '\n');
+          } else {
             constructorBody.writeln('$fieldName.beforeDelete = (entity) async {');
             constructorBody.writeAll(beforeOperations.map<dynamic>((e) => ' await super.${e.name}(entity);'), '\n');
             constructorBody.writeln('};');
@@ -268,38 +269,34 @@ class DaoWriter extends Writer {
   List<Method> _generateInsertionMethods(
     final List<InsertionMethod> insertionMethods,
   ) {
-    return insertionMethods
-        .map((method) => InsertionMethodWriter(method).write())
-        .toList();
+    return insertionMethods.map((method) => InsertionMethodWriter(method).write()).toList();
   }
 
   List<Method> _generateUpdateMethods(
     final List<UpdateMethod> updateMethods,
   ) {
-    return updateMethods
-        .map((method) => UpdateMethodWriter(method).write())
-        .toList();
+    return updateMethods.map((method) => UpdateMethodWriter(method).write()).toList();
   }
 
   List<Method> _generateDeletionMethods(
     final List<DeletionMethod> deletionMethods,
   ) {
-    return deletionMethods
-        .map((method) => DeletionMethodWriter(method).write())
-        .toList();
+    return deletionMethods.map((method) => DeletionMethodWriter(method).write()).toList();
   }
 
   List<Method> _generateQueryMethods(final List<QueryMethod> queryMethods) {
     return queryMethods
-        .map((method) => QueryMethodWriter(method, sqlColumnProcessor: sqlColumnProcessor, allFieldOfDaoWithAllMethods: allFieldOfDaoWithAllMethods, afterQueryMethods: dao.afterQueryMethods).write())
+        .map((method) => QueryMethodWriter(method,
+                sqlColumnProcessor: sqlColumnProcessor,
+                allFieldOfDaoWithAllMethods: allFieldOfDaoWithAllMethods,
+                afterQueryMethods: dao.afterQueryMethods)
+            .write())
         .toList();
   }
 
   List<Method> _generateTransactionMethods(
     final List<TransactionMethod> transactionMethods,
   ) {
-    return transactionMethods
-        .map((method) => TransactionMethodWriter(method).write())
-        .toList();
+    return transactionMethods.map((method) => TransactionMethodWriter(method).write()).toList();
   }
 }

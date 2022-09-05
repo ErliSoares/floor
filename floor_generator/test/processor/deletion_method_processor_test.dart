@@ -15,8 +15,7 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => DeletionMethodProcessor(deletionMethod, [entities]).process();
+      final actual = () => DeletionMethodProcessor(deletionMethod, [entities]).process();
 
       expect(
           actual,
@@ -33,8 +32,7 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => DeletionMethodProcessor(deletionMethod, [entities]).process();
+      final actual = () => DeletionMethodProcessor(deletionMethod, [entities]).process();
 
       expect(
           actual,
@@ -51,8 +49,7 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => DeletionMethodProcessor(deletionMethod, [entities]).process();
+      final actual = () => DeletionMethodProcessor(deletionMethod, [entities]).process();
 
       expect(
           actual,
@@ -69,14 +66,12 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => DeletionMethodProcessor(deletionMethod, [entities]).process();
+      final actual = () => DeletionMethodProcessor(deletionMethod, [entities]).process();
 
       expect(
           actual,
           throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(deletionMethod, 'Deletion')
-                  .doesNotReturnFuture));
+              ChangeMethodProcessorError(deletionMethod, 'Deletion').doesNotReturnFuture));
     });
     test('when returning a List', () async {
       final deletionMethod = await '''
@@ -86,14 +81,12 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => DeletionMethodProcessor(deletionMethod, [entities]).process();
+      final actual = () => DeletionMethodProcessor(deletionMethod, [entities]).process();
 
       expect(
           actual,
           throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(deletionMethod, 'Deletion')
-                  .shouldNotReturnList));
+              ChangeMethodProcessorError(deletionMethod, 'Deletion').shouldNotReturnList));
     });
     test('when not returning int or void', () async {
       final deletionMethod = await '''
@@ -103,14 +96,12 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => DeletionMethodProcessor(deletionMethod, [entities]).process();
+      final actual = () => DeletionMethodProcessor(deletionMethod, [entities]).process();
 
       expect(
           actual,
           throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(deletionMethod, 'Deletion')
-                  .doesNotReturnVoidNorInt));
+              ChangeMethodProcessorError(deletionMethod, 'Deletion').doesNotReturnVoidNorInt));
     });
   });
 }

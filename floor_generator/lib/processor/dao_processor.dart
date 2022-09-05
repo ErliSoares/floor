@@ -33,15 +33,10 @@ class DaoProcessor extends Processor<Dao> {
   final Set<TypeConverter> _typeConverters;
   final SqlColumnProcessor? sqlColumnProcessor;
 
-  DaoProcessor(
-    final ClassElement classElement,
-    final String daoGetterName,
-    final String databaseName,
-    final List<Entity> entities,
-    final List<View> views,
-    final Set<TypeConverter> typeConverters,
-    {this.sqlColumnProcessor}
-  )   : _classElement = classElement,
+  DaoProcessor(final ClassElement classElement, final String daoGetterName, final String databaseName,
+      final List<Entity> entities, final List<View> views, final Set<TypeConverter> typeConverters,
+      {this.sqlColumnProcessor})
+      : _classElement = classElement,
         _daoGetterName = daoGetterName,
         _databaseName = databaseName,
         _entities = entities,
@@ -117,10 +112,13 @@ class DaoProcessor extends Processor<Dao> {
   }
 
   List<BeforeOperationMethod> _getBeforeOperations(
-      final List<MethodElement> methodElements,
-      ) {
+    final List<MethodElement> methodElements,
+  ) {
     return methodElements
-        .where((methodElement) => methodElement.hasAnnotation(annotations.beforeUpdate.runtimeType) || methodElement.hasAnnotation(annotations.beforeInsert.runtimeType) || methodElement.hasAnnotation(annotations.beforeDelete.runtimeType))
+        .where((methodElement) =>
+            methodElement.hasAnnotation(annotations.beforeUpdate.runtimeType) ||
+            methodElement.hasAnnotation(annotations.beforeInsert.runtimeType) ||
+            methodElement.hasAnnotation(annotations.beforeDelete.runtimeType))
         .map((methodElement) => BeforeMethodProcessor(methodElement, _entities).process())
         .toList();
   }
@@ -148,8 +146,8 @@ class DaoProcessor extends Processor<Dao> {
   }
 
   List<AfterQueryMethod> _getAfterQueryMethod(
-      final List<MethodElement> methodElements,
-      ) {
+    final List<MethodElement> methodElements,
+  ) {
     return methodElements
         .where((methodElement) => methodElement.hasAnnotation(annotations.afterQuery.runtimeType))
         .map((methodElement) => AfterQueryMethodProcessor(methodElement, _entities).process())

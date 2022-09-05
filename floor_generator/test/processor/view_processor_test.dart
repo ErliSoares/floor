@@ -22,9 +22,7 @@ void main() {
     final actual = ViewProcessor(classElement, {}).process();
 
     const name = 'Person';
-    final fields = classElement.fields
-        .map((fieldElement) => FieldProcessor(fieldElement, null).process())
-        .toList();
+    final fields = classElement.fields.map((fieldElement) => FieldProcessor(fieldElement, null).process()).toList();
     final embeddeds = <Embedded>[];
     const query = 'SELECT * from otherentity';
     const constructor = "Person(row['id'] as int, row['name'] as String)";
@@ -57,11 +55,8 @@ void main() {
     final actual = ViewProcessor(classElement, {}).process();
 
     const name = 'Person';
-    final fields = classElement.fields
-        .map((fieldElement) => FieldProcessor(fieldElement, null).process())
-        .toList();
-    const query =
-        'WITH subquery as (SELECT * from otherentity) SELECT subquery.*';
+    final fields = classElement.fields.map((fieldElement) => FieldProcessor(fieldElement, null).process()).toList();
+    const query = 'WITH subquery as (SELECT * from otherentity) SELECT subquery.*';
     const constructor = "Person(row['id'] as int, row['name'] as String)";
     final expected = View(
       classElement,
@@ -93,9 +88,7 @@ void main() {
     expect(actual, throwsInvalidGenerationSourceError());
   });
 
-  test(
-      'Throws when processing view starting with WITH statement without SELECT',
-      () async {
+  test('Throws when processing view starting with WITH statement without SELECT', () async {
     final classElement = await createClassElement('''
       @DatabaseView("WITH subquery")
       class Person {
@@ -112,9 +105,7 @@ void main() {
     expect(actual, throwsInvalidGenerationSourceError());
   });
 
-  test(
-      'Throws when processing view starting with WITH statement with only one SELECT',
-      () async {
+  test('Throws when processing view starting with WITH statement with only one SELECT', () async {
     final classElement = await createClassElement('''
       @DatabaseView("WITH subquery as (SELECT * from otherentity)")
       class Person {
@@ -188,9 +179,7 @@ void main() {
     final actual = ViewProcessor(classElement, {}).process();
 
     const name = 'personview';
-    final fields = classElement.fields
-        .map((fieldElement) => FieldProcessor(fieldElement, null).process())
-        .toList();
+    final fields = classElement.fields.map((fieldElement) => FieldProcessor(fieldElement, null).process()).toList();
     final embeddeds = <Embedded>[];
     const query = 'SELECT * from otherentity';
     const constructor = "Person(row['id'] as int, row['name'] as String)";

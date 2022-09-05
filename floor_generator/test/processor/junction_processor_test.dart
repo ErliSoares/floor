@@ -26,7 +26,6 @@ void main() {
     );
     expect(actual, equals(expected));
   });
-
 }
 
 Future<FieldElement> _generateFieldElement() async {

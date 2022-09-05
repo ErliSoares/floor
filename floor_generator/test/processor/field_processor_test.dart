@@ -147,8 +147,7 @@ void main() {
       final DateTime dateTime;
     ''');
 
-    final actual =
-        FieldProcessor(fieldElement, externalTypeConverter).process();
+    final actual = FieldProcessor(fieldElement, externalTypeConverter).process();
 
     const name = 'dateTime';
     const columnName = 'dateTime';
@@ -179,8 +178,7 @@ void main() {
         FieldProcessor(fieldElement, null).process,
         throwsInvalidGenerationSourceError(InvalidGenerationSourceError(
           'Column type is not supported for List<int>.',
-          todo:
-              'Either make to use a supported type or supply a type converter.',
+          todo: 'Either make to use a supported type or supply a type converter.',
           element: fieldElement,
         )));
   });

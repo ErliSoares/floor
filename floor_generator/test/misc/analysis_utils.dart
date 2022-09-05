@@ -13,14 +13,13 @@ import 'package:path/path.dart' as p;
 import 'package:source_gen/source_gen.dart';
 
 Future<LibraryReader> resolveCompilationUnit(String sourceDirectory) async {
-  final files =
-  Directory(sourceDirectory).listSync().whereType<File>().toList();
+  final files = Directory(sourceDirectory).listSync().whereType<File>().toList();
 
   // Sort files to ensure the "first" one is first
   files.sort((a, b) => p.basename(a.path).compareTo(p.basename(b.path)));
 
-  final fileMap = Map<String, String>.fromEntries(files.map(
-          (f) => MapEntry('a|lib/${p.basename(f.path)}', f.readAsStringSync())));
+  final fileMap =
+      Map<String, String>.fromEntries(files.map((f) => MapEntry('a|lib/${p.basename(f.path)}', f.readAsStringSync())));
 
   final library = await resolveSources(fileMap, (item) async {
     final assetId = AssetId.parse(fileMap.keys.first);

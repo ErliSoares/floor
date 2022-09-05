@@ -30,8 +30,13 @@ class QueryMethodWriter implements Writer {
   final List<FieldOfDaoWithAllMethods> _allFieldOfDaoWithAllMethods;
   final List<AfterQueryMethod> afterQueryMethods;
 
-  QueryMethodWriter(final QueryMethod queryMethod, {final SqlColumnProcessor? sqlColumnProcessor, final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods = const [], this.afterQueryMethods = const []})
-      : _queryMethod = queryMethod, _sqlColumnProcessor = sqlColumnProcessor, _allFieldOfDaoWithAllMethods = allFieldOfDaoWithAllMethods;
+  QueryMethodWriter(final QueryMethod queryMethod,
+      {final SqlColumnProcessor? sqlColumnProcessor,
+      final List<FieldOfDaoWithAllMethods> allFieldOfDaoWithAllMethods = const [],
+      this.afterQueryMethods = const []})
+      : _queryMethod = queryMethod,
+        _sqlColumnProcessor = sqlColumnProcessor,
+        _allFieldOfDaoWithAllMethods = allFieldOfDaoWithAllMethods;
 
   @override
   Method write() {
@@ -67,8 +72,8 @@ class QueryMethodWriter implements Writer {
     return _queryMethod.parameters.where((e) => !e.isPositional).map((parameter) {
       return Parameter((builder) => builder
         ..name = parameter.name
-        ..named  = parameter.isNamed
-        ..required  = parameter.isRequiredNamed
+        ..named = parameter.isNamed
+        ..required = parameter.isRequiredNamed
         ..defaultTo = parameter.defaultValueCode == null ? null : Code(parameter.defaultValueCode!)
         ..type = refer(parameter.type.getDisplayString(
           // processor disallows nullable method parameters and throws if found,
@@ -94,7 +99,7 @@ class QueryMethodWriter implements Writer {
 
     if (_queryMethod.flattenedReturnType.isDartCoreMap) {
       var parameters = '';
-      if (arguments != null)  parameters = ', arguments: $arguments';
+      if (arguments != null) parameters = ', arguments: $arguments';
       _methodBody.writeln('return _queryAdapter.queryMap($query$parameters);');
       return _methodBody.toString();
     }
@@ -105,16 +110,16 @@ class QueryMethodWriter implements Writer {
       final select = _sqlColumnProcessor!.parserQuery(query.fromLiteral(), _queryMethod.methodElement);
       if (select is sqlparser.SelectStatement) {
         var parameters = '';
-        if (arguments != null)  parameters = ', arguments: $arguments';
+        if (arguments != null) parameters = ', arguments: $arguments';
 
         if (_queryMethod.flattenedReturnType.isDefaultSqlType) {
           _methodBody.writeln('return _queryAdapter.querySingleValue($query$parameters);');
           return _methodBody.toString();
         } else {
-          final typeConverter =
-          _queryMethod.typeConverters.getClosestOrNull(_queryMethod.flattenedReturnType);
+          final typeConverter = _queryMethod.typeConverters.getClosestOrNull(_queryMethod.flattenedReturnType);
           if (typeConverter != null) {
-            _methodBody.writeln('return ${typeConverter.name.decapitalize()}.decode(_queryAdapter.querySingleValue($query$parameters));');
+            _methodBody.writeln(
+                'return ${typeConverter.name.decapitalize()}.decode(_queryAdapter.querySingleValue($query$parameters));');
             return _methodBody.toString();
           }
         }
@@ -145,12 +150,10 @@ class QueryMethodWriter implements Writer {
         1;
 
     String? lastParam;
-    for (final listParam in _queryMethod.parameters
-        .where((param) => param.type.isDartCoreList)) {
+    for (final listParam in _queryMethod.parameters.where((param) => param.type.isDartCoreList)) {
       if (lastParam == null) {
         //make start final if it is only used once, fixes a lint
-        final constInt =
-            (start == _queryMethod.parameters.length) ? 'const' : 'int';
+        final constInt = (start == _queryMethod.parameters.length) ? 'const' : 'int';
         code.writeln('$constInt offset = $start;');
       } else {
         code.writeln('offset += $lastParam.length;');
@@ -172,7 +175,8 @@ class QueryMethodWriter implements Writer {
     //first, take fixed parameters, then insert list parameters.
     return [
       ..._queryMethod.parameters
-          .where((parameter) => !parameter.type.isDartCoreList && !parameter.type.isLoadOptions && !parameter.type.isLoadOptionsEntry)
+          .where((parameter) =>
+              !parameter.type.isDartCoreList && !parameter.type.isLoadOptions && !parameter.type.isLoadOptionsEntry)
           .map((parameter) {
         if (parameter.type.isDefaultSqlType) {
           if (parameter.type.isDartCoreBool) {
@@ -184,21 +188,17 @@ class QueryMethodWriter implements Writer {
         } else if (parameter.type.element is ClassElement && (parameter.type.element as ClassElement).isEnum) {
           return parameter.displayName + '.value';
         } else {
-          final typeConverter =
-              _queryMethod.typeConverters.getClosest(parameter.type);
+          final typeConverter = _queryMethod.typeConverters.getClosest(parameter.type);
           return '${typeConverter.name.decapitalize()}.encode(${parameter.displayName})';
         }
       }),
-      ..._queryMethod.parameters
-          .where((parameter) => parameter.type.isDartCoreList)
-          .map((parameter) {
+      ..._queryMethod.parameters.where((parameter) => parameter.type.isDartCoreList).map((parameter) {
         // TODO #403 what about type converters that map between e.g. string and list?
         final DartType flatType = parameter.type.flatten();
         if (flatType.isDefaultSqlType) {
           return '...${parameter.displayName}';
         } else {
-          final typeConverter =
-              _queryMethod.typeConverters.getClosest(flatType);
+          final typeConverter = _queryMethod.typeConverters.getClosest(flatType);
           return '...${parameter.displayName}.map((element) => ${typeConverter.name.decapitalize()}.encode(element))';
         }
       })
@@ -223,23 +223,22 @@ class QueryMethodWriter implements Writer {
       if (originalQuery.contains(r'$table_name_of_return_type')) {
         throw ProcessorError(
           message:
-          r'The $table_name_of_return_type variable in the query string cannot be used when the method return is not an entity',
-          todo:
-          r'Make the de value return one entity or remove $table_name_of_return_type in query string.',
+              r'The $table_name_of_return_type variable in the query string cannot be used when the method return is not an entity',
+          todo: r'Make the de value return one entity or remove $table_name_of_return_type in query string.',
           element: flattenedReturnTypeElement ?? _queryMethod.rawReturnType.element!,
         );
       }
     }
 
     for (final listParameter in _queryMethod.query.listParameters) {
-      code.write(
-          originalQuery.substring(start, listParameter.position)
-              .replaceAll(r'$table_name_of_return_type', tableName).toLiteral());
+      code.write(originalQuery
+          .substring(start, listParameter.position)
+          .replaceAll(r'$table_name_of_return_type', tableName)
+          .toLiteral());
       code.write(' + _sqliteVariablesFor${listParameter.name.capitalize()} + ');
       start = listParameter.position + varlistPlaceholder.length;
     }
-    code.write(originalQuery.substring(start)
-        .replaceAll(r'$table_name_of_return_type', tableName).toLiteral());
+    code.write(originalQuery.substring(start).replaceAll(r'$table_name_of_return_type', tableName).toLiteral());
 
     return code.toString();
   }
@@ -278,7 +277,8 @@ class QueryMethodWriter implements Writer {
         ..write(', isView: ${queryable is View}');
     }
 
-    final loadOptionsParam = _queryMethod.parameters.firstWhereOrNull((param) => param.type.isLoadOptions || param.type.isLoadOptionsEntry);
+    final loadOptionsParam =
+        _queryMethod.parameters.firstWhereOrNull((param) => param.type.isLoadOptions || param.type.isLoadOptionsEntry);
     if (loadOptionsParam != null) {
       if (_sqlColumnProcessor == null) {
         throw Exception('Não foi informado _sqlColumnProcessor para processar as colunas para o loadOptions');
@@ -292,12 +292,15 @@ class QueryMethodWriter implements Writer {
 
       final sqlColumns = StringBuffer();
       final mapColumns = _sqlColumnProcessor!.getColumns(select);
-      for(var field in mapColumns.entries) {
-        sqlColumns.writeln('ColumnSql(${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}Schema.col${field.key.firstCharToUpper()}, sqlField: \'${field.value}\'),');
+      for (var field in mapColumns.entries) {
+        sqlColumns.writeln(
+            'ColumnSql(${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}Schema.col${field.key.firstCharToUpper()}, sqlField: \'${field.value}\'),');
       }
-      final additionalFieldForFilter = _queryMethod.queryable?.fieldsAll.where((element) => element.junction != null) ?? [];
-      for(var field in additionalFieldForFilter) {
-        sqlColumns.writeln('ColumnSql(${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}Schema.col${field.name.firstCharToUpper()}, sqlField: \'\'),');
+      final additionalFieldForFilter =
+          _queryMethod.queryable?.fieldsAll.where((element) => element.junction != null) ?? [];
+      for (var field in additionalFieldForFilter) {
+        sqlColumns.writeln(
+            'ColumnSql(${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}Schema.col${field.name.firstCharToUpper()}, sqlField: \'\'),');
       }
       queryInfoParameters.writeln('columns: [$sqlColumns],');
 
@@ -311,32 +314,32 @@ class QueryMethodWriter implements Writer {
       }
       final fieldsEmbeddeds = _queryMethod.queryable!.embeddeds.expand((e) => e.fields);
 
-      for(var field in fieldsQuery) {
+      for (var field in fieldsQuery) {
         if (mapColumns.containsKey(field.columnName)) {
           continue;
         }
         throw ProcessorError(
-          message: 'O query não contêm o campo para o preenchimento do propriedade ${field.name} da entidade ${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}.',
+          message:
+              'O query não contêm o campo para o preenchimento do propriedade ${field.name} da entidade ${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}.',
           todo: 'Considere colocar a coluna no query ou ignorar a coluna na entidade.',
           element: _queryMethod.methodElement,
         );
       }
-      for(var field in fieldsEmbeddeds) {
+      for (var field in fieldsEmbeddeds) {
         if (mapColumns.containsKey(field.columnName)) {
           continue;
         }
         throw ProcessorError(
-          message: 'O query não contêm o campo para o preenchimento do propriedade embedded ${field.name} da entidade ${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}.',
+          message:
+              'O query não contêm o campo para o preenchimento do propriedade embedded ${field.name} da entidade ${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}.',
           todo: 'Considere colocar a coluna no query ou ignorar a coluna na entidade.',
           element: _queryMethod.methodElement,
         );
       }
 
-      for(var columnName in mapColumns.keys) {
-        if (
-        fieldsQuery.any((e) => e.columnName == columnName)
-        || fieldsEmbeddeds.any((e) => e.columnName == columnName)
-        ) {
+      for (var columnName in mapColumns.keys) {
+        if (fieldsQuery.any((e) => e.columnName == columnName) ||
+            fieldsEmbeddeds.any((e) => e.columnName == columnName)) {
           continue;
         }
         throw ProcessorError(
@@ -362,7 +365,8 @@ class QueryMethodWriter implements Writer {
 
       if (select.orderBy?.span != null) {
         final span = select.orderBy!.span!;
-        queryInfoParameters.writeln('orderByClauseIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
+        queryInfoParameters
+            .writeln('orderByClauseIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
         if (whereClauseStartIndex == 0) {
           whereClauseStartIndex = span.start.offset + 1;
         }
@@ -370,7 +374,8 @@ class QueryMethodWriter implements Writer {
 
       if (select.limit?.span != null) {
         final span = select.limit!.span!;
-        queryInfoParameters.writeln('limitClauseIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
+        queryInfoParameters
+            .writeln('limitClauseIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
         if (whereClauseStartIndex == 0) {
           whereClauseStartIndex = span.start.offset + 1;
         }
@@ -378,24 +383,31 @@ class QueryMethodWriter implements Writer {
 
       if (select.where?.span != null) {
         final span = select.where!.span!;
-        queryInfoParameters.writeln('whereClauseIndex: const RangeIndex($whereClauseStartIndex, ${span.end.offset + 1}),');
+        queryInfoParameters
+            .writeln('whereClauseIndex: const RangeIndex($whereClauseStartIndex, ${span.end.offset + 1}),');
       }
 
       if (select.where?.span != null) {
         final span = select.where!.span!;
-        queryInfoParameters.writeln('whereExpressionIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
+        queryInfoParameters
+            .writeln('whereExpressionIndex: const RangeIndex(${span.start.offset + 1}, ${span.end.offset + 1}),');
       }
 
       final expands = StringBuffer();
-      final relations = _queryMethod.queryable?.fieldsAll.where((element) => element.relation != null).map((e) => e.relation!) ?? [];
+      final relations =
+          _queryMethod.queryable?.fieldsAll.where((element) => element.relation != null).map((e) => e.relation!) ?? [];
       if (relations.isNotEmpty) {
         expands.writeln(_writeRelationsExpand(relations));
       }
-      final junctions = _queryMethod.queryable?.fieldsAll.where((element) => element.junction != null).map((e) => e.junction!) ?? [];
+      final junctions =
+          _queryMethod.queryable?.fieldsAll.where((element) => element.junction != null).map((e) => e.junction!) ?? [];
       if (junctions.isNotEmpty) {
         expands.writeln(_writeJunctionsExpand(junctions));
       }
-      final foreignKeyRelations = _queryMethod.queryable?.fieldsAll.where((element) => element.foreignKeyRelation != null).map((e) => e.foreignKeyRelation!) ?? [];
+      final foreignKeyRelations = _queryMethod.queryable?.fieldsAll
+              .where((element) => element.foreignKeyRelation != null)
+              .map((e) => e.foreignKeyRelation!) ??
+          [];
       if (foreignKeyRelations.isNotEmpty) {
         expands.writeln(_writeForeignKeyRelationsExpand(foreignKeyRelations));
       }
@@ -403,7 +415,9 @@ class QueryMethodWriter implements Writer {
         queryInfoParameters.writeln('expand: [$expands],');
       }
 
-      parameters..write(', queryInfo: QueryInfo<${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}>($queryInfoParameters),');
+      parameters
+        ..write(
+            ', queryInfo: QueryInfo<${_queryMethod.flattenedReturnType.getDisplayString(withNullability: false)}>($queryInfoParameters),');
     }
 
     final list = _queryMethod.returnsList ? 'List' : '';
@@ -414,7 +428,7 @@ class QueryMethodWriter implements Writer {
 
   String _writeJunctionsExpand(Iterable<Junction> junctions) {
     final str = StringBuffer();
-    for(final junction in junctions){
+    for (final junction in junctions) {
       str.writeln(_writeJunctionExpand(junction));
     }
     return str.toString();
@@ -432,8 +446,10 @@ class QueryMethodWriter implements Writer {
     final fieldQueryDaoJunction = _findMethodLoadWithLoadOptions(junctionClass);
     if (fieldQueryDaoJunction == null) {
       throw ProcessorError(
-        message: 'The type ${junctionClass.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
-        todo: 'Create DAO with method @Query with return List<${junctionClass.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
+        message:
+            'The type ${junctionClass.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
+        todo:
+            'Create DAO with method @Query with return List<${junctionClass.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
         element: junction.fieldElement,
       );
     }
@@ -442,8 +458,10 @@ class QueryMethodWriter implements Writer {
     final fieldQueryDaoChild = _findMethodLoadWithLoadOptions(childClass);
     if (fieldQueryDaoChild == null) {
       throw ProcessorError(
-        message: 'The type ${childClass.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
-        todo: 'Create DAO with method @Query with return List<${childClass.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
+        message:
+            'The type ${childClass.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
+        todo:
+            'Create DAO with method @Query with return List<${childClass.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
         element: junction.fieldElement,
       );
     }
@@ -453,7 +471,7 @@ class QueryMethodWriter implements Writer {
     if (junction.fieldElement.type.isDartCoreList) {
       methodFilter = 'where';
       methodFilterResultCast = '.toList()';
-    }  else if(junction.fieldElement.type.isNullable) {
+    } else if (junction.fieldElement.type.isNullable) {
       methodFilter = 'firstWhereOrNull';
       methodFilterResultCast = '';
     } else {
@@ -484,7 +502,7 @@ class QueryMethodWriter implements Writer {
 
   String _writeRelationsExpand(Iterable<Relation> relations) {
     final str = StringBuffer();
-    for(final relation in relations){
+    for (final relation in relations) {
       str.writeln(_writeRelationExpand(relation));
     }
     return str.toString();
@@ -500,8 +518,10 @@ class QueryMethodWriter implements Writer {
     final fieldQueryDao = _findMethodLoadWithLoadOptions(relation.childElement);
     if (fieldQueryDao == null) {
       throw ProcessorError(
-        message: 'The type ${relation.childElement.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
-        todo: 'Create DAO with method @Query with return List<${relation.childElement.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
+        message:
+            'The type ${relation.childElement.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
+        todo:
+            'Create DAO with method @Query with return List<${relation.childElement.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
         element: relation.fieldElement,
       );
     }
@@ -511,7 +531,7 @@ class QueryMethodWriter implements Writer {
     if (relation.fieldElement.type.isDartCoreList) {
       methodFilter = 'where';
       methodFilterResultCast = '.toList()';
-    }  else if(relation.fieldElement.type.isNullable) {
+    } else if (relation.fieldElement.type.isNullable) {
       methodFilter = 'firstWhereOrNull';
       methodFilterResultCast = '';
     } else {
@@ -565,7 +585,7 @@ class QueryMethodWriter implements Writer {
 
   String _writeForeignKeyRelationsExpand(Iterable<ForeignKeyRelation> foreignKeyRelations) {
     final str = StringBuffer();
-    for(final foreignKeyRelation in foreignKeyRelations){
+    for (final foreignKeyRelation in foreignKeyRelations) {
       str.writeln(_writeForeignKeyRelationExpand(foreignKeyRelation));
     }
     return str.toString();
@@ -581,14 +601,16 @@ class QueryMethodWriter implements Writer {
     final fieldQueryDao = _findMethodLoadWithLoadOptions(foreignKeyRelation.parentElement);
     if (fieldQueryDao == null) {
       throw ProcessorError(
-        message: 'The type ${foreignKeyRelation.parentElement.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
-        todo: 'Create DAO with method @Query with return List<${foreignKeyRelation.parentElement.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
+        message:
+            'The type ${foreignKeyRelation.parentElement.getDisplayString(withNullability: false)} not have DAO with method @Query with return list and parameter with LoadOptions.',
+        todo:
+            'Create DAO with method @Query with return List<${foreignKeyRelation.parentElement.getDisplayString(withNullability: false)}> and parameter LoadOptions.',
         element: foreignKeyRelation.fieldElement,
       );
     }
 
     final String methodFilter;
-    if(foreignKeyRelation.fieldElement.type.isNullable) {
+    if (foreignKeyRelation.fieldElement.type.isNullable) {
       methodFilter = 'firstWhereOrNull';
     } else {
       methodFilter = 'firstWhere';

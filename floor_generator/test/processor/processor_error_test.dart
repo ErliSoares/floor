@@ -11,8 +11,7 @@ void main() {
       Future<void> insertPerson(Person person);
     '''
         .asDaoMethodElement();
-    final error = ProcessorError(
-        message: 'mymessage', todo: 'mytodo', element: insertionMethod);
+    final error = ProcessorError(message: 'mymessage', todo: 'mytodo', element: insertionMethod);
     expect(
         error.toString(),
         equals('mymessage mytodo\n'
@@ -24,8 +23,7 @@ void main() {
   });
   test('toString with empty source element', () async {
     final element = FakeClassElement();
-    final error =
-        ProcessorError(message: 'mymessage', todo: 'mytodo', element: element);
+    final error = ProcessorError(message: 'mymessage', todo: 'mytodo', element: element);
     expect(
         error.toString(),
         equals('mymessage mytodo\n'

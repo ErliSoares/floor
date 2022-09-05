@@ -26,9 +26,7 @@ void main() {
 
     final actual = TestProcessor(classElement).process();
 
-    final fields = classElement.fields
-        .map((fieldElement) => FieldProcessor(fieldElement, null).process())
-        .toList();
+    final fields = classElement.fields.map((fieldElement) => FieldProcessor(fieldElement, null).process()).toList();
     final embeddeds = <Embedded>[];
     const constructor = "Person(row['id'] as int, row['name'] as String)";
     final expected = TestQueryable(
@@ -61,11 +59,9 @@ void main() {
       final actual = TestProcessor(classElement, {typeConverter}).process();
 
       final idField = FieldProcessor(classElement.fields[0], null).process();
-      final dateTimeField =
-          FieldProcessor(classElement.fields[1], typeConverter).process();
+      final dateTimeField = FieldProcessor(classElement.fields[1], typeConverter).process();
       final fields = [idField, dateTimeField];
-      const constructor =
-          "Order(row['id'] as int, _typeConverter.decode(row['dateTime'] as int))";
+      const constructor = "Order(row['id'] as int, _typeConverter.decode(row['dateTime'] as int))";
       final expected = TestQueryable(
         classElement,
         fields,
@@ -108,11 +104,9 @@ void main() {
         TypeConverterScope.queryable,
       );
       final idField = FieldProcessor(classElement.fields[0], null).process();
-      final dateTimeField =
-          FieldProcessor(classElement.fields[1], typeConverter).process();
+      final dateTimeField = FieldProcessor(classElement.fields[1], typeConverter).process();
       final fields = [idField, dateTimeField];
-      const constructor =
-          "Order(row['id'] as int, _dateTimeConverter.decode(row['dateTime'] as int))";
+      const constructor = "Order(row['id'] as int, _dateTimeConverter.decode(row['dateTime'] as int))";
       final expected = TestQueryable(
         classElement,
         fields,
@@ -122,8 +116,7 @@ void main() {
       expect(actual, equals(expected));
     });
 
-    test('process queryable and prefer local type converter over external',
-        () async {
+    test('process queryable and prefer local type converter over external', () async {
       final externalTypeConverter = TypeConverter(
         'ExternalConverter',
         await dateTimeDartType,
@@ -153,8 +146,7 @@ void main() {
       }
     ''');
 
-      final actual =
-          TestProcessor(classElement, {externalTypeConverter}).process();
+      final actual = TestProcessor(classElement, {externalTypeConverter}).process();
 
       final typeConverter = TypeConverter(
         'DateTimeConverter',
@@ -163,11 +155,9 @@ void main() {
         TypeConverterScope.queryable,
       );
       final idField = FieldProcessor(classElement.fields[0], null).process();
-      final dateTimeField =
-          FieldProcessor(classElement.fields[1], typeConverter).process();
+      final dateTimeField = FieldProcessor(classElement.fields[1], typeConverter).process();
       final fields = [idField, dateTimeField];
-      const constructor =
-          "Order(row['id'] as int, _dateTimeConverter.decode(row['dateTime'] as int))";
+      const constructor = "Order(row['id'] as int, _dateTimeConverter.decode(row['dateTime'] as int))";
       final expected = TestQueryable(
         classElement,
         fields,
@@ -199,8 +189,7 @@ void main() {
       final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
-      const expectedConstructor =
-          "TestEntity(row['id'] as int, row['name'] as String)";
+      const expectedConstructor = "TestEntity(row['id'] as int, row['name'] as String)";
       expect(fieldNames, containsAll(expectedFieldNames));
       expect(actual.constructor, equals(expectedConstructor));
     });
@@ -231,8 +220,7 @@ void main() {
       final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'foo', 'name'];
-      const expectedConstructor =
-          "TestEntity(row['id'] as int, row['foo'] as double, row['name'] as String)";
+      const expectedConstructor = "TestEntity(row['id'] as int, row['foo'] as double, row['name'] as String)";
       expect(fieldNames, containsAll(expectedFieldNames));
       expect(actual.constructor, equals(expectedConstructor));
     });
@@ -257,8 +245,7 @@ void main() {
       final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
-      const expectedConstructor =
-          "TestEntity(row['id'] as int, row['name'] as String)";
+      const expectedConstructor = "TestEntity(row['id'] as int, row['name'] as String)";
       expect(fieldNames, containsAll(expectedFieldNames));
       expect(actual.constructor, equals(expectedConstructor));
     });
@@ -285,8 +272,7 @@ void main() {
       final fieldNames = actual.fieldsAll.map((field) => field.name).toList();
 
       final expectedFieldNames = ['id', 'name'];
-      const expectedConstructor =
-          "TestEntity(row['id'] as int, row['name'] as String)";
+      const expectedConstructor = "TestEntity(row['id'] as int, row['name'] as String)";
       expect(fieldNames, containsAll(expectedFieldNames));
       expect(actual.constructor, equals(expectedConstructor));
     });
@@ -362,11 +348,7 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement)
-          .process()
-          .fieldsAll
-          .map((field) => field.name)
-          .toList();
+      final actual = TestProcessor(classElement).process().fieldsAll.map((field) => field.name).toList();
 
       expect(actual, equals(['id', 'name']));
     });
@@ -387,11 +369,7 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement)
-          .process()
-          .fieldsAll
-          .map((field) => field.name)
-          .toList();
+      final actual = TestProcessor(classElement).process().fieldsAll.map((field) => field.name).toList();
 
       expect(actual, equals(['id', 'name']));
     });
@@ -430,8 +408,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process().constructor;
 
-      const expected =
-          "Person(row['id'] as int, row['name'] as String, bar: row['bar'] as String)";
+      const expected = "Person(row['id'] as int, row['name'] as String, bar: row['bar'] as String)";
       expect(actual, equals(expected));
     });
 
@@ -472,8 +449,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process().constructor;
 
-      const expected =
-          "Person(id: row['id'] as int, name: row['name'] as String, bar: row['bar'] as String)";
+      const expected = "Person(id: row['id'] as int, name: row['name'] as String, bar: row['bar'] as String)";
       expect(actual, equals(expected));
     });
 
@@ -492,8 +468,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process().constructor;
 
-      const expected =
-          "Person(row['id'] as int, row['name'] as String, row['bar'] as String?)";
+      const expected = "Person(row['id'] as int, row['name'] as String, row['bar'] as String?)";
       expect(actual, equals(expected));
     });
 
@@ -512,8 +487,7 @@ void main() {
 
       final actual = TestProcessor(classElement).process().constructor;
 
-      const expected =
-          "Person(row['id'] as int?, row['name'] as String?, row['bar'] as String?)";
+      const expected = "Person(row['id'] as int?, row['name'] as String?, row['bar'] as String?)";
       expect(actual, equals(expected));
     });
 
@@ -583,10 +557,7 @@ void main() {
       }
     ''');
 
-      final actual = TestProcessor(classElement)
-          .process()
-          .fieldsAll
-          .map((field) => field.name);
+      final actual = TestProcessor(classElement).process().fieldsAll.map((field) => field.name);
 
       const expected = 'foo';
       expect(actual, isNot(contains(expected)));
@@ -620,7 +591,15 @@ class TestQueryable extends Queryable {
     List<Field> fields,
     List<Embedded> embeddeds,
     String constructor,
-  ) : super(constructor: constructor, name: '', classElement: classElement, fieldsAll: fields, fieldsDataBaseSchema: fields, fieldsQuery: fields, embeddeds: embeddeds,);
+  ) : super(
+          constructor: constructor,
+          name: '',
+          classElement: classElement,
+          fieldsAll: fields,
+          fieldsDataBaseSchema: fields,
+          fieldsQuery: fields,
+          embeddeds: embeddeds,
+        );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

@@ -54,26 +54,26 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       throw _processorError.autoIncrementInWithoutRowid;
     }
 
-    var actionsSave = fieldsAll
-        .where((e) => e.relation != null).map((e) => _getSaveRelation(e.relation!, name)).join('\n');
+    var actionsSave =
+        fieldsAll.where((e) => e.relation != null).map((e) => _getSaveRelation(e.relation!, name)).join('\n');
 
-    actionsSave = actionsSave + fieldsAll
-        .where((e) => e.junction != null)
-        .map((e) => _getSaveJunction(e.junction!, name)).join('\n');
+    actionsSave = actionsSave +
+        fieldsAll.where((e) => e.junction != null).map((e) => _getSaveJunction(e.junction!, name)).join('\n');
 
-    actionsSave = actionsSave + embeddeds
-        .where((e) => e.saveToSeparateEntity)
-        .map((e) => _getSaveEmbeddedEntity(e.fieldElement, name)).join('\n');
-
+    actionsSave = actionsSave +
+        embeddeds
+            .where((e) => e.saveToSeparateEntity)
+            .map((e) => _getSaveEmbeddedEntity(e.fieldElement, name))
+            .join('\n');
 
     final beforeSave = fieldsAll
         .where((e) => e.foreignKeyRelation != null && e.foreignKeyRelation!.save)
-        .map((e) => _getSaveForeignKeyRelation(e.foreignKeyRelation!, name)).join('\n');
+        .map((e) => _getSaveForeignKeyRelation(e.foreignKeyRelation!, name))
+        .join('\n');
     if (beforeSave.isNotEmpty) {
       // O geração do código pelo _getSaveForeignKeyRelation está correta, porem ela precisa ser salva antes da outra entidade
       throw UnimplementedError('Não foi implementado para salvar com o recurso foreignKeyRelation.');
     }
-
 
     return Entity(
       classElement,
@@ -101,9 +101,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
             ?.getField(AnnotationField.entityForeignKeys)
             ?.toListValue()
             ?.map((foreignKeyObject) {
-          final parentType = foreignKeyObject
-                  .getField(ForeignKeyField.entity)
-                  ?.toTypeValue() ??
+          final parentType = foreignKeyObject.getField(ForeignKeyField.entity)?.toTypeValue() ??
               (throw _processorError.foreignKeyNoEntity);
 
           final parentElement = parentType.element;
@@ -111,23 +109,19 @@ class EntityProcessor extends QueryableProcessor<Entity> {
               ? parentElement.tableName()
               : throw _processorError.foreignKeyDoesNotReferenceEntity(classElement);
 
-          final childColumns =
-              _getColumns(foreignKeyObject, ForeignKeyField.childColumns);
+          final childColumns = _getColumns(foreignKeyObject, ForeignKeyField.childColumns);
           if (childColumns.isEmpty) {
             throw _processorError.missingChildColumns;
           }
 
-          final parentColumns =
-              _getColumns(foreignKeyObject, ForeignKeyField.parentColumns);
+          final parentColumns = _getColumns(foreignKeyObject, ForeignKeyField.parentColumns);
           if (parentColumns.isEmpty) {
             throw _processorError.missingParentColumns;
           }
 
-          final onUpdate =
-              _getForeignKeyAction(foreignKeyObject, ForeignKeyField.onUpdate);
+          final onUpdate = _getForeignKeyAction(foreignKeyObject, ForeignKeyField.onUpdate);
 
-          final onDelete =
-              _getForeignKeyAction(foreignKeyObject, ForeignKeyField.onDelete);
+          final onDelete = _getForeignKeyAction(foreignKeyObject, ForeignKeyField.onDelete);
 
           return ForeignKey(
             parentName,
@@ -153,9 +147,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
   Fts _getFts3() {
     final ftsObject = classElement.getAnnotation(annotations.Fts3);
 
-    final tokenizer =
-        ftsObject?.getField(Fts3Field.tokenizer)?.toStringValue() ??
-            annotations.FtsTokenizer.simple;
+    final tokenizer = ftsObject?.getField(Fts3Field.tokenizer)?.toStringValue() ?? annotations.FtsTokenizer.simple;
 
     final tokenizerArgs = ftsObject
             ?.getField(Fts3Field.tokenizerArgs)
@@ -170,9 +162,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
   Fts _getFts4() {
     final ftsObject = classElement.getAnnotation(annotations.Fts4);
 
-    final tokenizer =
-        ftsObject?.getField(Fts4Field.tokenizer)?.toStringValue() ??
-            annotations.FtsTokenizer.simple;
+    final tokenizer = ftsObject?.getField(Fts4Field.tokenizer)?.toStringValue() ?? annotations.FtsTokenizer.simple;
 
     final tokenizerArgs = ftsObject
             ?.getField(Fts4Field.tokenizerArgs)
@@ -210,8 +200,8 @@ class EntityProcessor extends QueryableProcessor<Entity> {
             }
           }
 
-          final name = indexObject.getField(IndexField.name)?.toStringValue() ??
-              _generateIndexName(tableName, indexColumnNames);
+          final name =
+              indexObject.getField(IndexField.name)?.toStringValue() ?? _generateIndexName(tableName, indexColumnNames);
 
           return Index(name, tableName, unique, indexColumnNames);
         }).toList() ??
@@ -229,11 +219,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     final DartObject object,
     final String foreignKeyField,
   ) {
-    return object
-            .getField(foreignKeyField)
-            ?.toListValue()
-            ?.mapNotNull((object) => object.toStringValue())
-            .toList() ??
+    return object.getField(foreignKeyField)?.toListValue()?.mapNotNull((object) => object.toStringValue()).toList() ??
         [];
   }
 
@@ -254,14 +240,12 @@ class EntityProcessor extends QueryableProcessor<Entity> {
         ?.toListValue()
         ?.map((object) => object.toStringValue());
 
-    if (compoundPrimaryKeyColumnNames == null ||
-        compoundPrimaryKeyColumnNames.isEmpty) {
+    if (compoundPrimaryKeyColumnNames == null || compoundPrimaryKeyColumnNames.isEmpty) {
       return null;
     }
 
     final compoundPrimaryKeyFields = fields.where((field) {
-      return compoundPrimaryKeyColumnNames.any(
-          (primaryKeyColumnName) => field.columnName == primaryKeyColumnName);
+      return compoundPrimaryKeyColumnNames.any((primaryKeyColumnName) => field.columnName == primaryKeyColumnName);
     }).toList();
 
     if (compoundPrimaryKeyFields.isEmpty) {
@@ -272,8 +256,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
   }
 
   PrimaryKey _getPrimaryKeyFromAnnotation(final List<Field> fields) {
-    final primaryKeyField = fields.firstWhere(
-        (field) => field.fieldElement.hasAnnotation(annotations.PrimaryKey),
+    final primaryKeyField = fields.firstWhere((field) => field.fieldElement.hasAnnotation(annotations.PrimaryKey),
         orElse: () => throw _processorError.missingPrimaryKey);
 
     final autoGenerate = primaryKeyField.fieldElement
@@ -307,9 +290,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     final Map<String, String> map = {};
     _processFields(map, fields);
 
-    final keyValueList = map.entries
-        .map((entry) => "'${entry.key}': ${entry.value}")
-        .toList();
+    final keyValueList = map.entries.map((entry) => "'${entry.key}': ${entry.value}").toList();
 
     final embeddedKeyValue = embeddeds.expand((embedded) {
       final keyValue = <String>[];
@@ -344,7 +325,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
 
     if (fieldType.isDefaultSqlType) {
       attributeValue = '${ignoreAddItem ? '' : 'item.'}$prefix$parameterName';
-    }  else if (fieldType.element is ClassElement && (fieldType.element as ClassElement).isEnum) {
+    } else if (fieldType.element is ClassElement && (fieldType.element as ClassElement).isEnum) {
       return '${ignoreAddItem ? '' : 'item.'}$prefix$parameterName.value';
     } else {
       final typeConverter = [
@@ -401,12 +382,13 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     final foreignKey = relation.foreignKey;
 
     if (field.type.isDartCoreList) {
-      for(var i = 0; i < foreignKey.parentColumns.length; i++){
+      for (var i = 0; i < foreignKey.parentColumns.length; i++) {
         setFields.writeln('sub.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
       }
     } else {
-      for(var i = 0; i < foreignKey.parentColumns.length; i++){
-        setFields.writeln('entity.${field.name}.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
+      for (var i = 0; i < foreignKey.parentColumns.length; i++) {
+        setFields
+            .writeln('entity.${field.name}.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
       }
     }
     if (field.type.isNullable && field.type.isDartCoreList) {
@@ -419,12 +401,13 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       code = '''          for(final sub in entity.${field.name}) {
             ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
           }''';
-    } else if(field.type.isNullable) {
+    } else if (field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
             ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
           }''';
-    } else{
-      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
+    } else {
+      code =
+          '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
     }
 
     return code;
@@ -445,16 +428,17 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     final setFields = StringBuffer();
     final foreignKey = relation.foreignKey;
 
-    for(var i = 0; i < foreignKey.parentColumns.length; i++){
+    for (var i = 0; i < foreignKey.parentColumns.length; i++) {
       setFields.writeln('entity.${foreignKey.childColumns[i]} = entity.${field.name}.${foreignKey.parentColumns[i]};');
     }
 
-    if(field.type.isNullable) {
+    if (field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
             ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
           }''';
-    } else{
-      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
+    } else {
+      code =
+          '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
     }
 
     return code;
@@ -480,7 +464,8 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       if (junction.ignoreSaveChild) {
         saveChildCode = '';
       } else {
-        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
+        saveChildCode =
+            'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
       }
       code = '''          if (entity.${field.name} != null) {
             for(final sub in entity.${field.name}!) {
@@ -497,7 +482,8 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       if (junction.ignoreSaveChild) {
         saveChildCode = '';
       } else {
-        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
+        saveChildCode =
+            'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(sub);';
       }
       code = '''          for(final sub in entity.${field.name}) {
               $saveChildCode
@@ -507,12 +493,13 @@ class EntityProcessor extends QueryableProcessor<Entity> {
                 deleted: sub.deleted,
               ));
             }''';
-    } else if(field.type.isNullable) {
+    } else if (field.type.isNullable) {
       final String saveChildCode;
       if (junction.ignoreSaveChild) {
         saveChildCode = '';
       } else {
-        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name}!);';
+        saveChildCode =
+            'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name}!);';
       }
       code = '''          if (entity.${field.name} != null) {
               $saveChildCode
@@ -527,7 +514,8 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       if (junction.ignoreSaveChild) {
         saveChildCode = '';
       } else {
-        saveChildCode = 'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name});';
+        saveChildCode =
+            'await floorDatabase.${fieldOfDaoWithAllMethodsChild.field.name}.${fieldOfDaoWithAllMethodsChild.method.name}(entity.${field.name});';
       }
       code = '''
               $saveChildCode
@@ -604,12 +592,13 @@ class EntityProcessor extends QueryableProcessor<Entity> {
     final foreignKey = foreignKeysRelation.first;
 
     if (field.type.isDartCoreList) {
-      for(var i = 0; i < foreignKey.parentColumns.length; i++){
+      for (var i = 0; i < foreignKey.parentColumns.length; i++) {
         setFields.writeln('sub.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
       }
     } else {
-      for(var i = 0; i < foreignKey.parentColumns.length; i++){
-        setFields.writeln('entity.${field.name}.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
+      for (var i = 0; i < foreignKey.parentColumns.length; i++) {
+        setFields
+            .writeln('entity.${field.name}.${foreignKey.childColumns[i]} = entity.${foreignKey.parentColumns[i]};');
       }
     }
     if (field.type.isNullable && field.type.isDartCoreList) {
@@ -622,12 +611,13 @@ class EntityProcessor extends QueryableProcessor<Entity> {
       code = '''          for(final sub in entity.${field.name}) {
             ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(sub);
           }''';
-    } else if(field.type.isNullable) {
+    } else if (field.type.isNullable) {
       code = '''          if (entity.${field.name} != null) {
             ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name}!);
           }''';
-    } else{
-      code = '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
+    } else {
+      code =
+          '''                ${setFields}await floorDatabase.${fieldOfDaoWithAllMethods.field.name}.${fieldOfDaoWithAllMethods.method.name}(entity.${field.name});''';
     }
 
     return code;

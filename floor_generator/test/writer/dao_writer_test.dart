@@ -36,9 +36,7 @@ void main() {
         }
       ''');
 
-    final actual =
-        DaoWriter(dao, dao.streamEntities.toSet(), dao.streamViews.isNotEmpty, 'DataBase')
-            .write();
+    final actual = DaoWriter(dao, dao.streamEntities.toSet(), dao.streamViews.isNotEmpty, 'DataBase').write();
 
     expect(actual, equalsDart(r'''
         class _$PersonDao extends PersonDao {
@@ -115,9 +113,7 @@ void main() {
         }
       ''');
 
-    final actual =
-        DaoWriter(dao, dao.streamEntities.toSet(), dao.streamViews.isNotEmpty, 'DataBase')
-            .write();
+    final actual = DaoWriter(dao, dao.streamEntities.toSet(), dao.streamViews.isNotEmpty, 'DataBase').write();
 
     expect(actual, equalsDart(r'''
         class _$PersonDao extends PersonDao {
@@ -194,8 +190,7 @@ void main() {
         }
       ''');
     // simulate DB is aware of streamed Person and no View
-    final actual =
-        DaoWriter(dao, {dao.deletionMethods[0].entity}, false, 'DataBase').write();
+    final actual = DaoWriter(dao, {dao.deletionMethods[0].entity}, false, 'DataBase').write();
 
     expect(actual, equalsDart(r'''
         class _$PersonDao extends PersonDao {
@@ -430,8 +425,8 @@ Future<Dao> _createDao(final String dao) async {
     return LibraryReader((await resolver.findLibraryByName('test'))!);
   });
 
-  final daoClass = library.classes.firstWhere((classElement) =>
-      classElement.hasAnnotation(annotations.dao.runtimeType));
+  final daoClass =
+      library.classes.firstWhere((classElement) => classElement.hasAnnotation(annotations.dao.runtimeType));
 
   final entities = library.classes
       .where((classElement) => classElement.hasAnnotation(annotations.Entity))
@@ -439,11 +434,9 @@ Future<Dao> _createDao(final String dao) async {
       .toList();
 
   final views = library.classes
-      .where((classElement) =>
-          classElement.hasAnnotation(annotations.DatabaseView))
+      .where((classElement) => classElement.hasAnnotation(annotations.DatabaseView))
       .map((classElement) => ViewProcessor(classElement, {}).process())
       .toList();
 
-  return DaoProcessor(
-      daoClass, 'personDao', 'TestDatabase', entities, views, {}).process();
+  return DaoProcessor(daoClass, 'personDao', 'TestDatabase', entities, views, {}).process();
 }

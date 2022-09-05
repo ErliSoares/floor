@@ -47,9 +47,7 @@ class QueryMethod {
   );
 
   bool get returnsList {
-    final type = returnsStream
-        ? rawReturnType.flatten()
-        : methodElement.library.typeSystem.flatten(rawReturnType);
+    final type = returnsStream ? rawReturnType.flatten() : methodElement.library.typeSystem.flatten(rawReturnType);
 
     return type.isDartCoreList;
   }

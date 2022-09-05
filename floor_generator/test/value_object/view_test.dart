@@ -42,8 +42,7 @@ void main() {
 
     final actual = view.getCreateViewStatement();
 
-    final expected =
-        'CREATE VIEW IF NOT EXISTS `${view.name}` AS ${view.query}';
+    final expected = 'CREATE VIEW IF NOT EXISTS `${view.name}` AS ${view.query}';
     expect(actual, equals(expected));
   });
 }

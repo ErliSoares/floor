@@ -70,7 +70,6 @@ void main() {
 
     final actual = library.accept(DartEmitter()).toString();
 
-
     const expected = """mixin PersonMixin {
   @ignore
   @JsonKey(ignore: true)
@@ -97,5 +96,4 @@ class PersonSchema extends Table {
 
     expect(actual, equals(expected));
   });
-
 }

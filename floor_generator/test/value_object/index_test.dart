@@ -10,8 +10,7 @@ void main() {
 
     final actual = Index(name, tableName, unique, columnNames).createQuery();
 
-    final expected =
-        'CREATE INDEX `$name` ON `$tableName` (${columnNames.map((name) => '`$name`').join(', ')})';
+    final expected = 'CREATE INDEX `$name` ON `$tableName` (${columnNames.map((name) => '`$name`').join(', ')})';
     expect(actual, equals(expected));
   });
 
@@ -23,8 +22,7 @@ void main() {
 
     final actual = Index(name, tableName, unique, columnNames).createQuery();
 
-    final expected =
-        'CREATE UNIQUE INDEX `$name` ON `$tableName` (${columnNames.map((name) => '`$name`').join(', ')})';
+    final expected = 'CREATE UNIQUE INDEX `$name` ON `$tableName` (${columnNames.map((name) => '`$name`').join(', ')})';
     expect(actual, equals(expected));
   });
 }

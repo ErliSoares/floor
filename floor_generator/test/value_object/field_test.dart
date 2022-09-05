@@ -20,8 +20,7 @@ void main() {
 
     final actual = field.getDatabaseDefinition(autoGenerate);
 
-    final expected =
-        '`${field.columnName}` ${field.sqlType} PRIMARY KEY AUTOINCREMENT NOT NULL';
+    final expected = '`${field.columnName}` ${field.sqlType} PRIMARY KEY AUTOINCREMENT NOT NULL';
     expect(actual, equals(expected));
   });
 

@@ -19,8 +19,7 @@ class BeforeMethodProcessor implements Processor<BeforeOperationMethod> {
     final ChangeMethodProcessorHelper? changeMethodProcessorHelper,
   ])  : _methodElement = methodElement,
         _errors = BeforeMethodProcessorError(methodElement),
-        _helper = changeMethodProcessorHelper ??
-            ChangeMethodProcessorHelper(methodElement, entities);
+        _helper = changeMethodProcessorHelper ?? ChangeMethodProcessorHelper(methodElement, entities);
 
   @override
   BeforeOperationMethod process() {
@@ -33,8 +32,7 @@ class BeforeMethodProcessor implements Processor<BeforeOperationMethod> {
     _assertMethodReturnsNoList(flattenedReturnType);
 
     final parameterElement = _helper.getParameterElement();
-    final flattenedParameterType =
-        _helper.getFlattenedParameterType(parameterElement);
+    final flattenedParameterType = _helper.getFlattenedParameterType(parameterElement);
     final entity = _helper.getEntity(flattenedParameterType);
 
     final returnsVoid = flattenedReturnType.isVoid;

@@ -26,10 +26,7 @@ class UpdateMethod extends ChangeMethod {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      super == other &&
-          other is UpdateMethod &&
-          runtimeType == other.runtimeType &&
-          onConflict == other.onConflict;
+      super == other && other is UpdateMethod && runtimeType == other.runtimeType && onConflict == other.onConflict;
 
   @override
   int get hashCode => super.hashCode ^ onConflict.hashCode;

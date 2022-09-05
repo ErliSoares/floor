@@ -4,8 +4,7 @@ import 'package:source_gen/source_gen.dart';
 class QueryableProcessorError {
   final ClassElement _classElement;
 
-  QueryableProcessorError(final ClassElement classElement)
-      : _classElement = classElement;
+  QueryableProcessorError(final ClassElement classElement) : _classElement = classElement;
 
   InvalidGenerationSourceError get prohibitedMixinUsage {
     return InvalidGenerationSourceError(

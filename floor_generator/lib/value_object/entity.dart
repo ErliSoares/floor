@@ -21,23 +21,30 @@ class Entity extends Queryable {
   final String actionsSave;
 
   Entity(
-    ClassElement classElement,
-    String name,
-    List<Embedded> embeddeds,
-    List<Field> fieldsAll,
-    List<Field> fieldsDataBaseSchema,
-    List<Field> fieldsQuery,
-    this.primaryKey,
-    this.foreignKeys,
-    this.indices,
-    this.withoutRowid,
-    String constructor,
+      ClassElement classElement,
+      String name,
+      List<Embedded> embeddeds,
+      List<Field> fieldsAll,
+      List<Field> fieldsDataBaseSchema,
+      List<Field> fieldsQuery,
+      this.primaryKey,
+      this.foreignKeys,
+      this.indices,
+      this.withoutRowid,
+      String constructor,
       this.valueMappingForInsert,
       this.valueMappingForUpdate,
       this.valueMappingForDelete,
       this.fts,
-      [this.actionsSave = '']
-  ) : super(name: name, classElement: classElement, constructor: constructor, fieldsAll: fieldsAll, fieldsDataBaseSchema: fieldsDataBaseSchema, fieldsQuery: fieldsQuery, embeddeds: embeddeds);
+      [this.actionsSave = ''])
+      : super(
+            name: name,
+            classElement: classElement,
+            constructor: constructor,
+            fieldsAll: fieldsAll,
+            fieldsDataBaseSchema: fieldsDataBaseSchema,
+            fieldsQuery: fieldsQuery,
+            embeddeds: embeddeds);
 
   String getCreateTableStatement() {
     final clone = [...fieldsDataBaseSchema];
@@ -59,7 +66,7 @@ class Entity extends Queryable {
       }
 
       final aIsForeignKey = foreignKeys.any((e) => e.childColumns.contains(a.columnName));
-      final bIsForeignKey =  foreignKeys.any((e) => e.childColumns.contains(b.columnName));
+      final bIsForeignKey = foreignKeys.any((e) => e.childColumns.contains(b.columnName));
 
       if (aIsForeignKey && !bIsForeignKey) {
         return -1;
@@ -70,8 +77,7 @@ class Entity extends Queryable {
       return 0;
     });
     final databaseDefinition = fieldsDataBaseSchema.map((field) {
-      final autoIncrement =
-          primaryKey.fields.contains(field) && primaryKey.autoGenerateId;
+      final autoIncrement = primaryKey.fields.contains(field) && primaryKey.autoGenerateId;
       return field.getDatabaseDefinition(autoIncrement);
     }).toList();
 
@@ -94,8 +100,7 @@ class Entity extends Queryable {
         .toList();
     databaseDefinition.addAll(embeddedDefinitions);
 
-    final foreignKeyDefinitions =
-        foreignKeys.map((foreignKey) => foreignKey.getDefinition()).toList();
+    final foreignKeyDefinitions = foreignKeys.map((foreignKey) => foreignKey.getDefinition()).toList();
     databaseDefinition.addAll(foreignKeyDefinitions);
 
     final primaryKeyDefinition = _createPrimaryKeyDefinition();
@@ -119,12 +124,10 @@ class Entity extends Queryable {
     if (primaryKey.autoGenerateId) {
       return null;
     } else {
-      final columns =
-          primaryKey.fields.map((field) => '`${field.columnName}`').join(', ');
+      final columns = primaryKey.fields.map((field) => '`${field.columnName}`').join(', ');
       return 'PRIMARY KEY ($columns)';
     }
   }
-
 
   String getValueMapping() {
     final keyValueList = <String>[];
@@ -143,8 +146,7 @@ class Entity extends Queryable {
         className.add(child.fieldElement.displayName);
         for (final field in child.fields) {
           final columnName = field.columnName;
-          final attributeValue =
-              [...className, _getAttributeValue(field)].join('?.');
+          final attributeValue = [...className, _getAttributeValue(field)].join('?.');
           keyValue.add("'$columnName': item.$attributeValue");
         }
 
@@ -205,7 +207,7 @@ class Entity extends Queryable {
       fts.hashCode ^
       valueMappingForDelete.hashCode ^
       valueMappingForInsert.hashCode ^
-      valueMappingForUpdate.hashCode ;
+      valueMappingForUpdate.hashCode;
 
   @override
   String toString() {

@@ -17,8 +17,7 @@ class DeletionMethodProcessor implements Processor<DeletionMethod> {
     final ChangeMethodProcessorHelper? changeMethodProcessorHelper,
   ])  : _methodElement = methodElement,
         _errors = ChangeMethodProcessorError(methodElement, 'Deletion'),
-        _helper = changeMethodProcessorHelper ??
-            ChangeMethodProcessorHelper(methodElement, entities);
+        _helper = changeMethodProcessorHelper ?? ChangeMethodProcessorHelper(methodElement, entities);
 
   @override
   DeletionMethod process() {
@@ -38,8 +37,7 @@ class DeletionMethodProcessor implements Processor<DeletionMethod> {
     }
 
     final parameterElement = _helper.getParameterElement();
-    final flattenedParameterType =
-        _helper.getFlattenedParameterType(parameterElement);
+    final flattenedParameterType = _helper.getFlattenedParameterType(parameterElement);
 
     final entity = _helper.getEntity(flattenedParameterType);
 

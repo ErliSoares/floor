@@ -117,15 +117,14 @@ class SqlColumnProcessor {
   }
 
   void registerSqlCreateTable(String sql) {
-    try{
+    try {
       final rootNode = _engine.parse(sql).rootNode;
       final tableInducingStatement = rootNode as sqlparser.TableInducingStatement;
       final table = _engine.schemaReader.read(tableInducingStatement);
       // TODO Error https://github.com/simolus3/moor/issues/1194
       _engine.registerTable(table);
-    } catch(e){
+    } catch (e) {
       log.warning('Não foi possível registrar o create table `$sql` para analisar.', e);
     }
-
   }
 }

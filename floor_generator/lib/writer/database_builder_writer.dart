@@ -4,8 +4,7 @@ import 'package:floor_generator/writer/writer.dart';
 class DatabaseBuilderWriter extends Writer {
   final String _databaseName;
 
-  DatabaseBuilderWriter(final String databaseName)
-      : _databaseName = databaseName;
+  DatabaseBuilderWriter(final String databaseName) : _databaseName = databaseName;
 
   @override
   Class write() {

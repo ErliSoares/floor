@@ -13,8 +13,7 @@ void main() {
         .asDaoMethodElement();
     final entities = await getPersonEntity();
 
-    final actual =
-        UpdateMethodProcessor(insertionMethod, [entities]).process().onConflict;
+    final actual = UpdateMethodProcessor(insertionMethod, [entities]).process().onConflict;
 
     expect(actual, equals('OnConflictStrategy.replace'));
   });
@@ -28,14 +27,10 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => UpdateMethodProcessor(updateMethod, [entities]).process();
+      final actual = () => UpdateMethodProcessor(updateMethod, [entities]).process();
 
-      expect(
-          actual,
-          throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(updateMethod, 'Update')
-                  .wrongOnConflictValue));
+      expect(actual,
+          throwsInvalidGenerationSourceError(ChangeMethodProcessorError(updateMethod, 'Update').wrongOnConflictValue));
     });
     test('when not returning Future', () async {
       final updateMethod = await '''
@@ -45,14 +40,10 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => UpdateMethodProcessor(updateMethod, [entities]).process();
+      final actual = () => UpdateMethodProcessor(updateMethod, [entities]).process();
 
-      expect(
-          actual,
-          throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(updateMethod, 'Update')
-                  .doesNotReturnFuture));
+      expect(actual,
+          throwsInvalidGenerationSourceError(ChangeMethodProcessorError(updateMethod, 'Update').doesNotReturnFuture));
     });
     test('when returning a List', () async {
       final updateMethod = await '''
@@ -62,14 +53,10 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => UpdateMethodProcessor(updateMethod, [entities]).process();
+      final actual = () => UpdateMethodProcessor(updateMethod, [entities]).process();
 
-      expect(
-          actual,
-          throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(updateMethod, 'Update')
-                  .shouldNotReturnList));
+      expect(actual,
+          throwsInvalidGenerationSourceError(ChangeMethodProcessorError(updateMethod, 'Update').shouldNotReturnList));
     });
     test('when not returning int or void', () async {
       final updateMethod = await '''
@@ -79,14 +66,12 @@ void main() {
           .asDaoMethodElement();
       final entities = await getPersonEntity();
 
-      final actual =
-          () => UpdateMethodProcessor(updateMethod, [entities]).process();
+      final actual = () => UpdateMethodProcessor(updateMethod, [entities]).process();
 
       expect(
           actual,
           throwsInvalidGenerationSourceError(
-              ChangeMethodProcessorError(updateMethod, 'Update')
-                  .doesNotReturnVoidNorInt));
+              ChangeMethodProcessorError(updateMethod, 'Update').doesNotReturnVoidNorInt));
     });
   });
 }

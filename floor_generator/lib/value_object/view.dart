@@ -18,7 +18,14 @@ class View extends Queryable {
     this.query,
     String constructor,
     this.isQueryView,
-  ) : super(classElement: classElement, name: name, fieldsQuery: fieldsQuery, fieldsDataBaseSchema: fieldsDataBaseSchema, fieldsAll: fieldsAll, constructor: constructor, embeddeds: embeddeds);
+  ) : super(
+            classElement: classElement,
+            name: name,
+            fieldsQuery: fieldsQuery,
+            fieldsDataBaseSchema: fieldsDataBaseSchema,
+            fieldsAll: fieldsAll,
+            constructor: constructor,
+            embeddeds: embeddeds);
 
   String getCreateViewStatement() {
     return 'CREATE VIEW IF NOT EXISTS `$name` AS $query';

@@ -19,8 +19,7 @@ class AfterQueryMethodProcessor implements Processor<AfterQueryMethod> {
     final ChangeMethodProcessorHelper? changeMethodProcessorHelper,
   ])  : _methodElement = methodElement,
         _errors = AfterQueryMethodProcessorError(methodElement),
-        _helper = changeMethodProcessorHelper ??
-            ChangeMethodProcessorHelper(methodElement, entities);
+        _helper = changeMethodProcessorHelper ?? ChangeMethodProcessorHelper(methodElement, entities);
 
   @override
   AfterQueryMethod process() {
@@ -53,8 +52,7 @@ class AfterQueryMethodProcessor implements Processor<AfterQueryMethod> {
     }
 
     final parameterElement = parameters.first;
-    final flattenedParameterType =
-        _helper.getFlattenedParameterType(parameterElement);
+    final flattenedParameterType = _helper.getFlattenedParameterType(parameterElement);
     final entity = _helper.getEntity(flattenedParameterType);
 
     if (_methodElement.isAbstract) {

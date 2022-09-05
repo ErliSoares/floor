@@ -31,9 +31,7 @@ void main() {
       Future<List<Person>> findAllPersons();      
     ''');
 
-    final actual =
-        QueryMethodProcessor(methodElement, [...entities, ...views], {})
-            .process();
+    final actual = QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
     expect(
       actual,
@@ -58,9 +56,7 @@ void main() {
       Future<List<Name>> findAllNames();      
     ''');
 
-    final actual =
-        QueryMethodProcessor(methodElement, [...entities, ...views], {})
-            .process();
+    final actual = QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
     expect(
       actual,
@@ -86,8 +82,7 @@ void main() {
       Future<Person?> findPerson(int id);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query;
 
       expect(actual.sql, equals('SELECT * FROM Person WHERE id = ?1'));
       expect(actual.listParameters, equals(<ListParameter>[]));
@@ -99,8 +94,7 @@ void main() {
       Future<Person?> findPerson(int id);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query.sql;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query.sql;
 
       expect(actual, equals('SELECT * FROM Person WHERE id = ?1 AND id = ?1'));
     });
@@ -111,8 +105,7 @@ void main() {
       Future<Person?> findPerson(int id, String name);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query.sql;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query.sql;
 
       expect(
           actual,
@@ -129,13 +122,11 @@ void main() {
         Future<Person?> findPersonByIdAndName(int id, String name);
       """);
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query.sql;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query.sql;
 
       expect(
         actual,
-        equals(
-            'SELECT * FROM person           WHERE id = ?1 AND custom_name = ?2'),
+        equals('SELECT * FROM person           WHERE id = ?1 AND custom_name = ?2'),
       );
     });
 
@@ -146,8 +137,7 @@ void main() {
         Future<Person?> findPersonByIdAndName(int id, String name);    
       ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query.sql;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query.sql;
 
       expect(
         actual,
@@ -161,8 +151,7 @@ void main() {
       Future<void> setRated(List<int> ids);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query;
 
       expect(
         actual.sql,
@@ -177,8 +166,7 @@ void main() {
       Future<void> setRated(List<int> ids);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query;
 
       expect(
         actual.sql,
@@ -193,8 +181,7 @@ void main() {
       Future<void> setRated(List<int> ids);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query;
 
       expect(
         actual.sql,
@@ -209,8 +196,7 @@ void main() {
       Future<void> setRated(List<int> ids, List<int> bar);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query;
 
       expect(
         actual.sql,
@@ -219,8 +205,7 @@ void main() {
           r'and where foo in (:varlist)',
         ),
       );
-      expect(actual.listParameters,
-          equals([ListParameter(41, 'ids'), ListParameter(69, 'bar')]));
+      expect(actual.listParameters, equals([ListParameter(41, 'ids'), ListParameter(69, 'bar')]));
     });
 
     test('Parse query with IN clause and other parameter', () async {
@@ -229,8 +214,7 @@ void main() {
       Future<void> setRated(List<int> ids, int bar);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query;
 
       expect(
         actual.sql,
@@ -248,8 +232,7 @@ void main() {
       Future<void> setRated(String foo, List<String> names, List<int> ids, int bar);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query;
 
       expect(
         actual.sql,
@@ -258,8 +241,7 @@ void main() {
           r'AND name in (:varlist) and ?2 = ?1',
         ),
       );
-      expect(actual.listParameters,
-          equals([ListParameter(41, 'ids'), ListParameter(77, 'names')]));
+      expect(actual.listParameters, equals([ListParameter(41, 'ids'), ListParameter(77, 'names')]));
     });
 
     test('Parse query with LIKE operator', () async {
@@ -268,8 +250,7 @@ void main() {
       Future<List<Person>> findPersonsWithNamesLike(String name);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query.sql;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query.sql;
 
       expect(actual, equals('SELECT * FROM Persons WHERE name LIKE ?1'));
     });
@@ -280,8 +261,7 @@ void main() {
       Future<List<Person>> findPersonsWithNamesLike(String table, String otherTable);
     ''');
 
-      final actual =
-          QueryMethodProcessor(methodElement, [], {}).process().query.sql;
+      final actual = QueryMethodProcessor(methodElement, [], {}).process().query.sql;
       // note: this will throw an error at runtime, because
       // sqlite variables can not be used in place of table
       // names. But the Processor is not aware of this.
@@ -296,12 +276,9 @@ void main() {
       List<Person?> findAllPersons();
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
-      final error =
-          QueryMethodProcessorError(methodElement).doesNotReturnFutureNorStream;
+      final error = QueryMethodProcessorError(methodElement).doesNotReturnFutureNorStream;
       expect(actual, throwsInvalidGenerationSourceError(error));
     });
 
@@ -311,9 +288,7 @@ void main() {
       Future<List<Person>> findAllPersons();
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
       final error = QueryMethodProcessorError(methodElement).noQueryDefined;
       expect(actual, throwsInvalidGenerationSourceError(error));
@@ -325,123 +300,91 @@ void main() {
       Future<List<Person>> findAllPersons();
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
       final error = QueryMethodProcessorError(methodElement).noQueryDefined;
       expect(actual, throwsInvalidGenerationSourceError(error));
     });
 
-    test(
-        'exception when query arguments do not match method parameters, no list vs list',
-        () async {
+    test('exception when query arguments do not match method parameters, no list vs list', () async {
       final methodElement = await _createQueryMethodElement('''
       @Query('SELECT * FROM Person WHERE id = :id')
       Future<Person?> findPersonByIdAndName(List<int> id);
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
-      final error = QueryProcessorError(methodElement)
-          .queryMethodParameterIsListButVariableIsNot(':id');
+      final error = QueryProcessorError(methodElement).queryMethodParameterIsListButVariableIsNot(':id');
       expect(actual, throwsProcessorError(error));
     });
 
-    test(
-        'exception when query arguments do not match method parameters, list vs no list',
-        () async {
+    test('exception when query arguments do not match method parameters, list vs no list', () async {
       final methodElement = await _createQueryMethodElement('''
       @Query('SELECT * FROM Person WHERE id IN (:id)')
       Future<Person?> findPersonByIdAndName(int id);
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
-      final error = QueryProcessorError(methodElement)
-          .queryMethodParameterIsNormalButVariableIsList(':id');
+      final error = QueryProcessorError(methodElement).queryMethodParameterIsNormalButVariableIsList(':id');
       expect(actual, throwsProcessorError(error));
     });
 
-    test('exception when query arguments do not match method parameters',
-        () async {
+    test('exception when query arguments do not match method parameters', () async {
       final methodElement = await _createQueryMethodElement('''
       @Query('SELECT * FROM Person WHERE id = :id AND name = :name')
       Future<Person?> findPersonByIdAndName(int id);
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
-      final error =
-          QueryProcessorError(methodElement).unknownQueryVariable(':name');
+      final error = QueryProcessorError(methodElement).unknownQueryVariable(':name');
       expect(actual, throwsProcessorError(error));
     });
 
-    test('exception when passing nullable method parameter to query method',
-        () async {
+    test('exception when passing nullable method parameter to query method', () async {
       final methodElement = await _createQueryMethodElement('''
       @Query('SELECT * FROM Person WHERE id = :id')
       Future<Person?> findPersonByIdAndName(int? id);
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
       final parameterElement = methodElement.parameters.first;
-      final error = QueryProcessorError(methodElement)
-          .queryMethodParameterIsNullable(parameterElement);
+      final error = QueryProcessorError(methodElement).queryMethodParameterIsNullable(parameterElement);
       expect(actual, throwsProcessorError(error));
     });
 
-    test('exception when query arguments do not match method parameters',
-        () async {
+    test('exception when query arguments do not match method parameters', () async {
       final methodElement = await _createQueryMethodElement('''
       @Query('SELECT * FROM Person WHERE id = :id')
       Future<Person?> findPersonByIdAndName(int id, String name);
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
-      final error = QueryProcessorError(methodElement)
-          .unusedQueryMethodParameter(methodElement.parameters[1]);
+      final error = QueryProcessorError(methodElement).unusedQueryMethodParameter(methodElement.parameters[1]);
       expect(actual, throwsProcessorError(error));
     });
 
-    test(
-        'throws when method returns Future of non-nullable type for single item query',
-        () async {
+    test('throws when method returns Future of non-nullable type for single item query', () async {
       final methodElement = await _createQueryMethodElement('''
       @Query('SELECT * FROM Person WHERE id = :id')
       Future<Person> findPersonById(int id);      
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
       expect(actual, throwsProcessorError());
     });
 
-    test(
-        'throws when method returns Stream of non-nullable type for single item query',
-        () async {
+    test('throws when method returns Stream of non-nullable type for single item query', () async {
       final methodElement = await _createQueryMethodElement('''
       @Query('SELECT * FROM Person WHERE id = :id')
       Stream<Person> findPersonById(int id);      
     ''');
 
-      final actual = () =>
-          QueryMethodProcessor(methodElement, [...entities, ...views], {})
-              .process();
+      final actual = () => QueryMethodProcessor(methodElement, [...entities, ...views], {}).process();
 
       expect(actual, throwsProcessorError());
     });
@@ -526,8 +469,7 @@ Future<List<View>> _getViews() async {
   });
 
   return library.classes
-      .where((classElement) =>
-          classElement.hasAnnotation(annotations.DatabaseView))
+      .where((classElement) => classElement.hasAnnotation(annotations.DatabaseView))
       .map((classElement) => ViewProcessor(classElement, {}).process())
       .toList();
 }

@@ -114,8 +114,7 @@ void main() {
     '''));
     });
 
-    test('generates method with local method parameter type converter',
-        () async {
+    test('generates method with local method parameter type converter', () async {
       final typeConverter = TypeConverter(
         'ExternalTypeConverter',
         await dateTimeDartType,
@@ -138,8 +137,7 @@ void main() {
     '''));
     });
 
-    test('generates method with type converter receiving list of orders',
-        () async {
+    test('generates method with type converter receiving list of orders', () async {
       final typeConverter = TypeConverter(
         'DateTimeConverter',
         await dateTimeDartType,
@@ -167,9 +165,7 @@ void main() {
     });
   });
 
-  test(
-      'Query with multiple IN clauses, reusing and mixing with normal parameters, including converters',
-      () async {
+  test('Query with multiple IN clauses, reusing and mixing with normal parameters, including converters', () async {
     final typeConverter = TypeConverter(
       'DateTimeConverter',
       await dateTimeDartType,
@@ -372,9 +368,7 @@ void main() {
     '''));
   });
 
-  test(
-      'Query with multiple IN clauses, reusing and mixing with normal parameters',
-      () async {
+  test('Query with multiple IN clauses, reusing and mixing with normal parameters', () async {
     final queryMethod = await _createQueryMethod('''
       @Query('SELECT * FROM Person WHERE id IN (:ids) AND id IN (:idx) OR foo in (:ids) AND bar = :foo OR name = :name')
       Future<List<Person>> findWithIds(List<int> idx, String name, List<int> ids, int foo);
@@ -417,7 +411,8 @@ void main() {
 
     var sql = 'CREATE TABLE IF NOT EXISTS `person` (`id` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))';
     _sqlColumnProcessor.registerSqlCreateTable(sql);
-    sql = 'CREATE TABLE IF NOT EXISTS `address` (`id` INTEGER, `personId` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))';
+    sql =
+        'CREATE TABLE IF NOT EXISTS `address` (`id` INTEGER, `personId` INTEGER, `name` TEXT NOT NULL, PRIMARY KEY (`id`))';
     _sqlColumnProcessor.registerSqlCreateTable(sql);
 
     final actual = QueryMethodWriter(queryMethod, sqlColumnProcessor: _sqlColumnProcessor).write();
@@ -437,7 +432,8 @@ void main() {
     ''');
 
     final sqlColumnProcessor = SqlColumnProcessor();
-    const sql = 'CREATE TABLE IF NOT EXISTS `Person` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `picture` BLOB NOT NULL, PRIMARY KEY (`id`))';
+    const sql =
+        'CREATE TABLE IF NOT EXISTS `Person` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `picture` BLOB NOT NULL, PRIMARY KEY (`id`))';
     sqlColumnProcessor.registerSqlCreateTable(sql);
     final actual = QueryMethodWriter(queryMethod, sqlColumnProcessor: sqlColumnProcessor).write();
 
@@ -503,8 +499,8 @@ Future<Dao> createOrderDao(
     return LibraryReader((await resolver.findLibraryByName('test'))!);
   });
 
-  final daoClass = library.classes.firstWhere((classElement) =>
-      classElement.hasAnnotation(annotations.dao.runtimeType));
+  final daoClass =
+      library.classes.firstWhere((classElement) => classElement.hasAnnotation(annotations.dao.runtimeType));
 
   final entities = library.classes
       .where((classElement) => classElement.hasAnnotation(annotations.Entity))

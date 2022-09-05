@@ -5,8 +5,7 @@ import 'package:floor_generator/misc/type_utils.dart';
 class RelationProcessorError {
   final FieldElement _fieldElement;
 
-  RelationProcessorError(final FieldElement fieldElement)
-      : _fieldElement = fieldElement;
+  RelationProcessorError(final FieldElement fieldElement) : _fieldElement = fieldElement;
 
   InvalidGenerationSourceError get invalidNumbersOfForeignKeysError {
     return InvalidGenerationSourceError(
@@ -51,14 +50,13 @@ class RelationProcessorError {
   InvalidGenerationSourceError get typeOfFieldIsNotClass {
     final type = _fieldElement.type.isDartCoreList ? _fieldElement.type.flatten() : _fieldElement.type;
     return InvalidGenerationSourceError(
-       'The type ${type.getDisplayString(withNullability: false)} of fields with the @Relation annotation must be an entity.',
+      'The type ${type.getDisplayString(withNullability: false)} of fields with the @Relation annotation must be an entity.',
       todo: 'Remove the @Relation annotation or change the property type to an entity.',
       element: _fieldElement,
     );
   }
 
-
-  InvalidGenerationSourceError twoForeignKeysForTheSameParentTable(ClassElement _classElement){
+  InvalidGenerationSourceError twoForeignKeysForTheSameParentTable(ClassElement _classElement) {
     return InvalidGenerationSourceError(
       'More than one link from the child table to the same parent table, it was not implemented for two or more fields to link to the child table.',
       todo: 'Open a issue to implement the feature.',

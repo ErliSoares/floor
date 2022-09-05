@@ -5,6 +5,7 @@ import 'package:floor_generator/misc/extension/string_extension.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:collection/collection.dart';
 import 'package:floor_generator/misc/type_utils.dart';
+import 'package:build/build.dart';
 
 class EnumValuesWriter {
   final TypeChecker hasEnumValueAnnotation = const TypeChecker.fromRuntime(annotations.EnumValue);
@@ -19,26 +20,30 @@ class EnumValuesWriter {
 
     final enums = _removeDuplicate(fields.map((f) => f.type.element).whereType<ClassElement>().toList());
 
-    return enums.map((e) {
-      final enumValueAnnotations = e.annotatedWith(hasEnumValueAnnotation);
-      if (enumValueAnnotations.isEmpty) {
-        return null;
-      }
+    return enums
+        .map((e) {
+          final enumValueAnnotations = e.annotatedWith(hasEnumValueAnnotation);
+          if (enumValueAnnotations.isEmpty) {
+            return null;
+          }
 
-      final typeReturnIsString = !enumValueAnnotations.every((e) => !e.annotation.read(EnumValueField.value).isString);
+          final typeReturnIsString =
+              !enumValueAnnotations.every((e) => !e.annotation.read(EnumValueField.value).isString);
 
-      final valuesEnums = enumValueAnnotations.map((item) {
-        final enumValue = item.annotation.read('value').literalValue;
-        return '${e.name}.${item.element.name}: ${typeReturnIsString ? '\'$enumValue\'' : enumValue},\n';
-      });
-      if (valuesEnums.isEmpty) {
-        return null;
-      }
+          final valuesEnums = enumValueAnnotations.map((item) {
+            final enumValue = item.annotation.read('value').literalValue;
+            return '${e.name}.${item.element.name}: ${typeReturnIsString ? '\'$enumValue\'' : enumValue},\n';
+          });
+          if (valuesEnums.isEmpty) {
+            return null;
+          }
 
-      return '''const Map<Object, int> _${e.name.decapitalize()} = {
+          return '''const Map<Object, int> _${e.name.decapitalize()} = {
   ${valuesEnums.join()}
 };''';
-    }).whereNotNull().join('\n');
+        })
+        .whereNotNull()
+        .join('\n');
   }
 
   List<ClassElement> _removeDuplicate(List<ClassElement> list) {

@@ -5,8 +5,7 @@ import 'package:source_gen/source_gen.dart';
 class QueryMethodProcessorError {
   final MethodElement _methodElement;
 
-  QueryMethodProcessorError(final MethodElement methodElement)
-      : _methodElement = methodElement;
+  QueryMethodProcessorError(final MethodElement methodElement) : _methodElement = methodElement;
 
   InvalidGenerationSourceError get noQueryDefined {
     return InvalidGenerationSourceError(
@@ -27,8 +26,7 @@ class QueryMethodProcessorError {
   ProcessorError get doesNotReturnNullableStream {
     return ProcessorError(
       message: 'Queries returning streams of single elements might emit null.',
-      todo:
-          'Make the method return a Stream of a nullable type e.g. Stream<Person?>.',
+      todo: 'Make the method return a Stream of a nullable type e.g. Stream<Person?>.',
       element: _methodElement,
     );
   }
@@ -36,18 +34,18 @@ class QueryMethodProcessorError {
   ProcessorError get doesNotReturnNullableFuture {
     return ProcessorError(
       message: 'Queries returning single elements might return null.',
-      todo:
-          'Make the method return a Future of a nullable type e.g. Future<Person?>.',
+      todo: 'Make the method return a Future of a nullable type e.g. Future<Person?>.',
       element: _methodElement,
     );
   }
 
   ProcessorError invalidLoadOptionsQueryMethodParameterToProcessEntry(
-      final ParameterElement parameterElement,
-      ) {
+    final ParameterElement parameterElement,
+  ) {
     return ProcessorError(
       message: 'LoadOptions is not supported when return entry.',
-      todo: 'Change to LoadOptionsEntry or change the return to Future<List<Map<String, Object?>>> ${parameterElement.displayName}.',
+      todo:
+          'Change to LoadOptionsEntry or change the return to Future<List<Map<String, Object?>>> ${parameterElement.displayName}.',
       element: parameterElement,
     );
   }

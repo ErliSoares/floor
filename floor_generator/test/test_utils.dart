@@ -22,8 +22,8 @@ import 'package:test/test.dart';
 Future<LibraryReader> resolveCompilationUnit(final String sourceFile) async {
   final files = [File(sourceFile)];
 
-  final fileMap = Map<String, String>.fromEntries(files.map((file) =>
-      MapEntry('a|lib/${path.basename(file.path)}', file.readAsStringSync())));
+  final fileMap = Map<String, String>.fromEntries(
+      files.map((file) => MapEntry('a|lib/${path.basename(file.path)}', file.readAsStringSync())));
 
   final library = await resolveSources(fileMap, (item) async {
     final assetId = AssetId.parse(fileMap.keys.first);
@@ -60,11 +60,11 @@ Future<DartType> getDartTypeWithPerson(String value) async {
   }
   ''';
   return resolveSource(source, (item) async {
-    final libraryReader =
-        LibraryReader((await item.findLibraryByName('test'))!);
-    return (libraryReader.allElements.first as PropertyAccessorElement)
-        .type
-        .returnType;
+    final libraryReader = await item
+        .findLibraryByName('test')
+        .then((value) => ArgumentError.checkNotNull(value))
+        .then((value) => LibraryReader(value));
+    return (libraryReader.allElements.elementAt(1) as PropertyAccessorElement).type.returnType;
   });
 }
 
@@ -84,11 +84,11 @@ Future<DartType> getDartTypeWithName(String value) async {
   }
   ''';
   return resolveSource(source, (item) async {
-    final libraryReader =
-        LibraryReader((await item.findLibraryByName('test'))!);
-    return (libraryReader.allElements.first as PropertyAccessorElement)
-        .type
-        .returnType;
+    final libraryReader = await item
+        .findLibraryByName('test')
+        .then((value) => ArgumentError.checkNotNull(value))
+        .then((value) => LibraryReader(value));
+    return (libraryReader.allElements.elementAt(1) as PropertyAccessorElement).type.returnType;
   });
 }
 
@@ -100,9 +100,8 @@ Future<DartType> getDartTypeFromDeclaration(final String declaration) async {
   $declaration;
   ''';
   return resolveSource(source, (item) async {
-    final libraryReader =
-        LibraryReader((await item.findLibraryByName('test'))!);
-    return (libraryReader.allElements.elementAt(1) as VariableElement).type;
+    final libraryReader = LibraryReader((await item.findLibraryByName('test'))!);
+    return (libraryReader.allElements.elementAt(1) as PropertyAccessorElement).type.returnType;
   });
 }
 
@@ -170,21 +169,19 @@ Future<Dao> createDao(final String methodSignature) async {
     return LibraryReader((await resolver.findLibraryByName('test'))!);
   });
 
-  final daoClass = library.classes.firstWhere((classElement) =>
-      classElement.hasAnnotation(annotations.dao.runtimeType));
+  final daoClass =
+      library.classes.firstWhere((classElement) => classElement.hasAnnotation(annotations.dao.runtimeType));
 
   final entities = library.classes
       .where((classElement) => classElement.hasAnnotation(annotations.Entity))
       .map((classElement) => EntityProcessor(classElement, {}).process())
       .toList();
   final views = library.classes
-      .where((classElement) =>
-          classElement.hasAnnotation(annotations.DatabaseView))
+      .where((classElement) => classElement.hasAnnotation(annotations.DatabaseView))
       .map((classElement) => ViewProcessor(classElement, {}).process())
       .toList();
 
-  return DaoProcessor(
-      daoClass, 'personDao', 'TestDatabase', entities, views, {}).process();
+  return DaoProcessor(daoClass, 'personDao', 'TestDatabase', entities, views, {}).process();
 }
 
 Future<ClassElement> createClassElement(final String clazz) async {

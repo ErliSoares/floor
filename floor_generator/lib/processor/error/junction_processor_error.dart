@@ -5,8 +5,7 @@ import 'package:floor_generator/misc/type_utils.dart';
 class JunctionProcessorError {
   final FieldElement _fieldElement;
 
-  JunctionProcessorError(final FieldElement fieldElement)
-      : _fieldElement = fieldElement;
+  JunctionProcessorError(final FieldElement fieldElement) : _fieldElement = fieldElement;
 
   InvalidGenerationSourceError get invalidNumbersOfForeignKeysError {
     return InvalidGenerationSourceError(
@@ -51,7 +50,7 @@ class JunctionProcessorError {
   InvalidGenerationSourceError get typeOfFieldIsNotClass {
     final type = _fieldElement.type.isDartCoreList ? _fieldElement.type.flatten() : _fieldElement.type;
     return InvalidGenerationSourceError(
-       'The type ${type.getDisplayString(withNullability: false)} of fields with the @Junction annotation must be an entity.',
+      'The type ${type.getDisplayString(withNullability: false)} of fields with the @Junction annotation must be an entity.',
       todo: 'Remove the @Junction annotation or change the property type to an entity.',
       element: _fieldElement,
     );

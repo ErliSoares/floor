@@ -36,18 +36,13 @@ class ChangeMethodProcessorHelper {
   ) {
     final changesMultipleItems = parameterElement.type.isDartCoreList;
 
-    return changesMultipleItems
-        ? parameterElement.type.flatten()
-        : parameterElement.type;
+    return changesMultipleItems ? parameterElement.type.flatten() : parameterElement.type;
   }
 
   Entity getEntity(final DartType flattenedParameterType) {
     return _entities.firstWhere(
-        (entity) =>
-            entity.classElement.displayName ==
-            flattenedParameterType.getDisplayString(withNullability: false),
-        orElse: () => throw InvalidGenerationSourceError(
-            'You are trying to change an object which is not an entity.',
+        (entity) => entity.classElement.displayName == flattenedParameterType.getDisplayString(withNullability: false),
+        orElse: () => throw InvalidGenerationSourceError('You are trying to change an object which is not an entity.',
             element: _methodElement));
   }
 }

@@ -103,45 +103,36 @@ extension FieldElementExtension on FieldElement {
     final ignoreAnnotation = getAnnotation(annotations.Ignore)!;
     return !ignoreAnnotation.getField(IgnoreField.forInsert)!.toBoolValue()! ||
         !ignoreAnnotation.getField(IgnoreField.forUpdate)!.toBoolValue()! ||
-        !ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!
-    ;
+        !ignoreAnnotation.getField(IgnoreField.forDelete)!.toBoolValue()!;
   }
 
-  bool isRelation(){
+  bool isRelation() {
     return hasAnnotation(annotations.relation.runtimeType);
   }
 
-  bool isForeignKeyRelation(){
+  bool isForeignKeyRelation() {
     return hasAnnotation(annotations.ForeignKeyRelation);
   }
 
-  String nameColumnInSql(){
+  String nameColumnInSql() {
     return hasAnnotation(annotations.ColumnInfo)
-        ? getAnnotation(annotations.ColumnInfo)
-        ?.getField(AnnotationField.columnInfoName)
-        ?.toStringValue() ??
-        name
+        ? getAnnotation(annotations.ColumnInfo)?.getField(AnnotationField.columnInfoName)?.toStringValue() ?? name
         : name;
   }
 
-  int? columnLength(){
+  int? columnLength() {
     return hasAnnotation(annotations.ColumnInfo)
-        ? getAnnotation(annotations.ColumnInfo)
-        ?.getField(AnnotationField.columnInfoLength)
-        ?.toIntValue()
+        ? getAnnotation(annotations.ColumnInfo)?.getField(AnnotationField.columnInfoLength)?.toIntValue()
         : null;
   }
 
-  int? columnDecimals(){
+  int? columnDecimals() {
     return hasAnnotation(annotations.ColumnInfo)
-        ? getAnnotation(annotations.ColumnInfo)
-        ?.getField(AnnotationField.columnInfoDecimals)
-        ?.toIntValue()
+        ? getAnnotation(annotations.ColumnInfo)?.getField(AnnotationField.columnInfoDecimals)?.toIntValue()
         : null;
   }
 
-  bool isJunction(){
+  bool isJunction() {
     return hasAnnotation(annotations.Junction);
   }
-
 }

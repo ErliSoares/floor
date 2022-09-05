@@ -29,27 +29,21 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
     final database = _getDatabase(element, _sqlColumnProcessor);
 
     final databaseClass = DatabaseWriter(database).write();
-    final daoClasses = database.daoGetters
-        .map((daoGetter) => daoGetter.dao)
-        .map((dao) => DaoWriter(
-              dao,
-              database.streamEntities,
-              database.hasViewStreams,
-              database.name,
-              sqlColumnProcessor: _sqlColumnProcessor,
-              allFieldOfDaoWithAllMethods: database.allFieldOfDaoWithAllMethods,
-              routines: database.routines,
-            ).write());
+    final daoClasses = database.daoGetters.map((daoGetter) => daoGetter.dao).map((dao) => DaoWriter(
+          dao,
+          database.streamEntities,
+          database.hasViewStreams,
+          database.name,
+          sqlColumnProcessor: _sqlColumnProcessor,
+          allFieldOfDaoWithAllMethods: database.allFieldOfDaoWithAllMethods,
+          routines: database.routines,
+        ).write());
     final distinctTypeConverterFields = database.allTypeConverters
         .distinctBy((element) => element.name)
-        .map((typeConverter) =>
-            TypeConverterFieldWriter(typeConverter.name).write());
+        .map((typeConverter) => TypeConverterFieldWriter(typeConverter.name).write());
 
-    final routineFields = database.routines
-        .distinctBy((element) => element.name)
-        .map((typeConverter) =>
+    final routineFields = database.routines.distinctBy((element) => element.name).map((typeConverter) =>
         RoutineEntryTriggerFieldWriter(typeConverter.name, typeConverter.nameFieldInDataBase).write());
-
 
     const ignore = '// ignore_for_file: cast_nullable_to_non_nullable\n'
         '// ignore_for_file: avoid_types_on_closure_parameters\n'
@@ -58,14 +52,16 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
 
     final library = Library((builder) {
       builder
-      ..body.add(const Code(ignore))
+        ..body.add(const Code(ignore))
         ..body.add(FloorWriter(database.name).write())
         ..body.add(DatabaseBuilderWriter(database.name).write())
         ..body.add(databaseClass)
         ..body.addAll(daoClasses);
 
       if (distinctTypeConverterFields.isNotEmpty) {
-        builder.body..addAll(distinctTypeConverterFields)..addAll(routineFields);
+        builder.body
+          ..addAll(distinctTypeConverterFields)
+          ..addAll(routineFields);
       }
     });
 
@@ -74,15 +70,11 @@ class FloorGenerator extends GeneratorForAnnotation<annotations.Database> {
 
   Database _getDatabase(final Element element, SqlColumnProcessor sqlColumnProcessor) {
     if (element is! ClassElement) {
-      throw InvalidGenerationSourceError(
-          'The element annotated with @Database is not a class.',
-          element: element);
+      throw InvalidGenerationSourceError('The element annotated with @Database is not a class.', element: element);
     }
 
     if (!element.isAbstract) {
-      throw InvalidGenerationSourceError(
-          'The database class has to be abstract.',
-          element: element);
+      throw InvalidGenerationSourceError('The database class has to be abstract.', element: element);
     }
 
     return DatabaseProcessor(element, sqlColumnProcessor: sqlColumnProcessor).process();

@@ -15,7 +15,7 @@ class EnumHelperGenerator extends Generator {
   @override
   FutureOr<String> generate(LibraryReader library, BuildStep buildStep) {
     final lib = Library(
-          (b) => b
+      (b) => b
         ..body.addAll(
           library.enums.map((e) => Code(_codeForEnum(e))),
         ),
@@ -71,7 +71,6 @@ class EnumHelperGenerator extends Generator {
 
     str.writeln('    }');
 
-
     str.writeln('    extension ${enumElement.name}NullableExtension on ${enumElement.name}? {');
 
     if (enumValueAnnotations.isNotEmpty) {
@@ -98,7 +97,6 @@ class EnumHelperGenerator extends Generator {
 
     str.writeln('    }');
 
-
     return str.toString();
   }
 }
@@ -107,9 +105,9 @@ extension _EnumElementExtension on ClassElement {
   Iterable<AnnotatedElement> annotatedWith(TypeChecker checker) {
     return fields
         .map((f) {
-      final annotation = checker.firstAnnotationOf(f, throwOnUnresolved: true);
-      return (annotation != null) ? AnnotatedElement(ConstantReader(annotation), f) : null;
-    })
+          final annotation = checker.firstAnnotationOf(f, throwOnUnresolved: true);
+          return (annotation != null) ? AnnotatedElement(ConstantReader(annotation), f) : null;
+        })
         .where((e) => e != null)
         .cast();
   }

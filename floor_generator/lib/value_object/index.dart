@@ -10,8 +10,7 @@ class Index {
 
   String createQuery() {
     final uniqueSql = unique ? ' UNIQUE' : '';
-    final escapedColumnNames =
-        columnNames.map((columnName) => '`$columnName`').join(', ');
+    final escapedColumnNames = columnNames.map((columnName) => '`$columnName`').join(', ');
 
     return 'CREATE$uniqueSql INDEX `$name`'
         ' ON `$tableName` ($escapedColumnNames)';
@@ -30,11 +29,7 @@ class Index {
           const ListEquality<String>().equals(columnNames, other.columnNames);
 
   @override
-  int get hashCode =>
-      name.hashCode ^
-      tableName.hashCode ^
-      unique.hashCode ^
-      columnNames.hashCode;
+  int get hashCode => name.hashCode ^ tableName.hashCode ^ unique.hashCode ^ columnNames.hashCode;
 
   @override
   String toString() {

@@ -34,9 +34,8 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
   QueryableProcessor(
     this.classElement,
     final Set<TypeConverter> typeConverters,
-  ) : _queryableProcessorError = QueryableProcessorError(classElement),
-        queryableTypeConverters = typeConverters +
-            classElement.getTypeConverters(TypeConverterScope.queryable),
+  )   : _queryableProcessorError = QueryableProcessorError(classElement),
+        queryableTypeConverters = typeConverters + classElement.getTypeConverters(TypeConverterScope.queryable),
         _fields = classElement.getAllFields();
 
   @protected
@@ -45,11 +44,8 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
       throw _queryableProcessorError.prohibitedMixinUsage;
     }
 
-    return _fields
-        .where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation())
-        .map((field) {
-      final typeConverter =
-          queryableTypeConverters.getClosestOrNull(field.type);
+    return _fields.where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation()).map((field) {
+      final typeConverter = queryableTypeConverters.getClosestOrNull(field.type);
       return FieldProcessor(field, typeConverter).process();
     }).toList();
   }
@@ -59,56 +55,63 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
     if (classElement.mixins.isNotEmpty) {
       throw _queryableProcessorError.prohibitedMixinUsage;
     }
-    final constructorParameters = classElement.constructors.first.parameters.where((e) => _fields.any((f) => e.displayName == f.displayName) );
+    final constructorParameters =
+        classElement.constructors.first.parameters.where((e) => _fields.any((f) => e.displayName == f.displayName));
 
     return _fields
-        .where((fieldElement) => fieldElement.shouldBeIncludedForQuery() && constructorParameters.every((e) => e.name != fieldElement.name))
+        .where((fieldElement) =>
+            fieldElement.shouldBeIncludedForQuery() && constructorParameters.every((e) => e.name != fieldElement.name))
         .toList();
   }
 
   String _getValueMappingOutsideConstructor(final List<Fieldable> fields, List<FieldElement> fieldsOutsideConstructor) {
-    final keyValueList = fieldsOutsideConstructor.map((fieldElement) {
-      final parameterName = fieldElement.displayName;
-      final field = fields.firstWhereOrNull((field) => field.fieldElement.name == parameterName);
-      if (field is Field) {
-        final columnName = field.columnName;
-        final attributeValue = _getAttributeValue(fieldElement, field);
-        return '..$columnName = $attributeValue';
-      }
-      return null;
-    }).whereNotNull().toList();
+    final keyValueList = fieldsOutsideConstructor
+        .map((fieldElement) {
+          final parameterName = fieldElement.displayName;
+          final field = fields.firstWhereOrNull((field) => field.fieldElement.name == parameterName);
+          if (field is Field) {
+            final columnName = field.columnName;
+            final attributeValue = _getAttributeValue(fieldElement, field);
+            return '..$columnName = $attributeValue';
+          }
+          return null;
+        })
+        .whereNotNull()
+        .toList();
 
     return keyValueList.join('\n');
   }
+
   String _getAttributeValue(FieldElement parameterElement, Field field) {
-      final databaseValue = "row['${field.columnName}']";
+    final databaseValue = "row['${field.columnName}']";
 
-      String parameterValue;
+    String parameterValue;
 
-      if (parameterElement.type.isDefaultSqlType) {
-        parameterValue = databaseValue.cast(
-          parameterElement.type,
-          parameterElement,
-        );
-      } else if (parameterElement.type.element is ClassElement && (parameterElement.type.element as ClassElement).isEnum) {
-        if (field.isNullable) {
-          parameterValue = '$databaseValue == null ? null : ${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
-        } else{
-          parameterValue = '${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
-        }
-      } else {
-        final typeConverter = [...queryableTypeConverters, field.typeConverter]
-            .whereNotNull()
-            .getClosest(parameterElement.type);
-        final castedDatabaseValue = databaseValue.cast(
-          typeConverter.databaseType,
-          parameterElement,
-        );
-
+    if (parameterElement.type.isDefaultSqlType) {
+      parameterValue = databaseValue.cast(
+        parameterElement.type,
+        parameterElement,
+      );
+    } else if (parameterElement.type.element is ClassElement &&
+        (parameterElement.type.element as ClassElement).isEnum) {
+      if (field.isNullable) {
         parameterValue =
-        '${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+            '$databaseValue == null ? null : ${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
+      } else {
+        parameterValue =
+            '${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
       }
-      return parameterValue; // also covers positional parameter
+    } else {
+      final typeConverter =
+          [...queryableTypeConverters, field.typeConverter].whereNotNull().getClosest(parameterElement.type);
+      final castedDatabaseValue = databaseValue.cast(
+        typeConverter.databaseType,
+        parameterElement,
+      );
+
+      parameterValue = '${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+    }
+    return parameterValue; // also covers positional parameter
   }
 
   @protected
@@ -151,28 +154,29 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
 
         String parameterValue;
 
-      if (parameterElement.type.isDefaultSqlType) {
-        parameterValue = databaseValue.cast(
-          parameterElement.type,
-          parameterElement,
-        );
-      } else if (parameterElement.type.element is ClassElement && (parameterElement.type.element as ClassElement).isEnum) {
-        if (field.isNullable) {
-          parameterValue = '$databaseValue == null ? null : ${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
-        } else{
-          parameterValue = '${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
-        }
-      } else {
-        final typeConverter = [...queryableTypeConverters, field.typeConverter]
-            .whereNotNull()
-            .getClosest(parameterElement.type);
-        final castedDatabaseValue = databaseValue.cast(
-          typeConverter.databaseType,
-          parameterElement,
-        );
+        if (parameterElement.type.isDefaultSqlType) {
+          parameterValue = databaseValue.cast(
+            parameterElement.type,
+            parameterElement,
+          );
+        } else if (parameterElement.type.element is ClassElement &&
+            (parameterElement.type.element as ClassElement).isEnum) {
+          if (field.isNullable) {
+            parameterValue =
+                '$databaseValue == null ? null : ${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
+          } else {
+            parameterValue =
+                '${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
+          }
+        } else {
+          final typeConverter =
+              [...queryableTypeConverters, field.typeConverter].whereNotNull().getClosest(parameterElement.type);
+          final castedDatabaseValue = databaseValue.cast(
+            typeConverter.databaseType,
+            parameterElement,
+          );
 
-          parameterValue =
-          '${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
+          parameterValue = '${typeConverter.name.decapitalize()}.decode($castedDatabaseValue)';
         }
 
         if (parameterElement.isNamed) {

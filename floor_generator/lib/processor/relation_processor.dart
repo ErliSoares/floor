@@ -50,9 +50,10 @@ class RelationProcessor extends Processor<Relation?> {
       throw _processorError.twoForeignKeysForTheSameParentTable(fieldTypeElement);
     }
 
-    final childElement = (_fieldElement.type.isDartCoreList ? _fieldElement.type.flatten() : _fieldElement.type).element;
+    final childElement =
+        (_fieldElement.type.isDartCoreList ? _fieldElement.type.flatten() : _fieldElement.type).element;
 
-    if (! (childElement  is ClassElement)) {
+    if (!(childElement is ClassElement)) {
       throw _processorError.typeOfFieldIsNotClass;
     }
 

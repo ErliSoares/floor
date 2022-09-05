@@ -6,22 +6,18 @@ class AfterQueryMethodProcessorError {
 
   AfterQueryMethodProcessorError(this._methodElement);
 
-  InvalidGenerationSourceError get doesNotReturnFuture =>
-      InvalidGenerationSourceError(
+  InvalidGenerationSourceError get doesNotReturnFuture => InvalidGenerationSourceError(
         'Methods before callback have to return a Future.',
         element: _methodElement,
       );
 
-  InvalidGenerationSourceError get shouldReturnList =>
-      InvalidGenerationSourceError(
+  InvalidGenerationSourceError get shouldReturnList => InvalidGenerationSourceError(
         'Methods before callback have to return a Future of either list.',
         element: _methodElement,
       );
 
-  InvalidGenerationSourceError get isAbstractMethod =>
-      InvalidGenerationSourceError(
+  InvalidGenerationSourceError get isAbstractMethod => InvalidGenerationSourceError(
         'The after query method has to be abstract.',
         element: _methodElement,
       );
-
 }

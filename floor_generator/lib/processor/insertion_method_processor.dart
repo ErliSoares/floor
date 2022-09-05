@@ -1,7 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:floor_annotation/floor_annotation.dart' as annotations
-    show Insert;
+import 'package:floor_annotation/floor_annotation.dart' as annotations show Insert;
 import 'package:floor_generator/misc/change_method_processor_helper.dart';
 import 'package:floor_generator/misc/constants.dart';
 import 'package:floor_generator/misc/extension/dart_object_extension.dart';
@@ -22,8 +21,7 @@ class InsertionMethodProcessor implements Processor<InsertionMethod> {
     final ChangeMethodProcessorHelper? changeMethodProcessorHelper,
   ])  : _methodElement = methodElement,
         _errors = ChangeMethodProcessorError(methodElement, 'Insertion'),
-        _helper = changeMethodProcessorHelper ??
-            ChangeMethodProcessorHelper(methodElement, entities);
+        _helper = changeMethodProcessorHelper ?? ChangeMethodProcessorHelper(methodElement, entities);
 
   @override
   InsertionMethod process() {
@@ -33,8 +31,7 @@ class InsertionMethodProcessor implements Processor<InsertionMethod> {
     _assertMethodReturnsFuture(returnType);
 
     final returnsList = _getReturnsList(returnType);
-    final flattenedReturnType =
-        _getFlattenedReturnType(returnType, returnsList);
+    final flattenedReturnType = _getFlattenedReturnType(returnType, returnsList);
 
     final returnsVoid = flattenedReturnType.isVoid;
     final returnsInt = flattenedReturnType.isDartCoreInt;
@@ -45,8 +42,7 @@ class InsertionMethodProcessor implements Processor<InsertionMethod> {
     }
 
     final parameterElement = _helper.getParameterElement();
-    final flattenedParameterType =
-        _helper.getFlattenedParameterType(parameterElement);
+    final flattenedParameterType = _helper.getFlattenedParameterType(parameterElement);
 
     final entity = _helper.getEntity(flattenedParameterType);
     final onConflict = _getOnConflictStrategy();
@@ -76,10 +72,8 @@ class InsertionMethodProcessor implements Processor<InsertionMethod> {
   }
 
   String _getOnConflictStrategy() {
-    final onConflictStrategy = _methodElement
-        .getAnnotation(annotations.Insert)
-        ?.getField(AnnotationField.onConflict)
-        ?.toEnumValueString();
+    final onConflictStrategy =
+        _methodElement.getAnnotation(annotations.Insert)?.getField(AnnotationField.onConflict)?.toEnumValueString();
 
     if (onConflictStrategy == null) {
       throw _errors.wrongOnConflictValue;

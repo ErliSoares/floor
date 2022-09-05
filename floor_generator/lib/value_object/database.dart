@@ -34,8 +34,7 @@ class Database {
     this.allTypeConverters,
     this.allFieldOfDaoWithAllMethods,
     this.routines,
-  )   : streamEntities =
-            daoGetters.expand((dg) => dg.dao.streamEntities).toSet(),
+  )   : streamEntities = daoGetters.expand((dg) => dg.dao.streamEntities).toSet(),
         hasViewStreams = daoGetters.any((dg) => dg.dao.streamViews.isNotEmpty);
 
   @override

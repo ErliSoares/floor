@@ -5,8 +5,7 @@ import 'package:floor_generator/misc/type_utils.dart';
 class ForeignKeyRelationProcessorError {
   final FieldElement _fieldElement;
 
-  ForeignKeyRelationProcessorError(final FieldElement fieldElement)
-      : _fieldElement = fieldElement;
+  ForeignKeyRelationProcessorError(final FieldElement fieldElement) : _fieldElement = fieldElement;
 
   InvalidGenerationSourceError get invalidNumbersOfForeignKeysError {
     return InvalidGenerationSourceError(
@@ -51,7 +50,7 @@ class ForeignKeyRelationProcessorError {
   InvalidGenerationSourceError get typeOfFieldIsNotClass {
     final type = _fieldElement.type.isDartCoreList ? _fieldElement.type.flatten() : _fieldElement.type;
     return InvalidGenerationSourceError(
-       'The type ${type.getDisplayString(withNullability: false)} of fields with the @ForeignKeyRelation annotation must be an entity.',
+      'The type ${type.getDisplayString(withNullability: false)} of fields with the @ForeignKeyRelation annotation must be an entity.',
       todo: 'Remove the @ForeignKeyRelation annotation or change the property type to an entity.',
       element: _fieldElement,
     );
@@ -64,7 +63,7 @@ class ForeignKeyRelationProcessorError {
     );
   }
 
-  InvalidGenerationSourceError twoForeignKeysForTheSameParentTable(String nameField){
+  InvalidGenerationSourceError twoForeignKeysForTheSameParentTable(String nameField) {
     return InvalidGenerationSourceError(
       'The class ${_fieldElement.enclosingElement.name} have more one foreign key with child relation for field $nameField.',
       todo: 'Open a issue to implement the feature.',

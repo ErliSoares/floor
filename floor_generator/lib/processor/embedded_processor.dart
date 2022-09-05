@@ -55,17 +55,15 @@ class EmbeddedProcessor extends Processor<Embedded> {
 
   String _getPrefix() {
     return _prefix +
-        ((_fieldElement
-            .getAnnotation(annotations.Embedded)
-            ?.getField(AnnotationField.embeddedPrefix))?.toStringValue() ?? '');
+        ((_fieldElement.getAnnotation(annotations.Embedded)?.getField(AnnotationField.embeddedPrefix))
+                ?.toStringValue() ??
+            '');
   }
 
   List<Field> _getFields() {
-    return _fields.where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation())
-        .map((field) {
-          return FieldProcessor(field, converters.getClosestOrNull(field.type), _getPrefix()).process();
-    })
-        .toList();
+    return _fields.where((fieldElement) => fieldElement.shouldBeIncludedAnyOperation()).map((field) {
+      return FieldProcessor(field, converters.getClosestOrNull(field.type), _getPrefix()).process();
+    }).toList();
   }
 
   List<Embedded> _getChildren() {

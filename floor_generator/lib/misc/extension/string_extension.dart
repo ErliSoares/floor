@@ -6,7 +6,6 @@ const int _c0End = 0x1f;
 
 const int _c0Start = 0x00;
 
-
 extension StringExtension on String {
   String firstCharToUpper() {
     if (isEmpty) {
@@ -15,7 +14,7 @@ extension StringExtension on String {
     return '${this[0].toUpperCase()}${substring(1)}';
   }
 
-/// Returns a copy of this string having its first letter lowercased, or the
+  /// Returns a copy of this string having its first letter lowercased, or the
   /// original string, if it's empty or already starts with a lower case letter.
   ///
   /// ```dart
@@ -80,7 +79,7 @@ extension NullableStringExtension on String? {
 
     final sb = StringBuffer();
 
-    for(int i = 0; i<string.length; i++) {
+    for (int i = 0; i < string.length; i++) {
       final s = string[i];
       final runes = s.runes;
       if (runes.length == 1) {
@@ -140,10 +139,10 @@ extension NullableStringExtension on String? {
     } else {
       //TODO unescape correctly
       if (this!.startsWith('"') && this!.endsWith('"')) {
-        return this!.substring(1, this!.length -1);
+        return this!.substring(1, this!.length - 1);
       }
       if (this!.startsWith('\'') && this!.endsWith('\'')) {
-        return this!.substring(1, this!.length -1);
+        return this!.substring(1, this!.length - 1);
       }
       return this!;
     }

@@ -36,9 +36,7 @@ extension TypeConverterElementExtension on Element {
         );
       }
 
-      converters = {
-        ...typeConverterClassElements.map((element) => TypeConverterProcessor(element, scope).process())
-      };
+      converters = {...typeConverterClassElements.map((element) => TypeConverterProcessor(element, scope).process())};
     }
     final thisClass = this;
     if (thisClass is ClassElement && thisClass.supertype != null) {

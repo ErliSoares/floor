@@ -19,11 +19,7 @@ class TypeConverter {
           scope == other.scope;
 
   @override
-  int get hashCode =>
-      name.hashCode ^
-      fieldType.hashCode ^
-      databaseType.hashCode ^
-      scope.hashCode;
+  int get hashCode => name.hashCode ^ fieldType.hashCode ^ databaseType.hashCode ^ scope.hashCode;
 
   @override
   String toString() {

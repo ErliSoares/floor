@@ -5,8 +5,7 @@ import 'package:floor_generator/writer/writer.dart';
 class TypeConverterFieldWriter extends Writer {
   final String _typeConverterName;
 
-  TypeConverterFieldWriter(final String typeConverterName)
-      : _typeConverterName = typeConverterName;
+  TypeConverterFieldWriter(final String typeConverterName) : _typeConverterName = typeConverterName;
 
   @override
   Spec write() {

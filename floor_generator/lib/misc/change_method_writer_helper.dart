@@ -5,8 +5,7 @@ import 'package:floor_generator/value_object/change_method.dart';
 class ChangeMethodWriterHelper {
   final ChangeMethod _changeMethod;
 
-  ChangeMethodWriterHelper(final ChangeMethod changeMethod)
-      : _changeMethod = changeMethod;
+  ChangeMethodWriterHelper(final ChangeMethod changeMethod) : _changeMethod = changeMethod;
 
   /// Adds the change method signature to the [MethodBuilder].
   void addChangeMethodSignature(final MethodBuilder methodBuilder) {

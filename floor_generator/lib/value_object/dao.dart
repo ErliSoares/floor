@@ -26,20 +26,9 @@ class Dao {
   final List<BeforeOperationMethod> beforeOperations;
   final List<AfterQueryMethod> afterQueryMethods;
 
-  Dao(
-    this.classElement,
-    this.name,
-    this.queryMethods,
-    this.insertionMethods,
-    this.updateMethods,
-    this.deletionMethods,
-    this.transactionMethods,
-    this.streamEntities,
-    this.streamViews,
-    this.typeConverters,
-    this.beforeOperations,
-    {this.afterQueryMethods = const []}
-  );
+  Dao(this.classElement, this.name, this.queryMethods, this.insertionMethods, this.updateMethods, this.deletionMethods,
+      this.transactionMethods, this.streamEntities, this.streamViews, this.typeConverters, this.beforeOperations,
+      {this.afterQueryMethods = const []});
 
   @override
   bool operator ==(Object other) =>
@@ -57,8 +46,7 @@ class Dao {
           streamViews.equals(other.streamViews) &&
           typeConverters.equals(other.typeConverters) &&
           beforeOperations.equals(other.beforeOperations) &&
-          afterQueryMethods.equals(other.afterQueryMethods)
-  ;
+          afterQueryMethods.equals(other.afterQueryMethods);
 
   @override
   int get hashCode =>

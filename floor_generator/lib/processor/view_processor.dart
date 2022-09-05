@@ -1,5 +1,6 @@
 import 'package:analyzer/dart/element/element.dart';
 import 'package:floor_annotation/floor_annotation.dart' as annotations;
+import 'package:floor_generator/extension/class_extension.dart';
 import 'package:floor_generator/misc/constants.dart';
 import 'package:floor_generator/misc/type_utils.dart';
 import 'package:floor_generator/processor/error/view_processor_error.dart';
@@ -23,8 +24,7 @@ class ViewProcessor extends QueryableProcessor<View> {
     final fieldsDataBaseSchema = fieldsAll.where((e) => shouldBeIncludedForDataBaseSchema(e.fieldElement)).toList();
     final embeddeds = getEmbeddeds();
 
-    final isQueryView = classElement
-        .getAnnotation(annotations.queryView.runtimeType) != null;
+    final isQueryView = classElement.isQueryView;
 
     return View(
       classElement,
@@ -40,18 +40,13 @@ class ViewProcessor extends QueryableProcessor<View> {
   }
 
   String _getName() {
-    return classElement
-            .getAnnotation(annotations.DatabaseView)
-            ?.getField(AnnotationField.viewName)
-            ?.toStringValue() ??
+    return classElement.getAnnotation(annotations.DatabaseView)?.getField(AnnotationField.viewName)?.toStringValue() ??
         classElement.displayName;
   }
 
   String _getQuery() {
-    final query = classElement
-        .getAnnotation(annotations.DatabaseView)
-        ?.getField(AnnotationField.viewQuery)
-        ?.toStringValue();
+    final query =
+        classElement.getAnnotation(annotations.DatabaseView)?.getField(AnnotationField.viewQuery)?.toStringValue();
 
     if (query == null || !(query.isSelectQuery || query.isCteWithSelect)) {
       throw _processorError.missingQuery;
@@ -67,7 +62,6 @@ extension on String {
   /// followed by a `SELECT` query
   bool get isCteWithSelect {
     final lowerCasedString = toLowerCase();
-    return lowerCasedString.trimLeft().startsWith('with') &&
-        'select'.allMatches(lowerCasedString).length >= 2;
+    return lowerCasedString.trimLeft().startsWith('with') && 'select'.allMatches(lowerCasedString).length >= 2;
   }
 }

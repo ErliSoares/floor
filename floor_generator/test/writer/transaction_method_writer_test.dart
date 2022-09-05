@@ -115,8 +115,7 @@ void main() {
     '''));
   });
 
-  test('Generate transaction method with nullable return type parameter',
-      () async {
+  test('Generate transaction method with nullable return type parameter', () async {
     final transactionMethod = await _createTransactionMethod('''
       @transaction
       Future<Person?> replacePersons(List<Person> persons) async {

@@ -4,7 +4,10 @@ import 'package:floor_generator/misc/type_utils.dart';
 
 extension ClassExtension on ClassElement {
   bool get isEntity {
-    return hasAnnotation(annotations.Entity) &&
-    !isAbstract;
+    return hasAnnotation(annotations.Entity) && !isAbstract;
+  }
+
+  bool get isQueryView {
+    return hasAnnotation(annotations.queryView.runtimeType) && !isAbstract;
   }
 }

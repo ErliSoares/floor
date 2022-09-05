@@ -15,14 +15,12 @@ class Embedded extends Fieldable {
   final bool saveToSeparateEntity;
 
   Embedded(FieldElement fieldElement, this.fields, this.children,
-      {
-        this.ignoreForQuery = false,
-        this.ignoreForInsert = false,
-        this.ignoreForUpdate = false,
-        this.ignoreForDelete = false,
-        this.saveToSeparateEntity = false,
-        this.prefix
-      })
+      {this.ignoreForQuery = false,
+      this.ignoreForInsert = false,
+      this.ignoreForUpdate = false,
+      this.ignoreForDelete = false,
+      this.saveToSeparateEntity = false,
+      this.prefix})
       : classElement = fieldElement.type.element as ClassElement,
         super(fieldElement);
 

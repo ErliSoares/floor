@@ -6,19 +6,16 @@ class BeforeMethodProcessorError {
 
   BeforeMethodProcessorError(this._methodElement);
 
-  InvalidGenerationSourceError get doesNotReturnFuture =>
-      InvalidGenerationSourceError(
+  InvalidGenerationSourceError get doesNotReturnFuture => InvalidGenerationSourceError(
         'Methods before callback have to return a Future.',
         element: _methodElement,
       );
 
-  InvalidGenerationSourceError get shouldNotReturnList =>
-      InvalidGenerationSourceError(
+  InvalidGenerationSourceError get shouldNotReturnList => InvalidGenerationSourceError(
         'Methods before callback have to return a Future of either void but not a list.',
         element: _methodElement,
       );
-  InvalidGenerationSourceError get doesNotReturnVoid =>
-      InvalidGenerationSourceError(
+  InvalidGenerationSourceError get doesNotReturnVoid => InvalidGenerationSourceError(
         'Methods before callback have to return a Future of either void.',
         element: _methodElement,
       );

@@ -18,10 +18,8 @@ class ForeignKey {
   );
 
   String getDefinition() {
-    final escapedChildColumns =
-        childColumns.map((column) => '`$column`').join(', ');
-    final escapedParentColumns =
-        parentColumns.map((column) => '`$column`').join(', ');
+    final escapedChildColumns = childColumns.map((column) => '`$column`').join(', ');
+    final escapedParentColumns = parentColumns.map((column) => '`$column`').join(', ');
 
     return 'FOREIGN KEY ($escapedChildColumns)'
         ' REFERENCES `$parentName` ($escapedParentColumns)'
@@ -44,11 +42,7 @@ class ForeignKey {
 
   @override
   int get hashCode =>
-      parentName.hashCode ^
-      parentColumns.hashCode ^
-      childColumns.hashCode ^
-      onUpdate.hashCode ^
-      onDelete.hashCode;
+      parentName.hashCode ^ parentColumns.hashCode ^ childColumns.hashCode ^ onUpdate.hashCode ^ onDelete.hashCode;
 
   @override
   String toString() {

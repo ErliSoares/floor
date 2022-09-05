@@ -21,23 +21,19 @@ class FieldProcessor extends Processor<Field> {
   final String _prefix;
   final TypeConverter? _typeConverter;
 
-  FieldProcessor(
-    final FieldElement fieldElement,
-    final TypeConverter? typeConverter,
-    [final String prefix = '']
-  )   : _fieldElement = fieldElement,
+  FieldProcessor(final FieldElement fieldElement, final TypeConverter? typeConverter, [final String prefix = ''])
+      : _fieldElement = fieldElement,
         _typeConverter = typeConverter,
         _prefix = prefix;
 
   @override
   Field process() {
     final name = _fieldElement.name;
-    final columnName = '$_prefix${_prefix == '' ?  _fieldElement.nameColumnInSql() : _fieldElement.nameColumnInSql().firstCharToUpper()}';
+    final columnName =
+        '$_prefix${_prefix == '' ? _fieldElement.nameColumnInSql() : _fieldElement.nameColumnInSql().firstCharToUpper()}';
     final isNullable = _fieldElement.type.isNullable;
-    final typeConverter = {
-      ..._fieldElement.getTypeConverters(TypeConverterScope.field),
-      _typeConverter
-    }.whereNotNull().closestOrNull;
+    final typeConverter =
+        {..._fieldElement.getTypeConverters(TypeConverterScope.field), _typeConverter}.whereNotNull().closestOrNull;
 
     final junction = JunctionProcessor(_fieldElement).process();
     final relation = RelationProcessor(_fieldElement).process();
@@ -48,7 +44,7 @@ class FieldProcessor extends Processor<Field> {
       name,
       columnName,
       isNullable,
-      junction != null || relation != null  || foreignKeyRelation != null ? '' : _getSqlType(typeConverter),
+      junction != null || relation != null || foreignKeyRelation != null ? '' : _getSqlType(typeConverter),
       typeConverter,
       junction: junction,
       relation: relation,
@@ -57,7 +53,6 @@ class FieldProcessor extends Processor<Field> {
       length: _fieldElement.columnLength(),
     );
   }
-
 
   String _getSqlType(final TypeConverter? typeConverter) {
     final type = _fieldElement.type;

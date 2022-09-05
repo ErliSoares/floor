@@ -100,8 +100,7 @@ void main() {
       );
       final typeConverters = [typeConverter];
 
-      final actual =
-          () async => typeConverters.getClosest(await dateTimeDartType);
+      final actual = () async => typeConverters.getClosest(await dateTimeDartType);
 
       expect(actual, throwsInvalidGenerationSourceError());
     });

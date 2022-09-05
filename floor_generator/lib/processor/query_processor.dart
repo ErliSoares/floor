@@ -47,26 +47,19 @@ class QueryProcessor extends Processor<Query> {
     // positions and names.
     int currentLast = 0;
     for (final varToken in variables) {
-      newQuery.write(_query
-          .substring(currentLast, varToken.startPosition)
-          .replaceAll('\n', ' '));
+      newQuery.write(_query.substring(currentLast, varToken.startPosition).replaceAll('\n', ' '));
       final varIndexInMethod = indices[varToken.name];
       if (varIndexInMethod == null) {
         throw _processorError.unknownQueryVariable(varToken.name);
       } else if (varIndexInMethod > 0) {
         //normal variable/parameter
-        if (varToken.isListVar)
-          throw _processorError
-              .queryMethodParameterIsNormalButVariableIsList(varToken.name);
+        if (varToken.isListVar) throw _processorError.queryMethodParameterIsNormalButVariableIsList(varToken.name);
         newQuery.write('?');
         newQuery.write(varIndexInMethod);
       } else {
         //list variable/parameter
-        if (!varToken.isListVar)
-          throw _processorError
-              .queryMethodParameterIsListButVariableIsNot(varToken.name);
-        listParameters
-            .add(ListParameter(newQuery.length, varToken.name.substring(1)));
+        if (!varToken.isListVar) throw _processorError.queryMethodParameterIsListButVariableIsNot(varToken.name);
+        listParameters.add(ListParameter(newQuery.length, varToken.name.substring(1)));
         newQuery.write(varlistPlaceholder);
       }
       currentLast = varToken.endPosition;
@@ -109,14 +102,12 @@ class QueryProcessor extends Processor<Query> {
 /// context.
 List<VariableToken> findVariables(final String query) {
   final output = <VariableToken>[];
-  for (final match
-      in RegExp(r':[\w]+| [iI][nN]\s*\((:[\w]+)\)').allMatches(query)) {
+  for (final match in RegExp(r':[\w]+| [iI][nN]\s*\((:[\w]+)\)').allMatches(query)) {
     final content = match.group(0)!;
     final expectsList = content.toLowerCase().startsWith(' in');
     if (expectsList) {
       final varname = match.group(1)!;
-      output.add(
-          VariableToken(varname, query.indexOf(varname, match.start), true));
+      output.add(VariableToken(varname, query.indexOf(varname, match.start), true));
     } else {
       output.add(VariableToken(content, match.start, false));
     }
@@ -152,6 +143,5 @@ class VariableToken {
           isListVar == other.isListVar;
 
   @override
-  int get hashCode =>
-      name.hashCode ^ startPosition.hashCode ^ isListVar.hashCode;
+  int get hashCode => name.hashCode ^ startPosition.hashCode ^ isListVar.hashCode;
 }

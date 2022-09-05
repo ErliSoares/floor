@@ -14,8 +14,7 @@ class Query {
       other is Query &&
           runtimeType == other.runtimeType &&
           sql == other.sql &&
-          const ListEquality<ListParameter>()
-              .equals(listParameters, other.listParameters);
+          const ListEquality<ListParameter>().equals(listParameters, other.listParameters);
 
   @override
   int get hashCode => sql.hashCode ^ listParameters.hashCode;
@@ -35,10 +34,7 @@ class ListParameter {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is ListParameter &&
-          runtimeType == other.runtimeType &&
-          position == other.position &&
-          name == other.name;
+      other is ListParameter && runtimeType == other.runtimeType && position == other.position && name == other.name;
 
   @override
   int get hashCode => position.hashCode ^ name.hashCode;
