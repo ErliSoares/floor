@@ -54,17 +54,17 @@ class SqlColumnProcessor {
     for (final resultColumn in columns) {
       if (resultColumn is sqlparser.StarResultColumn) {
         if (resultColumn.tableName != null) {
-          final tableResolver = scope.resolve<sqlparser.ResolvesToResultSet>(resultColumn.tableName!);
+          final tableResolver = scope.resolveResultSetToAdd(resultColumn.tableName!);
           if (tableResolver == null) continue;
 
-          final visibleColumnsForStar = tableResolver.resultSet!.resolvedColumns!.where((e) => e.includedInResults);
+          final visibleColumnsForStar = tableResolver.resultSet.resultSet.resolvedColumns!.where((e) => e.includedInResults);
           for (var c in visibleColumnsForStar) {
             sqlColumns[c.name] = '${resultColumn.tableName}.${c.name}';
           }
         } else {
           // we have a * column without a table, that resolves to every columns
           // available
-          final visibleColumnsForStar = scope.availableColumns.where((e) => e.includedInResults).toList();
+          final visibleColumnsForStar = scope.expansionOfStarColumn!.where((e) => e.includedInResults).toList();
           for (var i = 0; i < visibleColumnsForStar.length; i++) {
             final columnFirst = visibleColumnsForStar[i];
             for (var j = i + 1; j < visibleColumnsForStar.length; j++) {
@@ -76,7 +76,7 @@ class SqlColumnProcessor {
           }
           for (var c in visibleColumnsForStar) {
             if (c is sqlparser.ExpressionColumn) {
-              sqlColumns[c.name] = c.expression!.span!.text;
+              sqlColumns[c.name] = c.expression.span!.text;
             } else {
               sqlColumns[c.name] = c.name;
             }

@@ -112,14 +112,14 @@ class SchemaGenerator extends Generator {
     final str = StringBuffer();
 
     final code = """mixin ${className}Mixin {
-    
+
   $entryNotChangedOverrideCode
-    
+
   @ignore
   ${className}Schema get schema => ${className}Schema.instance;
-  
+
   $cloneCode
-  
+
   $fieldsCode
 }
 
@@ -240,7 +240,7 @@ ${fields.map((e) => e.writeCol()).join('\n')}
     if (entryNotChanged == null) {
       _entryNotChanged = null;
       return;
-    }  
+    }
     if (entryNotChanged is! ${classElement.name}) {
       throw Exception('Objeto entryNotChanged para a entidade ${classElement.name} é inválida.');
     }
@@ -320,7 +320,7 @@ ${fields.map((e) => e.writeCol()).join('\n')}
       } else {
         return 'entry.${parameter.name}';
       }
-    } else if (parameter.type.element is ClassElement && (parameter.type.element as ClassElement).isEnum) {
+    } else if (parameter.type.element is EnumElement) {
       return 'entry.${parameter.name}.value';
     } else {
       final typeConverter = parameter.getAllTypeConverters().getClosestOrNull(parameter.type);
@@ -388,9 +388,9 @@ extension on FieldElement {
         databaseType = type;
       } else if (typeConverter != null) {
         databaseType = typeConverter.databaseType;
-      } else if (type.element is ClassElement && (type.element as ClassElement).isEnum) {
-        final classElement = type.element as ClassElement;
-        databaseType = classElement.typeOfEnum();
+      } else if (type.element is EnumElement) {
+        final enumElement = type.element as EnumElement;
+        databaseType = enumElement.typeOfEnum();
         if (databaseType == null) {
           throw InvalidGenerationSourceError(
             'Enum type $type must be defined the values through the @EnumValue annotation, it cannot have different data types for the same enum.',
@@ -515,7 +515,7 @@ class ColumnData {
     if (converter != null) {
       str.write(', converter: ');
       str.write(converter!.name.decapitalize());
-    } else if (element is ClassElement && element.isEnum) {
+    } else if (element is EnumElement) {
       str.write(', converter: const EnumConverter(_');
       str.write(element.name.decapitalize());
       str.write(')');

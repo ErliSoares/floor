@@ -104,6 +104,9 @@ extension ClassElementExtension on ClassElement {
     return annotation.getField(AnnotationField.entityTableName)?.toStringValue() ?? displayName;
   }
 
+}
+
+extension EnumElementExtension on EnumElement {
   DartType? typeOfEnum() {
     final types = fields.where((e) => e.isEnumConstant).map((e) {
       if (!e.hasAnnotation(annotations.EnumValue)) {

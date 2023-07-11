@@ -325,7 +325,7 @@ class EntityProcessor extends QueryableProcessor<Entity> {
 
     if (fieldType.isDefaultSqlType) {
       attributeValue = '${ignoreAddItem ? '' : 'item.'}$prefix$parameterName';
-    } else if (fieldType.element is ClassElement && (fieldType.element as ClassElement).isEnum) {
+    } else if (fieldType.element is EnumElement) {
       return '${ignoreAddItem ? '' : 'item.'}$prefix$parameterName.value';
     } else {
       final typeConverter = [

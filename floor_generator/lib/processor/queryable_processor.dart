@@ -92,8 +92,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
         parameterElement.type,
         parameterElement,
       );
-    } else if (parameterElement.type.element is ClassElement &&
-        (parameterElement.type.element as ClassElement).isEnum) {
+    } else if (parameterElement.type.element is EnumElement) {
       if (field.isNullable) {
         parameterValue =
             '$databaseValue == null ? null : ${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';
@@ -159,8 +158,7 @@ abstract class QueryableProcessor<T extends Queryable> extends Processor<T> {
             parameterElement.type,
             parameterElement,
           );
-        } else if (parameterElement.type.element is ClassElement &&
-            (parameterElement.type.element as ClassElement).isEnum) {
+        } else if (parameterElement.type.element is EnumElement) {
           if (field.isNullable) {
             parameterValue =
                 '$databaseValue == null ? null : ${parameterElement.type.element?.displayName}.values.firstWhere((e) => e.value == $databaseValue)';

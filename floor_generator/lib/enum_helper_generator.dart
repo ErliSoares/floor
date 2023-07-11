@@ -24,7 +24,7 @@ class EnumHelperGenerator extends Generator {
     return lib.accept(emitter).toString();
   }
 
-  String _codeForEnum(ClassElement enumElement) {
+  String _codeForEnum(EnumElement enumElement) {
     final enumValueAnnotations = enumElement.annotatedWith(hasEnumValueAnnotation);
     final descriptionAnnotations = enumElement.annotatedWith(hasDescriptionAnnotation);
     if (enumValueAnnotations.isEmpty && descriptionAnnotations.isEmpty) {
@@ -101,7 +101,7 @@ class EnumHelperGenerator extends Generator {
   }
 }
 
-extension _EnumElementExtension on ClassElement {
+extension _EnumElementExtension on EnumElement {
   Iterable<AnnotatedElement> annotatedWith(TypeChecker checker) {
     return fields
         .map((f) {
