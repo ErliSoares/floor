@@ -24,7 +24,7 @@ class QueryAdapter {
     required final T Function(Map<String, Object?>) mapper,
     FutureOr<List<T>> Function(List<T> entities, LoadOptionsEntry? loadOptions)? afterQuery,
   }) async {
-    log('RAW query execute: $sql');
+    //log('RAW query execute: $sql');
     final rows = await _database.rawQuery(sql, arguments);
 
     if (rows.isEmpty) {
@@ -54,7 +54,7 @@ class QueryAdapter {
     FutureOr<List<T>> Function(List<T> entities, LoadOptionsEntry? loadOptions)? afterQuery,
   }) async {
     if (loadOptions == null) {
-      log('RAW query execute: $sql');
+      //log('RAW query execute: $sql');
       final rows = await _database.rawQuery(sql, arguments);
       return rows.map((row) => mapper(row)).toList();
     }
@@ -72,7 +72,7 @@ class QueryAdapter {
       aggregators: loadOptions.aggregators,
     );
     final sqlProcessed = processSqlWithLoadOptions(sql, loadOptionsComplete, queryInfo, argumentsNew);
-    log('RAW query execute: $sqlProcessed');
+    //log('RAW query execute: $sqlProcessed');
     final rows = await _database.rawQuery(sqlProcessed, argumentsNew);
     final entities = rows.map((row) => mapper(row)).toList();
     final expands = loadOptions.expand;
@@ -106,7 +106,7 @@ class QueryAdapter {
     // TODO #94 differentiate between different query kinds (select, update, delete, insert)
     //  this enables to notify the observers
     //  also requires extracting the table name :(
-    log('RAW query execute: $sql');
+    //log('RAW query execute: $sql');
     await _database.rawQuery(sql, arguments);
   }
 
@@ -114,7 +114,7 @@ class QueryAdapter {
     final String sql, {
     final List<Object>? arguments,
   }) async {
-    log('RAW query execute: $sql');
+    //log('RAW query execute: $sql');
     final result = await _database.rawQuery(sql, arguments);
     if (result.isEmpty) {
       return null;
@@ -126,7 +126,7 @@ class QueryAdapter {
     final String sql, {
     final List<Object>? arguments,
   }) async {
-    log('RAW query execute: $sql');
+    //log('RAW query execute: $sql');
     return _database.rawQuery(sql, arguments);
   }
 

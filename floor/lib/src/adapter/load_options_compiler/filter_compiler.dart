@@ -109,9 +109,9 @@ class FilterCompiler extends ExpressionCompiler {
 
     switch (clientOperation) {
       case _contains:
-        return 'INSTR($nameField, $keyParameter) > 0';
+        return '$nameField LIKE \'%\' || $keyParameter || \'%\'';
       case _notContains:
-        return 'INSTR($nameField, $keyParameter) = 0';
+        return 'NOT ($nameField LIKE \'%\' || $keyParameter) || \'%\'';
       case _startsWith:
         if (value == null) {
           throw Exception('Condição $clientOperation não suporta valor null.');
